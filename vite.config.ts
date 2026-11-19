@@ -1,10 +1,21 @@
+// The repo's Vite+ config (Vite+'s monorepo guide: one root config for lint, format, staged checks
+// and the repo's tasks; each package keeps its own vite.config.ts for what it builds: apps/web
+// Void, packages/cli `vp pack`).
 import { defineConfig } from "vite-plus";
-import { voidPlugin } from "void";
-import { voidReact } from "@void/react/plugin";
 import { voidRules } from "./lint/void-rules";
 
 export default defineConfig({
-  plugins: [voidPlugin(), voidReact({ react: { compiler: true } })],
+  // `vp dev`, `vp build` and `vp preview` at the root mean the app; `vp pack`, the CLI.
+  defaultPackage: {
+    dev: "./apps/web",
+    build: "./apps/web",
+    preview: "./apps/web",
+    pack: "./packages/cli",
+  },
+  // Each commit's staged files, checked and fixed (`vp config` sets the hook up, on install).
+  staged: {
+    "*": "vp check --fix",
+  },
   lint: {
     // Void's own settings (lint/void-rules.ts names the commit): its default category off and
     // every rule listed, its plugins and environments, and its vite-plus plugin.
@@ -18,7 +29,7 @@ export default defineConfig({
       ...voidRules,
       // Ours, as joeblew999/void-fbtee's: every type from a real source, never from code saying
       // so. No casts (`as const` is fine), no value used as `any`, no `!` (lookups are "maybe
-      // nothing" too: noUncheckedIndexedAccess in tsconfig.json).
+      // nothing" too: noUncheckedIndexedAccess in the tsconfigs).
       "typescript/consistent-type-assertions": ["error", { assertionStyle: "never" }],
       "typescript/no-unsafe-assignment": "error",
       "typescript/no-unsafe-member-access": "error",
@@ -32,46 +43,37 @@ export default defineConfig({
     // Written by tools, not by hand: drizzle (migrations), Void (AGENTS.md).
     ignorePatterns: ["**/db/migrations/**", "**/AGENTS.md"],
   },
-  // The CLI as the `cloudflare-ping` package (cli/package.json): one file, every dependency inside
-  // it, so installing it installs nothing else. `vp run cli:pack`.
-  pack: {
-    entry: { main: "cli/main.ts" },
-    outDir: "cli/dist",
-    platform: "node",
-    target: "node22",
-    format: "esm",
-    clean: true,
-    deps: { alwaysBundle: [/.*/] },
-  },
   run: {
-    // The CLI from source: one task per thing the app does (cli/main.ts), each calling the app's
-    // API, as its page does (the README's table); the same commands as the package's.
+    // The repo's tasks, from anywhere in it. The CLI's commands run from source (packages/cli),
+    // each calling the app's API as its page does (the README's table); the package's built file
+    // runs the same ones anywhere.
     tasks: {
       // Any command: `vp run cli -- <command> [options]`.
-      cli: { command: "vpx cli/main.ts", cache: false },
+      cli: { command: "vpx packages/cli/main.ts", cache: false },
       // One Globalping test (`POST /api/probe`): the home page's "Run a probe".
-      "probe:test": { command: "vpx cli/main.ts test", cache: false },
+      "probe:test": { command: "vpx packages/cli/main.ts test", cache: false },
       // A request's Cloudflare log, by ray ID (`GET /api/trace/<ray>`): /trace/<ray>.
-      "probe:trace": { command: "vpx cli/main.ts trace", cache: false },
+      "probe:trace": { command: "vpx packages/cli/main.ts trace", cache: false },
       // Start a run and follow its fetches (`POST /api/runs`): the Runs page's "Start a run".
-      "ping:run": { command: "vpx cli/main.ts run", cache: false },
+      "ping:run": { command: "vpx packages/cli/main.ts run", cache: false },
       // The newest runs (`GET /api/runs`): the Runs page's list.
-      "ping:runs": { command: "vpx cli/main.ts runs", cache: false },
+      "ping:runs": { command: "vpx packages/cli/main.ts runs", cache: false },
       // One run and its fetches (`GET /api/runs/<id>`): /runs/<id>.
-      "ping:show": { command: "vpx cli/main.ts show", cache: false },
+      "ping:show": { command: "vpx packages/cli/main.ts show", cache: false },
       // Sign this machine in, out, and who it's signed in as: /login, "Sign out", the top bar.
-      "ping:sign-in": { command: "vpx cli/main.ts sign-in", cache: false },
-      "ping:sign-out": { command: "vpx cli/main.ts sign-out", cache: false },
-      "ping:whoami": { command: "vpx cli/main.ts whoami", cache: false },
-      // Build the package (cli/dist/main.mjs), and try the built file.
-      "cli:pack": { command: "vp pack", cache: false },
-      "cli:try": { command: "node cli/dist/main.mjs", cache: false },
-      // The docs (VitePress, docs/): write them with docs:dev (its own server, /docs/); docs:build
-      // puts them in public/docs, where `vp dev` and the deployed app serve them at /docs/.
-      // `void deploy` builds them itself (void.config.ts).
-      "docs:dev": { command: "pnpm --dir docs dev", cache: false },
-      "docs:build": { command: "pnpm --dir docs build", cache: false },
-      "docs:preview": { command: "pnpm --dir docs preview", cache: false },
+      "ping:sign-in": { command: "vpx packages/cli/main.ts sign-in", cache: false },
+      "ping:sign-out": { command: "vpx packages/cli/main.ts sign-out", cache: false },
+      "ping:whoami": { command: "vpx packages/cli/main.ts whoami", cache: false },
+      // The CLI package: build it (packages/cli/dist/main.mjs), and try the built file.
+      "cli:pack": { command: "vp run cloudflare-ping#build", cache: false },
+      "cli:try": { command: "node packages/cli/dist/main.mjs", cache: false },
+      // The docs (apps/docs): write them with docs:dev (VitePress's own server); docs:build puts
+      // them in apps/web/public/docs, where the app serves them at /docs/.
+      "docs:dev": { command: "vp run docs#dev", cache: false },
+      "docs:build": { command: "vp run docs#build", cache: false },
+      "docs:preview": { command: "vp run docs#preview", cache: false },
+      // Deploy the app and its docs (apps/web: `void deploy`, which builds both first).
+      deploy: { command: "vp run web#deploy", cache: false },
     },
   },
 });

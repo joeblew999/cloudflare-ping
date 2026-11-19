@@ -34,12 +34,13 @@ code (`src/`); each page shows its command; every command takes `--json` and `--
   app's own Cloudflare API token, `CLOUDFLARE_OBSERVABILITY_TOKEN`, not the machine's sign-in).
   Until the map (step 7), `ping:run` takes `--from <place>` (Globalping's place), not `--where`.
 - **The CLI:** commands run with `vp`, the same on the Mac, in CI and in a Claude session. Each is
-  a short function in `cli/commands/` that calls the API with Void's typed fetch (`fetch` from
-  `void/client`, `baseURL` set to the deployed app), so its paths, inputs and answers are checked
-  against the routes. The same commands are the `cloudflare-ping` npm package (`cli/`, built by
-  `vp pack` into one file with every dependency inside; the user's call, 2026-11-19: not published
-  yet, so `"private": true`), for `npx cloudflare-ping <command>` anywhere. A CLI built for
-  another API version is told to update (`src/version.ts`, `middleware/02.api-version.ts`).
+  a short function in `packages/cli/commands/` that calls the API with Void's typed fetch (`fetch`
+  from `void/client`, `baseURL` set to the deployed app), so its paths, inputs and answers are
+  checked against the routes. The same commands are the `cloudflare-ping` npm package
+  (`packages/cli`, built by `vp pack` into one file with every dependency inside; the user's call,
+  2026-11-19: not published yet, so `"private": true`), for `npx cloudflare-ping <command>`
+  anywhere. A CLI built for another API version is told to update
+  (`packages/shared/src/version.ts`, `apps/web/middleware/02.api-version.ts`).
   - `vp run ping:map` asks the app to build or refresh the map (`POST /api/map`).
   - `vp run ping:run -- --target <site> --where <all | region | codes>` asks the app to start a
     run (`POST /api/runs`). The app puts it on its own queue and does the work on Cloudflare, so it
@@ -47,11 +48,15 @@ code (`src/`); each page shows its command; every command takes `--json` and `--
     (`GET /api/runs/[id]`): a table by region, or JSON with `--json`.
 - **The web pages:** the map and each run by region, each request linked to its trace, reading
   the same API.
-- **The docs** (the user's call, 2026-11-19): VitePress 2 in `docs/`, at `/docs/` on the same
+- **The docs** (the user's call, 2026-11-19): VitePress 2 in `apps/docs`, at `/docs/` on the same
   Worker, built and shipped by the same `void deploy`. Written once, from the sources: the README's
   sections, the CLI's own command list, this plan, and the newest runs live from the API. Their
-  own package in a pnpm workspace, since Void 1.10.0's Cloudflare deploy won't deploy an app whose
-  root package depends on VitePress (README, "The docs").
+  own package, since Void 1.10.0's Cloudflare deploy won't deploy an app whose package depends on
+  VitePress (README, "The docs").
+- **The repo** (the user's call, 2026-11-19): a Vite+ monorepo, as Vite+'s `vite:monorepo`
+  template and monorepo guide lay one out: `apps/web` (the Void app), `apps/docs`, `packages/cli`,
+  `packages/shared`; one catalog of versions (`pnpm-workspace.yaml`); one root `vite.config.ts`
+  for lint, format and the repo's tasks (README, "The repo").
 - **Who may do what: Void's auth** (Better Auth, built into Void: `void/auth`, set up in
   `auth.ts`). Reading the map and the runs is open. Anything that spends Globalping tests
   (`POST /api/map`, `POST /api/runs`) calls `requireAuth(c)`, and answers 401 to anyone not signed

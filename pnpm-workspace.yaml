@@ -1,16 +1,38 @@
-# The app is the root package; the docs (VitePress) are their own, so Void (1.10.0) does not take
-# the app for a static VitePress site when it deploys to Cloudflare (README, "The docs").
+# A Vite+ monorepo (Vite+'s `vite:monorepo` template, and its guide/monorepo.md): apps/ (the Void
+# app, the docs), packages/ (the CLI, the code they share).
 packages:
-  - docs
+  - apps/*
+  - packages/*
+
+catalogMode: prefer
+
+# One version each, for every package ("catalog:" in their package.json).
+catalog:
+  "@types/node": 26.6.6
+  "@void/react": 1.10.0
+  better-auth: 1.7.25
+  typescript: ^7.0.2
+  # Void 1.10.0 writes Vite+ ^1.6.0, which takes Vite+ 1.7.0, whose core must be 8.3.8000 (reported
+  # to Void 2026-11-18): both held at 1.6.0 until a Void release writes a pair.
+  vite: npm:@voidzero-dev/vite-plus-core@1.6.0
+  vite-plus: 1.6.0
+  vitepress: 2.0.0-alpha.21
+  void: 1.10.0
+  vue: 3.5.45
+  zod: ^4.6.7
+
+overrides:
+  vite@*: "catalog:"
+
+peerDependencyRules:
+  allowAny:
+    - vite
+  allowedVersions:
+    vite: "*"
+
+# Void's quickstart: workerd, esbuild and sharp build; better-sqlite3 doesn't (Void uses its own).
 allowBuilds:
   better-sqlite3: false
   esbuild: true
   sharp: true
   workerd: true
-overrides:
-  # Void 1.10.0 writes Vite+ ^1.6.0, which takes Vite+ 1.7.0, whose core must be 8.3.8000 (reported
-  # to Void 2026-11-18): both held at 1.6.0, as void-fbtee does, until a Void release writes a pair.
-  vite@*: npm:@voidzero-dev/vite-plus-core@1.6.0
-peerDependencyRules:
-  allowedVersions:
-    vite: "*"

@@ -5,17 +5,17 @@ a data centre, and our Worker there does the fetching. Built with [Void](https:/
 and why, step by step: `.claude/plans/2026-11-19-01-cloudflare-ping.md`.
 
 Deployed at https://cloudflare-ping.gedw99.workers.dev (Cloudflare account `7384af54e33b8a54ff240371ea368440`),
-with its docs at https://cloudflare-ping.gedw99.workers.dev/docs/ (`docs/`, VitePress).
+with its docs at https://cloudflare-ping.gedw99.workers.dev/docs/ (`apps/docs`, VitePress).
 
 ## What you can do, on the web and from a terminal
 
-<!-- The docs show this section as it is (docs/guide.md); write it here only. -->
+<!-- The docs show this section as it is (apps/docs/guide.md); write it here only. -->
 <!-- #region use -->
 
-One way in: the app's own API (`routes/api/`). Each thing the app does is one API route; its web
-page and its command both call that route with Void's typed fetch (`void/client`), and page
-loaders and API routes share the same server code (`src/`). So the web and the terminal do the
-same things, the same way.
+One way in: the app's own API (`apps/web/routes/api/`). Each thing the app does is one API route;
+its web page and its command both call that route with Void's typed fetch (`void/client`), and
+page loaders and API routes share the same server code (`apps/web/src/`). So the web and the
+terminal do the same things, the same way.
 
 | What                       | Web page               | In the repo                      | Anywhere (the package)           | API                                   |
 | -------------------------- | ---------------------- | -------------------------------- | -------------------------------- | ------------------------------------- |
@@ -43,35 +43,65 @@ starting one, or reading Cloudflare's logs, needs you signed in.
 
 <!-- #region package -->
 
-The commands are in `cli/` (`cli/main.ts`, one file per command in `cli/commands/`, what they
-share in `cli/api.ts`). In the repo, the `vp run` tasks (`vite.config.ts`) run them from source.
-As the `cloudflare-ping` npm package (`cli/package.json`, `cli/README.md`), `vp run cli:pack`
-builds them into one file, `cli/dist/main.mjs` (about 275 kB; every dependency is inside it, so
-installing it installs nothing else), and `vp run cli:try -- <command>` runs that file.
+The commands are in `packages/cli` (`main.ts`, one file per command in `commands/`, what they
+share in `api.ts`; their names and help, with the docs, in `packages/shared/src/commands.ts`). In
+the repo, the `vp run` tasks (the root `vite.config.ts`) run them from source. As the
+`cloudflare-ping` npm package (`packages/cli/package.json`, `packages/cli/README.md`),
+`vp run cli:pack` (`vp pack`, configured in `packages/cli/vite.config.ts`) builds them into one
+file, `packages/cli/dist/main.mjs` (about 275 kB; every dependency is inside it, so installing it
+installs nothing else), and `vp run cli:try -- <command>` runs that file.
 
-It isn't published: `cli/package.json` says `"private": true`, which npm refuses to publish (only
-`npm publish --dry-run` skips that check). To publish: remove that line, `vp run cli:pack`, then
-`npm publish` in `cli/`. After that, `npx cloudflare-ping <command>` works on any machine with
-Node 22 or later.
+It isn't published: `packages/cli/package.json` says `"private": true`, which npm refuses to
+publish (only `npm publish --dry-run` skips that check). To publish: remove that line,
+`vp run cli:pack`, then `npm publish` in `packages/cli`. After that, `npx cloudflare-ping <command>`
+works on any machine with Node 22 or later.
 
-The CLI says which version of the API it was built for (`src/version.ts`), and the app refuses a
-CLI built for another one, telling it to update (`middleware/02.api-version.ts`). Raise
-`API_VERSION` when an API route changes in a way an older CLI can't use, and publish a new
-version of the package with it.
+The CLI says which version of the API it was built for (`packages/shared/src/version.ts`), and the
+app refuses a CLI built for another one, telling it to update
+(`apps/web/middleware/02.api-version.ts`). Raise `API_VERSION` when an API route changes in a way
+an older CLI can't use, and publish a new version of the package with it.
 
 <!-- #endregion package -->
 
-## How it's built
+## The repo
+
+A Vite+ monorepo, as Vite+'s `vite:monorepo` template and its monorepo guide lay one out:
+
+| Where             | Package                   | What                                                                                           |
+| ----------------- | ------------------------- | ---------------------------------------------------------------------------------------------- |
+| `apps/web`        | `web`                     | The Void app: its pages, API routes, database, auth, and the Worker (`void.config.ts`)         |
+| `apps/docs`       | `docs`                    | The docs (VitePress 2), built into `apps/web/public/docs` for the app to serve at `/docs/`     |
+| `packages/cli`    | `cloudflare-ping`         | The CLI, and the npm package it becomes (`vp pack`)                                            |
+| `packages/shared` | `@cloudflare-ping/shared` | What those three share: where the app is, what `/run` may fetch, the API version, the commands |
+
+- `pnpm-workspace.yaml`: the packages, and one version of each shared dependency for all of them
+  (the catalog: Vite+, Void, VitePress, …; `"catalog:"` in each package.json).
+- The root `vite.config.ts`: lint and format for the whole repo, the pre-commit check (`staged`,
+  set up by `vp config` on install), the repo's tasks (`vp run <task>` from anywhere in it), and
+  `defaultPackage`, so plain `vp dev` and `vp build` at the root mean the app and `vp pack` the CLI.
+  With options (`vp dev --port 5199`), name the app: `vp -C apps/web dev --port 5199`.
+- Each package's own `vite.config.ts`: what it builds. The app's `build` task runs after its
+  workspace dependencies' (the docs: `dependsOn`), so the docs are always built first.
+- The CLI and the docs call the app's API with Void's typed fetch, so their tsconfigs extend the
+  app's generated `apps/web/.void/tsconfig.json` (the app's route types).
+- At the root too: `.claude/plans/` (the plan), `evidence/` (each step's raw results, copied from
+  Globalping before its measurements expire), `lint/void-rules.ts` (Void's own lint rules; the
+  root config adds ours: no casts, no `any`, no `!`).
+
+## How the app is built
+
+In `apps/web`:
 
 - `routes/where.ts`: answers which Cloudflare data centre it ran in (`/where`). What Globalping's
   probes fetch. `?wait=<ms>` answers after that long and `?size=<bytes>` pads the answer, which
   found Globalping's limits: 15 seconds and 10,000 bytes per test (plan step 2).
 - `routes/run.ts`: `/run?url=<address>` fetches an address from the data centre it ran in and
   answers what the target said (status, `cf-ray`, cache, time); `&repeat=<n>` fetches it n times
-  in a row. Only the addresses in `src/targets.ts`. `&run=<id>` records each fetch in the
-  database (`db/schema.ts`: `runs`, `fetches`), only for a run that exists; `&background=1`
-  answers at once and fetches afterwards. Public, since Globalping's probes can't sign in. Needs
-  `global_fetch_strictly_public` (`void.config.ts`) to reach other Workers on `gedw99.workers.dev`.
+  in a row. Only the addresses in `packages/shared/src/targets.ts`. `&run=<id>` records each fetch
+  in the database (`db/schema.ts`: `runs`, `fetches`), only for a run that exists;
+  `&background=1` answers at once and fetches afterwards. Public, since Globalping's probes can't
+  sign in. Needs `global_fetch_strictly_public` (`void.config.ts`) to reach other Workers on
+  `gedw99.workers.dev`.
 - `src/globalping.ts`, `src/runs.ts`, `src/trace.ts`: what the API routes and the pages' loaders
   both use. `src/trace.ts` reads the account's Workers logs with the app's own Cloudflare API
   token (`CLOUDFLARE_OBSERVABILITY_TOKEN`, "Workers Observability Read"); without it, the log
@@ -80,37 +110,37 @@ version of the package with it.
   in.
 - Signing in: `auth.ts` (Void's auth, with Better Auth's device login and bearer plugins). Only
   the addresses in the `ALLOWED_EMAILS` secret can make an account (`env.ts`). The first time a
-  command needs it, it shows a link and a code (`cli/sign-in.ts`); open it, sign in
+  command needs it, it shows a link and a code (`packages/cli/sign-in.ts`); open it, sign in
   (`/login`), approve the code (`/device`), and the command keeps its token in
   `~/.config/cloudflare-ping/tokens.json`. In CI, set `CLOUDFLARE_PING_TOKEN` instead.
-- `evidence/`: each step's raw results, copied from Globalping before its measurements expire.
-- `lint/void-rules.ts`: Void's own lint rules; `vite.config.ts` adds ours (no casts, no `any`, no `!`).
 
 ## The docs
 
-`docs/` is the docs site (VitePress 2), served by the app at `/docs/`: `vp run docs:dev` to write
-them (VitePress's own server), `vp run docs:build` to build them into `public/docs` (ignored by
-git), where `vp dev` and the deployed app serve them. `void deploy` builds them itself first
-(`void.config.ts`: `inference.build`), then the app, which ships them with its other public files:
-one deploy, one site.
+`apps/docs` is the docs site (VitePress 2), served by the app at `/docs/`: `vp run docs:dev` to
+write them (VitePress's own server), `vp run docs:build` to build them into
+`apps/web/public/docs` (ignored by git), where `vp dev` and the deployed app serve them. Building
+the app builds them first (its `build` task depends on them), so `void deploy` ships them too: one
+deploy, one site.
 
 They're written once, from the sources: the guide includes this README's sections (the
-`#region` comments), the command reference is the CLI's own list (`cli/commands/list.ts`, read by
-`docs/cli.data.ts`), the plan page includes the plan, and the home page's newest runs come live
-from the app's API (`GET /api/runs`, with `void/client`, as the Runs page and `cloudflare-ping runs`
-do). The theme is VitePress's, in Void's colours (`docs/.vitepress/theme`).
+`#region` comments), the command reference is the CLI's own list
+(`packages/shared/src/commands.ts`, read by `apps/docs/cli.data.ts`), the plan page includes the
+plan, and the home page's newest runs come live from the app's API (`GET /api/runs`, with
+`void/client`, as the Runs page and `cloudflare-ping runs` do). The theme is VitePress's, in
+Void's colours (`apps/docs/.vitepress/theme`).
 
-The docs are their own package in a pnpm workspace (`docs/package.json`, `pnpm-workspace.yaml`),
-not a dependency of the app: Void 1.10.0, deploying to Cloudflare, takes a root package that
-depends on VitePress for a static VitePress site and refuses to deploy it while it has
-`routes/` and `pages/`, even with `inference.appType: "void"` (only its own platform's path reads
-that setting): worth reporting to Void. In a workspace, `vp build` at the root needs `-C .`.
+The docs are their own package, and the app's package doesn't depend on VitePress: Void 1.10.0,
+deploying to Cloudflare, takes a package that depends on VitePress for a static VitePress site and
+refuses to deploy it while it has `routes/` and `pages/`, even with `inference.appType: "void"`
+(only its own platform's path reads that setting): worth reporting to Void.
 
 ## Building and deploying
 
-`vp check` formats, lints and type-checks. `pnpm build` builds the docs and the app. Deploy with
-`void deploy --platform cloudflare`; the first time from a new machine, with
-`CLOUDFLARE_WORKERS_SUBDOMAIN=gedw99`.
+From the root: `vp check` formats, lints and type-checks every package; `vp run -r build` builds
+every package, each after the ones it depends on; `pnpm ready` does both. `vp run deploy` deploys
+the app and its docs (`void deploy --platform cloudflare` in `apps/web`, which builds both first);
+the first time from a new machine, with `CLOUDFLARE_WORKERS_SUBDOMAIN=gedw99`. Void's other
+commands (`void db …`, `void secret …`) run in `apps/web`.
 
 If a deploy stops with "did not pass /\_\_void/ready", Void put the previous version back and left
 the new one inactive; this happened once when deploying straight after another deploy. The next

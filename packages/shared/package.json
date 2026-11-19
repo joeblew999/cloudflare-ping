@@ -1,0 +1,19 @@
+{
+  "name": "@cloudflare-ping/shared",
+  "private": true,
+  "description": "What the app, the CLI and the docs share: where the app is, what /run may fetch, the API version, the commands, and the words for a failed call.",
+  "type": "module",
+  "exports": {
+    "./commands": "./src/commands.ts",
+    "./failure": "./src/failure.ts",
+    "./site": "./src/site.ts",
+    "./targets": "./src/targets.ts",
+    "./version": "./src/version.ts"
+  },
+  "dependencies": {
+    "void": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

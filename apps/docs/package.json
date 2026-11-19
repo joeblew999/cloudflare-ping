@@ -1,0 +1,16 @@
+{
+  "name": "docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "@cloudflare-ping/shared": "workspace:*",
+    "vitepress": "catalog:",
+    "void": "catalog:",
+    "vue": "catalog:"
+  }
+}

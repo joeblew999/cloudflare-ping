@@ -1,0 +1,18 @@
+{
+  "extends": "../web/.void/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["void/env", "node", "vitepress/client"],
+    "jsx": "react-jsx",
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true
+  },
+  "include": ["*.ts", ".vitepress/**/*.ts"],
+  "exclude": [".vitepress/cache"]
+}

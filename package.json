@@ -1,30 +1,17 @@
 {
-  "name": "cloudflare-ping",
+  "name": "cloudflare-ping-repo",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vp dev",
-    "build": "pnpm --dir docs build && vp -C . build",
-    "preview": "vp preview",
-    "postinstall": "void prepare"
-  },
-  "dependencies": {
-    "better-auth": "1.7.25",
-    "hono": "^4.11.9",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "zod": "^4.6.7"
+    "ready": "vp check && vp run -r build",
+    "dev": "vp run web#dev",
+    "prepare": "vp config"
   },
   "devDependencies": {
-    "@types/node": "26.6.6",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@void/react": "1.10.0",
+    "@types/node": "catalog:",
     "cf": "1.0.0-beta.26",
-    "oxc-transform-react": ">=0.152.0 <0.157.0",
-    "typescript": "^7.0.2",
-    "vite": "npm:@voidzero-dev/vite-plus-core@1.6.0",
-    "vite-plus": "1.6.0",
-    "void": "1.10.0"
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
   }
 }
