@@ -16,6 +16,26 @@ nothing: a plain Worker lives only as long as its request (Cloudflare's Workers 
 The first user is void-fbtee's example app: after each deploy, warm every data centre and check,
 region by region, that it behaves as designed (`void-fbtee/plans/read-latency.md`).
 
+## How we use it
+
+Through commands run with `vp`, the same on the Mac, in CI and in a Claude session, each using
+the Cloudflare sign-in that machine already has (in CI, the token it already deploys with). The
+app has no sign-in or key of its own.
+
+- While proving it (steps 1 to 5): `vp run probe:test -- --from <place> --path <path>` sends one
+  Globalping test to the deployed probe and prints what came back (data centre, `cf-ray`, timings,
+  the answer); `vp run probe:trace -- <ray id>` prints Cloudflare's trace of that request
+  (`cf o11y telemetry query`).
+- Once it works (steps 6 and 7): `vp run ping:map` builds or refreshes the map; `vp run ping:run --
+  --target <site> --where <all | region | codes>` puts the run on the app's queue (Cloudflare's
+  Queues API, with the machine's sign-in), so the app does the work on Cloudflare and it carries on
+  if the machine stops, then reads the results from the app's database as they arrive: a table by
+  region, or JSON with `--json`.
+- To look around: the app's own pages, the map and each run by region, each request linked to its
+  trace. Read-only, so no sign-in.
+- void-fbtee's deploy job: `vp run ping:run -- --target <the example> --where all --json`, then its
+  global check reads that and the traces.
+
 ## How it's built: one proof at a time
 
 Each step proves one thing, with the least built to prove it. A step's result, with its date and
@@ -25,7 +45,7 @@ again: nothing after it is built on a guess.
 ### 1. A Worker can tell us which data centre it's in
 
 - Build: `void init` on Void 1.11.0, one route, `routes/where.ts`, answering `request.cf.colo`.
-  Deployed.
+  Deployed. `probe:test`.
 - Proof: one Globalping HTTP test to `/where` from a probe in Thailand answers a data centre code,
   and the same code is the end of that response's `cf-ray`.
 - If it fails: no probe can know where it is; the idea is dead.
@@ -42,7 +62,7 @@ again: nothing after it is built on a guess.
 ### 3. A fetch from our Worker runs the target in the same data centre
 
 - Build: `routes/run.ts`: fetch one given address and answer its status, `cf-ray` and timings.
-  Only targets on an allowed list (to start: void-fbtee's example).
+  Only targets on an allowed list (to start: void-fbtee's example). `probe:trace`.
 - Proof: a Globalping test from Thailand to `/run` fetching the example's events page. The
   example's own trace for that request (it has tracing on) shows it ran in the same data centre
   as our Worker, and which D1 copy answered its reads.
@@ -74,12 +94,12 @@ again: nothing after it is built on a guess.
 
 ### 7. A run across many data centres
 
-- Build: `ping:run --target <site> --where <codes>`: through a Void queue, one message per data
-  centre, each sending that one Globalping test; done when every data centre's rows are in, or a
-  sweep marks those that never answered.
+- Build: `ping:run`: the run goes on a Void queue, one message per data centre, each sending that
+  one Globalping test; done when every data centre's rows are in, or a sweep marks those that
+  never answered.
 - Proof: one data centre first, then every mapped one; the run's rows, and its total tests.
 
 ### 8. Then, and only then
 
-The sign-in on starting runs, pages for the map and the runs, the API for void-fbtee's deploy
-check, and a cron that re-maps. Each gets its own step, written here once 7 has passed.
+The pages for the map and the runs, `--json` for void-fbtee's deploy check, and a cron that
+re-maps. Each gets its own step, written here once 7 has passed.
