@@ -1,10 +1,10 @@
-// Runs: start one (`POST /api/runs`, the CLI's `ping:run`) and the newest ones (`GET /api/runs`,
-// the CLI's `ping:runs`). A run sends one Globalping test to `/run`, and each fetch it makes is
-// recorded (plan step 5).
+// Runs: start one (`POST /api/runs`, the CLI's `run`) and the newest ones (`GET /api/runs`, the
+// CLI's `runs`). A run sends one Globalping test to `/run`, and each fetch it makes is recorded
+// (plan step 5).
 import { useState } from "react";
 import { fetch } from "void/client";
-import { ALLOWED_HOSTS, DEFAULT_TARGET } from "@cloudflare-ping/shared/targets";
 import { failure } from "@cloudflare-ping/shared/failure";
+import { ALLOWED_HOSTS, DEFAULT_TARGET } from "@cloudflare-ping/shared/targets";
 import type { Props } from "./index.server";
 
 const HOSTS = [...ALLOWED_HOSTS];
@@ -43,7 +43,7 @@ export default function RunsPage({ email, runs }: Props) {
   }
 
   const command = [
-    "vp run ping:run --",
+    "cloudflare-ping run",
     `--target ${target}`,
     `--from ${from}`,
     `--probes ${probes}`,
@@ -52,119 +52,115 @@ export default function RunsPage({ email, runs }: Props) {
   ].join(" ");
 
   return (
-    <main className="starter">
-      <section className="starter-demo" aria-labelledby="start-title">
-        <div className="demo-content">
-          <h1 id="start-title">Runs</h1>
-          <p className="note">
-            A run sends one Globalping test from probes in a place to our <code>/run</code>, which
-            fetches the target from each data centre the probes reach and records every fetch. In
-            the background, the test only has to reach the data centre; the fetches come after.
-          </p>
-          <form
-            className="form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void start();
-            }}
-          >
-            <div className="form-row">
-              <label>
-                Target
-                <select value={host} onChange={(event) => setHost(event.target.value)}>
-                  {HOSTS.map((each) => (
-                    <option key={each} value={each}>
-                      {each}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Path
-                <input value={path} onChange={(event) => setPath(event.target.value)} required />
-              </label>
-            </div>
-            <div className="form-row">
-              <label>
-                From
-                <input value={from} onChange={(event) => setFrom(event.target.value)} required />
-              </label>
-              <label>
-                Probes
-                <input
-                  type="number"
-                  min={1}
-                  max={10}
-                  value={probes}
-                  onChange={(event) => setProbes(event.target.value)}
-                  required
-                />
-              </label>
-              <label>
-                Fetches each
-                <input
-                  type="number"
-                  min={1}
-                  max={5}
-                  value={repeat}
-                  onChange={(event) => setRepeat(event.target.value)}
-                  required
-                />
-              </label>
-            </div>
-            <label className="check">
-              <input
-                type="checkbox"
-                checked={background}
-                onChange={(event) => setBackground(event.target.checked)}
-              />
-              In the background
+    <main className="content vp-doc">
+      <section aria-labelledby="start-title">
+        <h1 id="start-title">Runs</h1>
+        <p className="lead">
+          A run sends one Globalping test from probes in a place to our <code>/run</code>, which
+          fetches the target from each data centre the probes reach and records every fetch. In the
+          background, the test only has to reach the data centre; the fetches come after.
+        </p>
+        <form
+          className="form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void start();
+          }}
+        >
+          <div className="form-row">
+            <label>
+              Target
+              <select value={host} onChange={(event) => setHost(event.target.value)}>
+                {HOSTS.map((each) => (
+                  <option key={each} value={each}>
+                    {each}
+                  </option>
+                ))}
+              </select>
             </label>
-            <button type="submit" disabled={pending || !email}>
+            <label>
+              Path
+              <input value={path} onChange={(event) => setPath(event.target.value)} required />
+            </label>
+          </div>
+          <div className="form-row">
+            <label>
+              From
+              <input value={from} onChange={(event) => setFrom(event.target.value)} required />
+            </label>
+            <label>
+              Probes
+              <input
+                type="number"
+                min={1}
+                max={10}
+                value={probes}
+                onChange={(event) => setProbes(event.target.value)}
+                required
+              />
+            </label>
+            <label>
+              Fetches each
+              <input
+                type="number"
+                min={1}
+                max={5}
+                value={repeat}
+                onChange={(event) => setRepeat(event.target.value)}
+                required
+              />
+            </label>
+          </div>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={background}
+              onChange={(event) => setBackground(event.target.checked)}
+            />
+            In the background
+          </label>
+          <div className="form-actions">
+            <button type="submit" className="button brand" disabled={pending || !email}>
               {pending ? "Starting…" : email ? "Start a run" : "Sign in to start a run"}
             </button>
-            {error ? (
-              <p className="error" role="alert">
-                {error}
-              </p>
-            ) : null}
-            <p className="note">
-              The same from a terminal: <code>{command}</code>
-            </p>
-          </form>
-        </div>
+          </div>
+        </form>
+        {error ? (
+          <div className="custom-block danger" role="alert">
+            <p>{error}</p>
+          </div>
+        ) : null}
+        <p>
+          The same from a terminal: <code>{command}</code>
+        </p>
       </section>
-      <div className="ticks" aria-hidden="true"></div>
-      <section className="starter-demo" aria-labelledby="list-title">
-        <div className="demo-content">
-          <h2 id="list-title">The newest</h2>
-          <p className="note">
-            The same from a terminal: <code>vp run ping:runs</code>
-          </p>
-          {runs.length === 0 ? (
-            <p>No runs yet.</p>
-          ) : (
-            <ul className="results">
-              {runs.map((run) => (
-                <li key={run.id}>
-                  <strong>
-                    <a href={`/runs/${run.id}`}>{new URL(run.target).pathname}</a>
-                  </strong>
-                  <span>
-                    {run.fromPlace ?? "?"} · {run.probes ?? "?"} probes × {run.repeat ?? 1} ·{" "}
+
+      <section aria-labelledby="list-title">
+        <h2 id="list-title">The newest</h2>
+        <p>
+          The same from a terminal: <code>cloudflare-ping runs</code>
+        </p>
+        {runs.length === 0 ? (
+          <p>No runs yet.</p>
+        ) : (
+          <ul className="results">
+            {runs.map((run) => (
+              <li key={run.id}>
+                <a className="card" href={`/runs/${run.id}`}>
+                  <p className="card-title">{new URL(run.target).pathname}</p>
+                  <p className="card-details">
+                    From {run.fromPlace ?? "?"} · {run.probes ?? "?"} probes × {run.repeat ?? 1} ·{" "}
                     {run.fetches} fetches recorded
-                  </span>
-                  <small>
-                    {run.createdAt} · {run.id}
-                  </small>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+                  </p>
+                  <p className="card-details">
+                    {run.createdAt.slice(0, 16).replace("T", " ")} · {run.id}
+                  </p>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
-      <div className="ticks" aria-hidden="true"></div>
-      <div id="spacer" aria-hidden="true"></div>
     </main>
   );
 }

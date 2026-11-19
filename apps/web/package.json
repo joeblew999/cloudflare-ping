@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@cloudflare-ping/shared": "workspace:*",
+    "@cloudflare-ping/theme": "workspace:*",
     "better-auth": "catalog:",
     "hono": "^4.11.9",
     "react": "^19.2.4",

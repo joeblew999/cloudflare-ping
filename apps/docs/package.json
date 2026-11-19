@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "@cloudflare-ping/shared": "workspace:*",
+    "@cloudflare-ping/theme": "workspace:*",
     "vitepress": "catalog:",
     "void": "catalog:",
     "vue": "catalog:"

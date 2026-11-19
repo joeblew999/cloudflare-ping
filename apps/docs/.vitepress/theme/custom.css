@@ -1,14 +1,2 @@
-/* Void's colours (the app's pages/style.css: --accent), so the docs and the app look like one. */
-:root {
-  --vp-c-brand-1: #6c3bff;
-  --vp-c-brand-2: #5b2fe6;
-  --vp-c-brand-3: #4c24cc;
-  --vp-c-brand-soft: rgb(108 59 255 / 14%);
-}
-
-.dark {
-  --vp-c-brand-1: #b39aff;
-  --vp-c-brand-2: #a283ff;
-  --vp-c-brand-3: #8f6bff;
-  --vp-c-brand-soft: rgb(179 154 255 / 16%);
-}
+/* The docs' colours: Void's, shared with the app (packages/theme/brand.css). */
+@import "@cloudflare-ping/theme/brand.css";

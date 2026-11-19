@@ -1,16 +1,39 @@
-// The app's home page: where this page was served from, and one Globalping test from the browser,
-// through the same API as the CLI's `probe:test` (`POST /api/probe`): to our probe, or to an
-// allowed target directly (`--host`). Void's starter look (style.css).
+// The app's home page, in the docs' look (VitePress's home: a hero, three feature cards): what it
+// is, where this page was served from, and one Globalping test from the browser, through the same
+// API as the CLI's `test` (`POST /api/probe`): to our probe, or to an allowed target directly
+// (`--host`).
 import { useState } from "react";
 import { fetch } from "void/client";
+import { failure } from "@cloudflare-ping/shared/failure";
 import { SITE } from "@cloudflare-ping/shared/site";
 import { ALLOWED_HOSTS } from "@cloudflare-ping/shared/targets";
-import { failure } from "@cloudflare-ping/shared/failure";
 import type { Props } from "./index.server";
 
-const REPO = "https://github.com/joeblew999/cloudflare-ping";
-const PLAN = `${REPO}/blob/main/.claude/plans/2026-11-19-01-cloudflare-ping.md`;
 const HOSTS = [SITE, ...ALLOWED_HOSTS];
+
+const FEATURES = [
+  {
+    title: "One test, a whole data centre",
+    details:
+      "Globalping counts tests. Here one test only has to reach a data centre; from there our Worker fetches as much as you ask, and the target runs in that same data centre.",
+    link: "/docs/how-it-works",
+    linkText: "How it works",
+  },
+  {
+    title: "The same on the web and in a terminal",
+    details:
+      "Every action is one API route, one page and one command: in the repo with vp run, and anywhere with the cloudflare-ping package.",
+    link: "/docs/guide",
+    linkText: "What you can do",
+  },
+  {
+    title: "Proven a step at a time",
+    details:
+      "Each step's question, its answer, and the raw evidence, from Globalping and from Cloudflare's own logs.",
+    link: "/docs/plan",
+    linkText: "The plan",
+  },
+];
 
 const runProbe = (body: { from: string; path: string; probes: number; host?: string }) =>
   fetch("/api/probe", { method: "POST", body });
@@ -44,7 +67,7 @@ export default function HomePage({ email, here }: Props) {
   }
 
   const command = [
-    "vp run probe:test --",
+    "cloudflare-ping test",
     `--from ${from}`,
     `--path ${path}`,
     `--probes ${probes}`,
@@ -52,35 +75,55 @@ export default function HomePage({ email, here }: Props) {
   ].join(" ");
 
   return (
-    <main className="starter">
-      <section id="center" aria-labelledby="title">
-        <div className="hero">
-          <img className="base" src="/stack.svg" width="170" height="179" alt="" />
-          <img className="framework" src="/react.svg" alt="" />
-          <img className="void" src="/void.svg" alt="" />
-        </div>
-        <div className="starter-intro">
-          <h1 id="title">cloudflare-ping</h1>
-          <div className="starter-description">
-            <p>
-              Our own Globalping, run from Cloudflare&apos;s data centres. A Globalping probe is
-              only the way in: it reaches our Worker in a data centre, and the Worker says which,
-              and fetches from there.
-            </p>
-            <p>
-              This page was served from <code>{here.colo ?? "?"}</code>
-              {here.city ? ` (${here.city}, ${here.country ?? "?"})` : ""}.
-            </p>
+    <main>
+      <section className="hero" aria-labelledby="title">
+        <div className="hero-inner">
+          <h1 id="title" className="hero-heading">
+            <span className="hero-name">cloudflare-ping</span>
+            <span className="hero-text">
+              Our own Globalping, run from Cloudflare&apos;s data centres
+            </span>
+          </h1>
+          <p className="hero-tagline">
+            A Globalping probe is only the way in. Our Worker, in the data centre it reaches, does
+            the fetching, and records it.
+          </p>
+          <div className="hero-actions">
+            <a className="button brand big" href="#probe">
+              Run a probe
+            </a>
+            <a className="button alt big" href="/runs">
+              Runs
+            </a>
+            <a className="button alt big" href="/docs/">
+              Docs
+            </a>
           </div>
+          <p className="hero-where">
+            This page was served from {here.colo ?? "?"}
+            {here.city ? ` (${here.city}, ${here.country ?? "?"})` : ""}.
+          </p>
         </div>
       </section>
-      <div className="ticks" aria-hidden="true"></div>
-      <section className="starter-demo" aria-labelledby="probe-title">
-        <div className="demo-content">
+
+      <section className="features" aria-label="What it is">
+        <div className="features-grid">
+          {FEATURES.map((each) => (
+            <a key={each.title} className="card" href={each.link}>
+              <h2 className="card-title">{each.title}</h2>
+              <p className="card-details">{each.details}</p>
+              <p className="card-link">{each.linkText} →</p>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <div className="content vp-doc">
+        <section id="probe" aria-labelledby="probe-title">
           <h2 id="probe-title">Run a probe</h2>
-          <p className="note">
-            One Globalping test, from probes in a place (a country such as TH, a city, a network):
-            to our probe (<code>/where</code> answers the data centre it reached;{" "}
+          <p>
+            One Globalping test, from probes in a place (a country such as <code>TH</code>, a city,
+            a network): to our probe (<code>/where</code> answers the data centre it reached;{" "}
             <code>/run?url=…</code> fetches a target from there), or straight to a target, as a
             visitor would. It spends Globalping tests, so it needs you signed in.
           </p>
@@ -91,14 +134,16 @@ export default function HomePage({ email, here }: Props) {
               void run();
             }}
           >
-            <label htmlFor="host">To</label>
-            <select id="host" value={host} onChange={(event) => pickHost(event.target.value)}>
-              {HOSTS.map((each) => (
-                <option key={each} value={each}>
-                  {each === SITE ? `${each} (our probe)` : each}
-                </option>
-              ))}
-            </select>
+            <label>
+              To
+              <select value={host} onChange={(event) => pickHost(event.target.value)}>
+                {HOSTS.map((each) => (
+                  <option key={each} value={each}>
+                    {each === SITE ? `${each} (our probe)` : each}
+                  </option>
+                ))}
+              </select>
+            </label>
             <div className="form-row">
               <label>
                 From
@@ -120,99 +165,57 @@ export default function HomePage({ email, here }: Props) {
                 />
               </label>
             </div>
-            <button type="submit" disabled={pending || !email}>
-              {pending ? "Waiting for Globalping…" : email ? "Run" : "Sign in to run"}
-            </button>
-            {error ? (
-              <p className="error" role="alert">
-                {error}
-              </p>
-            ) : null}
-            <p className="note">
-              The same from a terminal: <code>{command}</code>
-            </p>
+            <div className="form-actions">
+              <button type="submit" className="button brand" disabled={pending || !email}>
+                {pending ? "Waiting for Globalping…" : email ? "Run" : "Sign in to run"}
+              </button>
+            </div>
           </form>
+          {error ? (
+            <div className="custom-block danger" role="alert">
+              <p>{error}</p>
+            </div>
+          ) : null}
+          <p>
+            The same from a terminal: <code>{command}</code>
+          </p>
           {answer ? (
             <>
-              <p className="note">
+              <p>
                 Globalping measurement{" "}
                 <a href={`https://api.globalping.io/v1/measurements/${answer.measurement}`}>
                   {answer.measurement}
                 </a>
-                , from {answer.from}, {answer.site}
-                {answer.path}
+                , from {answer.from}, <code>{`${answer.site}${answer.path}`}</code>
               </p>
               <ul className="results">
                 {answer.results.map((each) => (
-                  <li key={`${each.city}-${each.network}-${each.ray}`}>
-                    <strong>
+                  <li key={`${each.city}-${each.network}-${each.ray}`} className="card">
+                    <p className="card-title">
                       {each.city}, {each.country}
-                    </strong>
-                    <span>
+                    </p>
+                    <p className="card-details">
                       {each.network} (AS{each.asn})
-                    </span>
-                    {each.error ? <small className="different">{each.error}</small> : null}
-                    <small className={each.same || !ours ? "same" : "different"}>
-                      {ours
-                        ? `${each.same ? "Same" : "Different"}: answered ${each.colo || "-"}, `
-                        : ""}
+                    </p>
+                    {each.error ? <p className="card-details different">{each.error}</p> : null}
+                    <p className="card-details">
+                      {ours ? (
+                        <span className={each.same ? "same" : "different"}>
+                          {each.same ? "Same" : "Different"}: answered {each.colo || "-"}.{" "}
+                        </span>
+                      ) : null}
                       cf-ray {each.ray ? <a href={`/trace/${each.ray}`}>{each.ray}</a> : "-"} · HTTP{" "}
                       {each.httpStatus ?? "-"} · {each.totalMs ?? "-"} ms
                       {each.isr ? ` · ${each.isr}` : ""}
                       {each.truncated ? " · cut off" : ""}
-                    </small>
+                    </p>
                   </li>
                 ))}
               </ul>
             </>
           ) : null}
-        </div>
-      </section>
-      <div className="ticks" aria-hidden="true"></div>
-      <section id="next-steps" aria-label="More">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>From a terminal</h2>
-          <p>
-            Everything here is a command too, through the same API. The first one shows a link and a
-            code; approve it here, and the commands stay signed in.
-          </p>
-          <ul>
-            <li>
-              <a href="/docs/cli">The commands</a>
-            </li>
-            <li>
-              <a href="/docs/">The docs</a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#github-icon"></use>
-          </svg>
-          <h2>How it&apos;s built</h2>
-          <p>One proof at a time</p>
-          <ul>
-            <li>
-              <a href={PLAN} target="_blank" rel="noreferrer">
-                The plan
-              </a>
-            </li>
-            <li>
-              <a href={REPO} target="_blank" rel="noreferrer">
-                <svg className="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-      <div className="ticks" aria-hidden="true"></div>
-      <div id="spacer" aria-hidden="true"></div>
+        </section>
+      </div>
     </main>
   );
 }

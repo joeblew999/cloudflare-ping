@@ -14,6 +14,8 @@ export default defineConfig({
   outDir: "../web/public/docs",
   cleanUrls: true,
   lastUpdated: true,
+  // The app's icon (apps/web/public/favicon.svg): the docs are served by the app, on its site.
+  head: [["link", { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }]],
   themeConfig: {
     nav: [
       { text: "Guide", link: "/guide" },

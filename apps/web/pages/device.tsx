@@ -32,38 +32,31 @@ export default function DevicePage({ email, userCode }: Props) {
   }
 
   return (
-    <main className="starter">
-      <section id="center" aria-labelledby="title">
-        <div className="starter-intro">
-          <h1 id="title">Sign in a command</h1>
-          <div className="starter-description">
-            <p>
-              Signed in to <a href="/">cloudflare-ping</a> as {email}. Approve only a code that a
-              command you just ran is showing.
-            </p>
-          </div>
+    <main className="content vp-doc">
+      <h1>Sign in a command</h1>
+      <p className="lead">
+        Signed in to <a href="/">cloudflare-ping</a> as {email}. Approve only a code that a command
+        you just ran is showing.
+      </p>
+      <div className="form">
+        <label>
+          Code
+          <input id="code" value={code} onChange={(event) => setCode(event.target.value)} />
+        </label>
+        <div className="form-actions">
+          <button type="button" className="button brand" onClick={() => void decide("approve")}>
+            Approve
+          </button>
+          <button type="button" className="button alt" onClick={() => void decide("deny")}>
+            Deny
+          </button>
         </div>
-      </section>
-      <div className="ticks" aria-hidden="true"></div>
-      <section className="starter-demo" aria-label="Approve">
-        <div className="demo-content">
-          <div className="form">
-            <label htmlFor="code">Code</label>
-            <input id="code" value={code} onChange={(event) => setCode(event.target.value)} />
-            <div className="form-row">
-              <button type="button" onClick={() => void decide("approve")}>
-                Approve
-              </button>
-              <button type="button" onClick={() => void decide("deny")}>
-                Deny
-              </button>
-            </div>
-            {outcome ? <p role="status">{outcome}</p> : null}
-          </div>
+      </div>
+      {outcome ? (
+        <div className="custom-block tip" role="status">
+          <p>{outcome}</p>
         </div>
-      </section>
-      <div className="ticks" aria-hidden="true"></div>
-      <div id="spacer" aria-hidden="true"></div>
+      ) : null}
     </main>
   );
 }

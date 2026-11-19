@@ -1,554 +1,508 @@
-:root {
-  --text: rgb(22 23 29 / 70%);
-  --text-h: #16171d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f2f1f4;
-  --accent: #6c3bff;
-  --error: #b42318;
-  --social-bg: #f2f1f4;
-  --radius-inner: 4px;
-  --radius-element: 6px;
-  --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+/* The app, in the docs' look: VitePress's own theme CSS (packages/theme: fonts, variables, base,
+   `.vp-doc` and `.custom-block`), and the app's parts styled as VitePress styles its components
+   (VPNavBar, VPButton, VPHero, VPFeature, VPSwitchAppearance), with the same variables and values.
+   Light or dark: `.dark` on <html> (middleware/00.head.ts, as VitePress does). */
+@import "@cloudflare-ping/theme/base.css";
 
-  --sans: system-ui, "Segoe UI", Roboto, sans-serif;
-  --heading: system-ui, "Segoe UI", Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+/* The bar at the top (VPNavBar). */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: var(--vp-nav-height);
+  border-bottom: 1px solid var(--vp-c-divider);
+  background-color: var(--vp-nav-bg-color);
+  backdrop-filter: var(--vp-nav-backdrop-filter);
+  white-space: nowrap;
 }
 
-@supports (corner-shape: squircle) {
-  :root {
-    /* Squircle curves need about twice the radius to read as rounded. */
-    --radius-inner: 8px;
-    --radius-element: 12px;
-  }
-
-  :where(.starter, .starter *),
-  .starter *::before,
-  .starter *::after {
-    corner-shape: squircle;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: rgb(255 255 255 / 70%);
-    --text-h: #fff;
-    --bg: #16171d;
-    --border: #3b3440;
-    --code-bg: #3b3440;
-    --accent: #b39aff;
-    --error: #fda29b;
-    --social-bg: #3b3440;
-    --shadow: rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-}
-
-.starter {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+.nav-inner {
   display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  max-width: var(--vp-layout-max-width);
+  height: 100%;
 }
 
-body {
-  margin: 0;
+@media (min-width: 48rem) {
+  .nav-inner {
+    padding: 0 2rem;
+  }
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
+.nav-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  transition: opacity 0.25s;
+}
+
+.nav-title:hover {
+  opacity: 0.6;
+}
+
+.nav-menu {
+  display: flex;
+  margin-inline-start: auto;
+}
+
+.nav-link {
+  display: block;
+  padding: 0 0.75rem;
+  line-height: calc(var(--vp-nav-height) - 1px);
+  font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-h);
+  color: var(--vp-c-text-1);
+  transition: color 0.25s;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+.nav-link:hover,
+.nav-link.active {
+  color: var(--vp-c-brand-1);
+}
+
+.nav-who {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-inline-start: 1px solid var(--vp-c-divider);
+  padding-inline-start: 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--vp-c-text-2);
+}
+
+@media (max-width: 48rem) {
+  .nav {
+    height: auto;
+  }
+
+  .nav-inner {
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    padding-block: 0.75rem;
+  }
+
+  .nav-link {
+    line-height: 2rem;
+    padding: 0 0.5rem;
+  }
+
+  .nav-who {
+    width: 100%;
+    border: none;
+    padding: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
 
-code {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: var(--radius-inner);
-  color: var(--text-h);
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
-}
-
-.hero {
+/* Light and dark (VPSwitch, VPSwitchAppearance). */
+.switch {
   position: relative;
+  flex-shrink: 0;
+  display: block;
+  border: 1px solid var(--vp-input-border-color);
+  border-radius: 0.6875rem;
+  width: 2.5rem;
+  height: 1.375rem;
+  background-color: var(--vp-input-switch-bg-color);
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
 
-  .base,
-  .framework,
-  .void {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
+.switch:hover {
+  border-color: var(--vp-c-brand-1);
+}
 
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
+.switch-check {
+  position: absolute;
+  top: 1px;
+  inset-inline-start: 1px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  width: 1.125rem;
+  height: 1.125rem;
+  background-color: var(--vp-c-neutral-inverse);
+  box-shadow: var(--vp-shadow-1);
+  color: var(--vp-c-text-2);
+  font-size: 0.6875rem;
+  line-height: 1;
+  transition: transform 0.25s;
+}
 
-  .framework,
-  .void {
-    position: absolute;
-  }
+.dark .switch-check {
+  transform: translateX(1.125rem);
+  color: var(--vp-c-text-1);
+}
 
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg) scale(1.4);
-  }
+/* Buttons (VPButton). */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  height: 2.5rem;
+  border-radius: 1.25rem;
+  padding: 0 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 0.25s,
+    border-color 0.25s,
+    background-color 0.25s;
+}
 
-  .void {
-    z-index: 0;
-    top: 107px;
-    height: 22px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg) scale(0.8);
+.button.big {
+  height: 3rem;
+  border-radius: 1.5rem;
+  padding: 0 1.5rem;
+  font-size: 1rem;
+}
+
+.button.small {
+  height: 2rem;
+  border-radius: 1rem;
+  padding: 0 0.875rem;
+  font-size: 0.8125rem;
+}
+
+.button.brand {
+  border-color: var(--vp-button-brand-border);
+  color: var(--vp-button-brand-text);
+  background-color: var(--vp-button-brand-bg);
+}
+
+.button.brand:hover {
+  border-color: var(--vp-button-brand-hover-border);
+  color: var(--vp-button-brand-hover-text);
+  background-color: var(--vp-button-brand-hover-bg);
+}
+
+.button.alt {
+  border-color: var(--vp-button-alt-border);
+  color: var(--vp-button-alt-text);
+  background-color: var(--vp-button-alt-bg);
+}
+
+.button.alt:hover {
+  border-color: var(--vp-button-alt-hover-border);
+  color: var(--vp-button-alt-hover-text);
+  background-color: var(--vp-button-alt-hover-bg);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* The home page's opening (VPHero). */
+.hero {
+  padding: 3rem 1.5rem 3rem;
+}
+
+@media (min-width: 40rem) {
+  .hero {
+    padding: 5rem 3rem 4rem;
   }
 }
 
-#center {
+@media (min-width: 60rem) {
+  .hero {
+    padding: 5rem 4rem 4rem;
+  }
+}
+
+.hero-inner {
+  margin: 0 auto;
+  max-width: 72rem;
+}
+
+.hero-heading {
   display: flex;
   flex-direction: column;
-  gap: 25px;
-  padding-bottom: 24px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
+}
 
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
+.hero-name,
+.hero-text {
+  width: fit-content;
+  max-width: 24.5rem;
+  letter-spacing: -0.025rem;
+  line-height: 1.25;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.hero-name {
+  color: var(--vp-home-hero-name-color);
+  background: var(--vp-home-hero-name-background);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: var(--vp-home-hero-name-color);
+}
+
+.hero-text {
+  color: var(--vp-c-text-1);
+}
+
+@media (min-width: 40rem) {
+  .hero-name,
+  .hero-text {
+    max-width: 36rem;
+    line-height: 1.1666667;
+    font-size: 3rem;
   }
 }
 
-.starter-intro {
-  width: min(720px, 100%);
-  padding-inline: 20px;
-  box-sizing: border-box;
-
-  a {
-    color: var(--accent);
-  }
-
-  @media (max-width: 1024px) {
-    padding-inline: 0;
+@media (min-width: 60rem) {
+  .hero-name,
+  .hero-text {
+    line-height: 1.1428571;
+    font-size: 3.5rem;
   }
 }
 
-.starter-description {
+.hero-tagline {
+  padding-top: 0.5rem;
+  max-width: 24.5rem;
+  line-height: 1.5555556;
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--vp-c-text-2);
+}
+
+@media (min-width: 40rem) {
+  .hero-tagline {
+    padding-top: 0.75rem;
+    max-width: 36rem;
+    line-height: 1.6;
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 60rem) {
+  .hero-tagline {
+    line-height: 1.5;
+    font-size: 1.5rem;
+  }
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-top: 1.5rem;
+}
+
+@media (min-width: 40rem) {
+  .hero-actions {
+    padding-top: 2rem;
+  }
+}
+
+.hero-where {
+  padding-top: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--vp-c-text-2);
+}
+
+/* Cards (VPFeature): the home page's three, and each result or run. */
+.features {
+  padding: 0 1.5rem 2rem;
+}
+
+@media (min-width: 40rem) {
+  .features {
+    padding: 0 3rem 2rem;
+  }
+}
+
+@media (min-width: 60rem) {
+  .features {
+    padding: 0 4rem 2rem;
+  }
+}
+
+/* As VPFeatures: the width capped inside the padding, so the cards line up with the hero. */
+.features-grid {
   display: grid;
-  gap: 12px;
-
-  > p:nth-child(2) {
-    text-wrap: balance;
-  }
-}
-
-.starter-demo {
-  border-top: 1px solid var(--border);
-  padding: 32px;
-  text-align: left;
-
-  @media (max-width: 1024px) {
-    padding: 24px 20px;
-  }
-}
-
-.demo-content {
-  max-width: 640px;
+  gap: 0.5rem;
   margin: 0 auto;
-  display: grid;
-  gap: 24px;
+  max-width: 72rem;
+}
 
-  h2 {
-    margin: 0;
+@media (min-width: 40rem) {
+  .features-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
-.results {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 12px;
+.card {
+  display: block;
+  border: 1px solid var(--vp-c-bg-soft);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  background-color: var(--vp-c-bg-soft);
+  transition:
+    border-color 0.25s,
+    background-color 0.25s;
+}
 
-  li {
-    display: grid;
-    gap: 2px;
-    padding: 12px 16px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-element);
-    overflow-wrap: anywhere;
-  }
+a.card:hover {
+  border-color: var(--vp-c-brand-1);
+}
 
-  strong {
-    display: block;
-    color: var(--text-h);
-    font-weight: 500;
-  }
+.card-title {
+  line-height: 1.5;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
 
-  small {
-    font-size: 14px;
-  }
+.card-details {
+  padding-top: 0.5rem;
+  line-height: 1.7142857;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--vp-c-text-2);
+}
 
-  .same {
-    color: var(--accent);
-  }
+.card-link {
+  padding-top: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--vp-c-brand-1);
+}
 
-  .different {
-    color: var(--error);
+/* A page's content (VitePress's document column, with its `.vp-doc` styles). */
+.content {
+  margin: 0 auto;
+  padding: 2rem 1.5rem 6rem;
+  max-width: 48rem;
+}
+
+@media (min-width: 48rem) {
+  .content {
+    padding: 3rem 2rem 6rem;
   }
 }
 
-.note {
-  font-size: 14px;
-
-  a {
-    color: var(--accent);
-  }
-
-  code {
-    font-size: 13px;
-    padding: 1px 6px;
-  }
+.content.wide {
+  max-width: 60rem;
 }
 
-.link-button {
-  font: inherit;
-  color: var(--accent);
-  background: none;
-  border: none;
-  padding: 0;
-  text-decoration: underline;
-  cursor: pointer;
+.content > section + section {
+  margin-top: 3rem;
 }
 
+.vp-doc .lead {
+  font-size: 1.0625rem;
+  color: var(--vp-c-text-2);
+}
+
+/* Forms, in VitePress's inputs' colours. */
 .form {
   display: grid;
-  gap: 12px;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
 
-  label {
-    color: var(--text-h);
-  }
+.form label {
+  display: grid;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--vp-c-text-1);
+}
 
-  input,
-  select,
-  button {
-    font: inherit;
-    color: var(--text-h);
-    background: var(--social-bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-element);
-    padding: 10px 12px;
+.form input:not([type="checkbox"]),
+.form select {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 0.5rem;
+  padding: 0 0.75rem;
+  height: 2.5rem;
+  width: 100%;
+  font-size: 0.9375rem;
+  color: var(--vp-c-text-1);
+  background-color: var(--vp-c-bg-alt);
+  transition: border-color 0.25s;
+}
 
-    &:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
-  }
+.form input:focus,
+.form select:focus {
+  border-color: var(--vp-c-brand-1);
+  outline: none;
+}
 
-  input,
-  select {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .check {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    input {
-      flex: none;
-    }
-  }
-
-  button {
-    cursor: pointer;
-
-    &:hover {
-      border-color: var(--accent);
-    }
-
-    &:disabled {
-      cursor: wait;
-      opacity: 0.6;
-    }
-  }
+.form .check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .form-row {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 40rem) {
+  .form-row {
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  }
+}
+
+.form-actions {
   display: flex;
-  gap: 8px;
-
-  > label {
-    display: grid;
-    gap: 4px;
-    flex: 1;
-    min-width: 0;
-  }
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-  }
-}
-
-.form .error {
-  color: var(--error);
-  font-size: 14px;
-}
-
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    color: var(--accent);
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
-}
-
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-}
-
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: var(--radius-element);
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
-}
-
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
-}
-
-.ticks {
-  position: relative;
-  width: 100%;
-
-  &::before,
-  &::after {
-    content: "";
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
-
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
-  }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
-  }
-}
-
-/* Every page's frame (pages/layout.tsx): the same width and lines as the starter's. */
-.nav {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  box-sizing: border-box;
-  border-inline: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 24px;
-  padding: 12px 32px;
-  font-size: 16px;
-
-  a {
-    color: var(--text-h);
-    text-decoration: none;
-
-    &:hover {
-      color: var(--accent);
-    }
-  }
-
-  .brand {
-    font-weight: 500;
-  }
-
-  nav {
-    display: flex;
-    gap: 16px;
-  }
-
-  .who {
-    margin-left: auto;
-    color: var(--text);
-    overflow-wrap: anywhere;
-  }
-
-  @media (max-width: 640px) {
-    flex-wrap: wrap;
-    gap: 8px 16px;
-    padding: 12px 20px;
-
-    .who {
-      margin-left: 0;
-      width: 100%;
-    }
-  }
+  gap: 0.75rem;
 }
 
-/* A run's fetches (pages/runs/[id].tsx). */
-.table {
+/* Results and runs, as cards in a list. */
+.results {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vp-doc .results li + li {
+  margin-top: 0;
+}
+
+.results .card-details {
+  padding-top: 0.25rem;
+}
+
+.same {
+  color: var(--vp-c-brand-1);
+}
+
+.different {
+  color: var(--vp-c-danger-1);
+}
+
+.link-button {
+  border: none;
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: var(--vp-c-brand-1);
+  cursor: pointer;
+}
+
+.link-button:hover {
+  color: var(--vp-c-brand-2);
+}
+
+/* `.vp-doc` tables scroll on a phone. */
+.vp-doc .table-scroll {
   overflow-x: auto;
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 15px;
-  }
-
-  th,
-  td {
-    text-align: left;
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-  }
-
-  th {
-    color: var(--text-h);
-    font-weight: 500;
-  }
-
-  a {
-    color: var(--accent);
-  }
-
-  .same {
-    color: var(--accent);
-  }
-
-  .different {
-    color: var(--error);
-  }
-}
-
-.demo-content h1 {
-  font-size: 36px;
-  margin: 0;
-}
-
-.results a,
-.demo-content > p a {
-  color: var(--accent);
-}
-
-.demo-content > .error {
-  color: var(--error);
 }

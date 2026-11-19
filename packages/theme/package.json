@@ -1,0 +1,13 @@
+{
+  "name": "@cloudflare-ping/theme",
+  "private": true,
+  "description": "One look for the app and the docs: VitePress's own theme CSS (fonts, variables, base, document styles), in Void's colours.",
+  "type": "module",
+  "exports": {
+    "./base.css": "./base.css",
+    "./brand.css": "./brand.css"
+  },
+  "dependencies": {
+    "vitepress": "catalog:"
+  }
+}

@@ -73,6 +73,7 @@ A Vite+ monorepo, as Vite+'s `vite:monorepo` template and its monorepo guide lay
 | `apps/docs`       | `docs`                    | The docs (VitePress 2), built into `apps/web/public/docs` for the app to serve at `/docs/`     |
 | `packages/cli`    | `cloudflare-ping`         | The CLI, and the npm package it becomes (`vp pack`)                                            |
 | `packages/shared` | `@cloudflare-ping/shared` | What those three share: where the app is, what `/run` may fetch, the API version, the commands |
+| `packages/theme`  | `@cloudflare-ping/theme`  | One look for the app and the docs: VitePress's own theme CSS, in Void's colours                |
 
 - `pnpm-workspace.yaml`: the packages, and one version of each shared dependency for all of them
   (the catalog: Vite+, Void, VitePress, …; `"catalog:"` in each package.json).
@@ -106,8 +107,14 @@ In `apps/web`:
   both use. `src/trace.ts` reads the account's Workers logs with the app's own Cloudflare API
   token (`CLOUDFLARE_OBSERVABILITY_TOKEN`, "Workers Observability Read"); without it, the log
   lookups say they're not set up.
-- `pages/layout.tsx`: every page's frame and links; `middleware/01.auth.ts` shares who's signed
-  in.
+- `pages/layout.tsx`: every page's frame and links, as the docs' bar, with light or dark;
+  `middleware/01.auth.ts` shares who's signed in and where the page is; `middleware/00.head.ts`
+  sets light or dark before the page paints, as VitePress does and under its key
+  (`src/appearance.ts`), so a choice in the docs holds in the app.
+- The look: the docs'. `pages/style.css` starts from VitePress's own theme CSS (`packages/theme`:
+  its fonts, variables, base and `.vp-doc` styles, in Void's colours, which the docs use too) and
+  styles the app's bar, buttons, hero and cards as VitePress styles its own (VPNavBar, VPButton,
+  VPHero, VPFeature), with the same values.
 - Signing in: `auth.ts` (Void's auth, with Better Auth's device login and bearer plugins). Only
   the addresses in the `ALLOWED_EMAILS` secret can make an account (`env.ts`). The first time a
   command needs it, it shows a link and a code (`packages/cli/sign-in.ts`); open it, sign in
@@ -127,9 +134,10 @@ They're written once, from the sources: the guide includes this README's section
 (`packages/shared/src/commands.ts`, read by `apps/docs/cli.data.ts`), the plan page includes the
 plan, and the home page's newest runs come live from the app's API (`GET /api/runs`, with
 `void/client`, as the Runs page and `cloudflare-ping runs` do). The theme is VitePress's, in
-Void's colours (`apps/docs/.vitepress/theme`).
+Void's colours (`apps/docs/.vitepress/theme`, with `packages/theme/brand.css`).
 
-The docs are their own package, and the app's package doesn't depend on VitePress: Void 1.10.0,
+The docs are their own package, and the app's package doesn't depend on VitePress (the app takes
+VitePress's CSS through `packages/theme`): Void 1.10.0,
 deploying to Cloudflare, takes a package that depends on VitePress for a static VitePress site and
 refuses to deploy it while it has `routes/` and `pages/`, even with `inference.appType: "void"`
 (only its own platform's path reads that setting): worth reporting to Void.
@@ -141,6 +149,18 @@ every package, each after the ones it depends on; `pnpm ready` does both. `vp ru
 the app and its docs (`void deploy --platform cloudflare` in `apps/web`, which builds both first);
 the first time from a new machine, with `CLOUDFLARE_WORKERS_SUBDOMAIN=gedw99`. Void's other
 commands (`void db …`, `void secret …`) run in `apps/web`.
+
+Locally: `vp dev` at the root runs the app, with the docs at `/docs/` once built. `vp preview`
+runs the production build, which needs `BETTER_AUTH_SECRET` (Void: `guide/auth.md`): put one in
+`apps/web/.env` (ignored by git; any long random value, such as
+`node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`).
+
+Every Vite+ command and task was run from the root on 2026-11-19, and each did what it says:
+`vp check`, `vp lint`, `vp fmt --check`, `vp hooks status`, `vp run -r build`, `vp build`,
+`vp pack`, `pnpm ready`, `vp dev`, `vp -C apps/web dev --port 5199`, `pnpm dev`, `vp preview`,
+`vp install`, and the tasks `cli`, `probe:test`, `probe:trace`, `ping:run`, `ping:runs`,
+`ping:show`, `ping:whoami`, `ping:sign-out`, `cli:pack`, `cli:try`, `docs:dev`, `docs:build`,
+`docs:preview` and `deploy`.
 
 If a deploy stops with "did not pass /\_\_void/ready", Void put the previous version back and left
 the new one inactive; this happened once when deploying straight after another deploy. The next

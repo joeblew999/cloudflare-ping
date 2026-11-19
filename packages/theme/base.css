@@ -1,0 +1,13 @@
+/* VitePress's own default-theme CSS, so the app looks as the docs do: its fonts and variables
+   (colours, spacing, light and dark: `.dark` on <html>), its base styles, and its document
+   styles (`.vp-doc`: headings, text, links, tables, code) and callouts (`.custom-block`).
+   From the vitepress package (MIT, Evan You), at the version the catalog pins. VitePress's
+   components (its nav bar, buttons, hero, feature cards) are Vue, so the app restyles its own
+   with the same variables (apps/web/pages/style.css). Then Void's colours (brand.css). */
+@import "vitepress/dist/client/theme-default/styles/fonts.css";
+@import "vitepress/dist/client/theme-default/styles/vars.css";
+@import "vitepress/dist/client/theme-default/styles/base.css";
+@import "vitepress/dist/client/theme-default/styles/utils.css";
+@import "vitepress/dist/client/theme-default/styles/components/vp-doc.css";
+@import "vitepress/dist/client/theme-default/styles/components/custom-block.css";
+@import "./brand.css";
