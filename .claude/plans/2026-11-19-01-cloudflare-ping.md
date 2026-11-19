@@ -47,6 +47,11 @@ code (`src/`); each page shows its command; every command takes `--json` and `--
     (`GET /api/runs/[id]`): a table by region, or JSON with `--json`.
 - **The web pages:** the map and each run by region, each request linked to its trace, reading
   the same API.
+- **The docs** (the user's call, 2026-11-19): VitePress 2 in `docs/`, at `/docs/` on the same
+  Worker, built and shipped by the same `void deploy`. Written once, from the sources: the README's
+  sections, the CLI's own command list, this plan, and the newest runs live from the API. Their
+  own package in a pnpm workspace, since Void 1.10.0's Cloudflare deploy won't deploy an app whose
+  root package depends on VitePress (README, "The docs").
 - **Who may do what: Void's auth** (Better Auth, built into Void: `void/auth`, set up in
   `auth.ts`). Reading the map and the runs is open. Anything that spends Globalping tests
   (`POST /api/map`, `POST /api/runs`) calls `requireAuth(c)`, and answers 401 to anyone not signed

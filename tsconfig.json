@@ -12,6 +12,18 @@
     "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true
   },
-  "include": ["src", "pages", "routes", "middleware", "crons", "queues", "db", "cli", "*.ts"],
-  "exclude": ["cli/dist"]
+  "include": [
+    "src",
+    "pages",
+    "routes",
+    "middleware",
+    "crons",
+    "queues",
+    "db",
+    "cli",
+    "docs/**/*.ts",
+    "docs/.vitepress/**/*.ts",
+    "*.ts"
+  ],
+  "exclude": ["cli/dist", "docs/.vitepress/cache"]
 }

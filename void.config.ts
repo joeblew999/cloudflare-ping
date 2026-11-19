@@ -5,6 +5,13 @@ export default defineConfig({
   routing: {
     typedRoutes: true,
   },
+  // A Void app with a static docs site beside it (Void's guide/app-types.md, "Adding a backend to
+  // a static site"): `void deploy` builds the docs (VitePress, docs/) into public/docs first, then
+  // the app, which ships them with its other public files, at /docs/.
+  inference: {
+    appType: "void",
+    build: "pnpm --dir docs build && vp -C . build",
+  },
   // The Worker's name on Cloudflare (cloudflare-ping.<subdomain>.workers.dev) and its account.
   // workers.dev on, preview URLs and routes stated, so Void's deploy needn't read them from its
   // own record (void-fbtee found that record cut off, 2026-11-19).

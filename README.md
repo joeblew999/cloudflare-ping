@@ -4,9 +4,13 @@ Our own Globalping, run from Cloudflare's own data centres: a Globalping test is
 a data centre, and our Worker there does the fetching. Built with [Void](https://void.cloud). How
 and why, step by step: `.claude/plans/2026-11-19-01-cloudflare-ping.md`.
 
-Deployed at https://cloudflare-ping.gedw99.workers.dev (Cloudflare account `7384af54e33b8a54ff240371ea368440`).
+Deployed at https://cloudflare-ping.gedw99.workers.dev (Cloudflare account `7384af54e33b8a54ff240371ea368440`),
+with its docs at https://cloudflare-ping.gedw99.workers.dev/docs/ (`docs/`, VitePress).
 
 ## What you can do, on the web and from a terminal
+
+<!-- The docs show this section as it is (docs/guide.md); write it here only. -->
+<!-- #region use -->
 
 One way in: the app's own API (`routes/api/`). Each thing the app does is one API route; its web
 page and its command both call that route with Void's typed fetch (`void/client`), and page
@@ -29,7 +33,15 @@ it is) and `--site <url>` (another copy of the app, such as `vp dev`'s); `vp run
 runs any of them from source. Each page shows its command. Signing in is also automatic: the first
 command that needs it shows a link and a code to approve at `/device`.
 
+A run sends one Globalping test, from probes in a place, to `/run` for that run; `/run` fetches
+the target from each data centre the probes reach and records every fetch. Reading runs is open;
+starting one, or reading Cloudflare's logs, needs you signed in.
+
+<!-- #endregion use -->
+
 ### The CLI, as a package
+
+<!-- #region package -->
 
 The commands are in `cli/` (`cli/main.ts`, one file per command in `cli/commands/`, what they
 share in `cli/api.ts`). In the repo, the `vp run` tasks (`vite.config.ts`) run them from source.
@@ -47,9 +59,7 @@ CLI built for another one, telling it to update (`middleware/02.api-version.ts`)
 `API_VERSION` when an API route changes in a way an older CLI can't use, and publish a new
 version of the package with it.
 
-A run sends one Globalping test, from probes in a place, to `/run` for that run; `/run` fetches
-the target from each data centre the probes reach and records every fetch. Reading runs is open;
-starting one, or reading Cloudflare's logs, needs you signed in.
+<!-- #endregion package -->
 
 ## How it's built
 
@@ -76,14 +86,41 @@ starting one, or reading Cloudflare's logs, needs you signed in.
 - `evidence/`: each step's raw results, copied from Globalping before its measurements expire.
 - `lint/void-rules.ts`: Void's own lint rules; `vite.config.ts` adds ours (no casts, no `any`, no `!`).
 
-`vp check` formats, lints and type-checks. Deploy with
+## The docs
+
+`docs/` is the docs site (VitePress 2), served by the app at `/docs/`: `vp run docs:dev` to write
+them (VitePress's own server), `vp run docs:build` to build them into `public/docs` (ignored by
+git), where `vp dev` and the deployed app serve them. `void deploy` builds them itself first
+(`void.config.ts`: `inference.build`), then the app, which ships them with its other public files:
+one deploy, one site.
+
+They're written once, from the sources: the guide includes this README's sections (the
+`#region` comments), the command reference is the CLI's own list (`cli/commands/list.ts`, read by
+`docs/cli.data.ts`), the plan page includes the plan, and the home page's newest runs come live
+from the app's API (`GET /api/runs`, with `void/client`, as the Runs page and `cloudflare-ping runs`
+do). The theme is VitePress's, in Void's colours (`docs/.vitepress/theme`).
+
+The docs are their own package in a pnpm workspace (`docs/package.json`, `pnpm-workspace.yaml`),
+not a dependency of the app: Void 1.10.0, deploying to Cloudflare, takes a root package that
+depends on VitePress for a static VitePress site and refuses to deploy it while it has
+`routes/` and `pages/`, even with `inference.appType: "void"` (only its own platform's path reads
+that setting): worth reporting to Void. In a workspace, `vp build` at the root needs `-C .`.
+
+## Building and deploying
+
+`vp check` formats, lints and type-checks. `pnpm build` builds the docs and the app. Deploy with
 `void deploy --platform cloudflare`; the first time from a new machine, with
 `CLOUDFLARE_WORKERS_SUBDOMAIN=gedw99`.
+
+If a deploy stops with "did not pass /\_\_void/ready", Void put the previous version back and left
+the new one inactive; this happened once when deploying straight after another deploy. The next
+deploy will then stop as below.
 
 If a deploy stops with "the active Worker Version is not the latest upload" (or "could not verify
 which Worker Version would supply inherited secrets"), an earlier deploy uploaded a version and
 stopped before making it active, and Void (1.10.0) refuses every deploy after it; retrying only
-adds more. Make the newest upload active, then deploy again:
+adds more. Make the newest upload active (and check `/__void/ready` answers 200), then deploy
+again:
 
 ```sh
 pnpm exec cf workers versions list --worker-id cloudflare-ping --per-page 3   # newest first

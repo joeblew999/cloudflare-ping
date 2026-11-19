@@ -181,9 +181,10 @@ export default function HomePage({ email, here }: Props) {
           </p>
           <ul>
             <li>
-              <a href={`${REPO}#readme`} target="_blank" rel="noreferrer">
-                The commands
-              </a>
+              <a href="/docs/cli">The commands</a>
+            </li>
+            <li>
+              <a href="/docs/">The docs</a>
             </li>
           </ul>
         </div>

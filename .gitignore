@@ -9,3 +9,6 @@ dist
 *.tsbuildinfo
 .DS_Store
 .playwright-mcp
+# The docs, built by VitePress into the app's public files (docs/.vitepress/config.ts), and its cache.
+public/docs
+docs/.vitepress/cache

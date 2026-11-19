@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vp dev",
-    "build": "vp build",
+    "build": "pnpm --dir docs build && vp -C . build",
     "preview": "vp preview",
     "postinstall": "void prepare"
   },

@@ -66,6 +66,12 @@ export default defineConfig({
       // Build the package (cli/dist/main.mjs), and try the built file.
       "cli:pack": { command: "vp pack", cache: false },
       "cli:try": { command: "node cli/dist/main.mjs", cache: false },
+      // The docs (VitePress, docs/): write them with docs:dev (its own server, /docs/); docs:build
+      // puts them in public/docs, where `vp dev` and the deployed app serve them at /docs/.
+      // `void deploy` builds them itself (void.config.ts).
+      "docs:dev": { command: "pnpm --dir docs dev", cache: false },
+      "docs:build": { command: "pnpm --dir docs build", cache: false },
+      "docs:preview": { command: "pnpm --dir docs preview", cache: false },
     },
   },
 });

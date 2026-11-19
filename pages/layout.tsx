@@ -21,6 +21,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <nav aria-label="Main">
           <Link href="/">Probe</Link>
           <Link href="/runs">Runs</Link>
+          {/* The docs are their own site (VitePress, docs/), so a plain link, not Void's. */}
+          <a href="/docs/">Docs</a>
         </nav>
         <span className="who">
           {who.email ? (
