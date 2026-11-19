@@ -1,0 +1,12 @@
+allowBuilds:
+  better-sqlite3: false
+  esbuild: true
+  sharp: true
+  workerd: true
+overrides:
+  # Void 1.10.0 writes Vite+ ^1.6.0, which takes Vite+ 1.7.0, whose core must be 8.3.8000 (reported
+  # to Void 2026-11-18): both held at 1.6.0, as void-fbtee does, until a Void release writes a pair.
+  vite@*: npm:@voidzero-dev/vite-plus-core@1.6.0
+peerDependencyRules:
+  allowedVersions:
+    vite: "*"

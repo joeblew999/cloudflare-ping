@@ -1,7 +1,8 @@
 # 2026-11-19-01-cloudflare-ping.md: our own Globalping, run from Cloudflare's data centres
 
-Status: 2026-11-19, written; waits for the user's approval in the conversation. Built with Void
-1.11.0, from 2026-11-20 01:48 UTC (a release is installed a day after it comes out).
+Status: 2026-11-19, approved; step 1 proven. Built on Void 1.10.0 (the user's call, 2026-11-19:
+1.11.0 was hours old, and a release is installed a day after it comes out), with Vite+ held at
+1.6.0, since Void 1.10.0 writes a Vite+ range that takes 1.7.0, whose core it doesn't match.
 
 ## The idea
 
@@ -49,6 +50,17 @@ again: nothing after it is built on a guess.
 - Proof: one Globalping HTTP test to `/where` from a probe in Thailand answers a data centre code,
   and the same code is the end of that response's `cf-ray`.
 - If it fails: no probe can know where it is; the idea is dead.
+- **Result, 2026-11-19: proven.** Deployed as https://cloudflare-ping.gedw99.workers.dev
+  (`void deploy --platform cloudflare`, Void 1.10.0). `vp run probe:test --from TH --probes 3`,
+  Globalping measurement 2cJRvCt2HmjAL4aV500021X0s:
+  - Bangkok (AIS Fibre, AS133481): answer `BKK`, `cf-ray a5cd99551e42ee29-BKK`;
+  - Pattani (ADVANCED WIRELESS NETWORK COMPANY, AS138524): answer `BKK`, `cf-ray ...-BKK`;
+  - Phuket (same network): answer `BKK`, `cf-ray ...-BKK`.
+
+  And from Germany (two probes, both Hetzner, AS24940): Falkenstein answered `FRA` (`cf-ray
+  ...-FRA`), Nuremberg answered `CDG` (`cf-ray ...-CDG`): the same network, a city apart, reached
+  Paris rather than Frankfurt. The answer and the `cf-ray` agreed every time. And it shows the map
+  is needed: which data centre a probe reaches isn't where it is.
 
 ### 2. How much one Globalping test can carry
 
