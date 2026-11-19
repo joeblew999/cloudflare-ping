@@ -6,6 +6,7 @@
 // 500 (globalping.io/credits, checked 2026-11-19).
 import { z } from "zod";
 import { SITE } from "./site";
+import { ALLOWED_HOSTS } from "./targets";
 
 const API = "https://api.globalping.io/v1/measurements";
 
@@ -47,7 +48,15 @@ function coloOf(raw: string): string {
   return /"colo":"([A-Z]{3})"/.exec(raw)?.[1] ?? "";
 }
 
-export type ProbeOptions = { from: string; path: string; probes: number; token?: string };
+// `host`: our own probe (SITE) unless given; another only if `/run` may fetch it too
+// (src/targets.ts), to fetch a target directly, as any visitor would (plan step 4).
+export type ProbeOptions = {
+  from: string;
+  path: string;
+  probes: number;
+  host?: string;
+  token?: string;
+};
 
 export async function probeFrom(options: ProbeOptions) {
   const headers = new Headers({ "content-type": "application/json" });
@@ -58,12 +67,16 @@ export async function probeFrom(options: ProbeOptions) {
   const mark = options.path.indexOf("?");
   const path = mark === -1 ? options.path : options.path.slice(0, mark);
   const query = mark === -1 ? "" : options.path.slice(mark + 1);
+  const host = options.host ?? SITE;
+  if (host !== SITE && !ALLOWED_HOSTS.has(host)) {
+    throw new Error(`Not on the allowed list: ${host}`);
+  }
   const started = await fetch(API, {
     method: "POST",
     headers,
     body: JSON.stringify({
       type: "http",
-      target: SITE,
+      target: host,
       locations: [{ magic: options.from, limit: options.probes }],
       measurementOptions: {
         protocol: "HTTPS",
@@ -89,13 +102,16 @@ export async function probeFrom(options: ProbeOptions) {
 
   return {
     measurement: id,
-    site: SITE,
+    site: host,
     from: options.from,
     path: options.path,
     status: done.status,
     results: done.results.map(({ probe, result }) => {
-      const header = result.headers?.["cf-ray"];
-      const ray = (Array.isArray(header) ? header[0] : header) ?? "";
+      const headerOf = (name: string) => {
+        const value = result.headers?.[name];
+        return (Array.isArray(value) ? value[0] : value) ?? "";
+      };
+      const ray = headerOf("cf-ray");
       const rayColo = ray.split("-").pop() ?? "";
       const raw = result.rawBody ?? "";
       const colo = coloOf(raw);
@@ -112,6 +128,8 @@ export async function probeFrom(options: ProbeOptions) {
         truncated: result.truncated ?? false,
         ray,
         rayColo,
+        // A Void site's page cache: HIT, STALE or MISS (step 4).
+        isr: headerOf("x-isr-cache"),
         answer: raw.length > 200 ? `${raw.slice(0, 200)}…` : raw,
         colo,
         same: colo !== "" && colo === rayColo,

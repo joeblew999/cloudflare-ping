@@ -16,6 +16,8 @@ const { values } = parseArgs({
     path: { type: "string", default: "/where" },
     probes: { type: "string", default: "1" },
     site: { type: "string", default: `https://${SITE}` },
+    // Test an allowed target directly (src/targets.ts), not our probe.
+    host: { type: "string" },
   },
 });
 const site = values.site.replace(/\/+$/, "");
@@ -25,7 +27,12 @@ const ask = async () =>
     method: "POST",
     baseURL: site,
     headers: { authorization: `Bearer ${await token(site)}` },
-    body: { from: values.from, path: values.path, probes: Number(values.probes) },
+    body: {
+      from: values.from,
+      path: values.path,
+      probes: Number(values.probes),
+      ...(values.host ? { host: values.host } : {}),
+    },
   });
 
 let answer;
@@ -50,6 +57,9 @@ for (const each of answer.results) {
   }
   console.log(`  HTTP ${each.httpStatus ?? "-"}, cf-ray ${each.ray}, ${each.totalMs ?? "-"} ms`);
   console.log(`  ${each.bodyBytes} bytes back${each.truncated ? ", cut off by Globalping" : ""}`);
+  if (each.isr) {
+    console.log(`  x-isr-cache: ${each.isr}`);
+  }
   console.log(`  answer: ${each.answer}`);
   console.log(
     `  ${each.same ? "same" : "DIFFERENT"}: answer ${each.colo || "-"}, cf-ray ${each.rayColo || "-"}\n`,

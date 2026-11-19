@@ -1,6 +1,6 @@
 # 2026-11-19-01-cloudflare-ping.md: our own Globalping, run from Cloudflare's data centres
 
-Status: 2026-11-19, approved; steps 1 to 3 proven; step 6 built and deployed, ahead of 4 and 5. Built on Void 1.10.0 (the user's call, 2026-11-19:
+Status: 2026-11-19, approved; steps 1 to 4 proven; step 6 built and deployed, ahead of 5. Built on Void 1.10.0 (the user's call, 2026-11-19:
 1.11.0 was hours old, and a release is installed a day after it comes out), with Vite+ held at
 1.6.0, since Void 1.10.0 writes a Vite+ range that takes 1.7.0, whose core it doesn't match.
 Changed the same day (the user's call): the app's own API is the one way in, for the CLI and the
@@ -172,6 +172,25 @@ again: nothing after it is built on a guess.
 - Proof: straight after step 3, a second fetch of the same page through the same route is a cache
   hit (`x-isr-cache: HIT`), and so is a Globalping test from Thailand fetching the page directly.
 - If it isn't: warming needs another way; checking still works.
+- **Result, 2026-11-19: proven, with what "warm" means made exact.** Void's page cache
+  (`@void/isr` 1.10.0) has two layers: each data centre's edge cache (`caches.default`) in front
+  of one global store (Workers KV, the example's `ISR_CACHE`). Both answer `x-isr-cache: HIT`,
+  so the header alone can't say whether our fetch warmed anything; the example's own log can (how
+  long it ran, and its CPU). `/run` takes `&repeat=<n>`, and `POST /api/probe` a `host`, to
+  fetch an allowed target directly, as a visitor would. From Falkenstein (Hetzner, reaching
+  `FRA`):
+  - Control, `/ar-EG/events` fetched directly twice: first `STALE`, the example ran 1,098 ms with
+    146 ms CPU (served the stale copy and rendered a new one); then `HIT`, 37 ms and 3 ms.
+  - Treatment, `/th-TH/events` fetched first by our `/run`: `STALE`, 406 ms and 52 ms CPU (the
+    refresh, done for our fetch); then directly by a visitor: `HIT`, 37 ms and 2 ms.
+
+  So our fetch took the slow request, and the visitor after it got the fast one, as a second
+  visitor does. In `evidence/2026-11-19-step-4.json`. **What that changes:** a warm page stays
+  warm only for the target's own cache time, and the example's pages were `STALE` again within
+  minutes (`cache-control: public, max-age=0, must-revalidate`): warming is worth doing just
+  before the traffic, after a deploy (which empties the cache), not hours ahead. The refreshed
+  copy also goes into the global store, so other data centres get it from there: slower than
+  their own edge cache, but without a render.
 
 ### 5. A probe can record its own results
 

@@ -1,0 +1,211 @@
+{
+  "what": "Step 4 of .claude/plans/2026-11-19-01-cloudflare-ping.md: does /run's fetch warm the data centre for a visitor? From Falkenstein (Hetzner, AS24940), reaching FRA: a control page fetched directly twice, and a treatment page fetched first by our /run, then directly. targetLog is the example's own Workers log for each request, by its ray ID (cf o11y telemetry query). Sent by the app through POST /api/probe, 2026-11-19; copied from Globalping's API because its measurements expire.",
+  "measurements": [
+    {
+      "what": "control: a visitor fetches /ar-EG/events directly (first in FRA)",
+      "id": "2Or2uteGwCGkXhbtb00021X2b",
+      "createdAt": "2026-11-19T09:33:59.665Z",
+      "target": "void-fbtee-example.gedw99.workers.dev",
+      "locations": [
+        {
+          "magic": "Falkenstein+AS24940"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/ar-EG/events"
+      },
+      "results": [
+        {
+          "probe": {
+            "country": "DE",
+            "city": "Falkenstein",
+            "asn": 24940,
+            "network": "Hetzner Online"
+          },
+          "statusCode": 200,
+          "cfRay": "a5ce37704eb4d272-FRA",
+          "isr": "STALE",
+          "ours": null,
+          "timings": {
+            "total": 805,
+            "dns": 20,
+            "tcp": 7,
+            "tls": 20,
+            "firstByte": 757,
+            "download": 1
+          },
+          "targetLog": [
+            {
+              "service": "void-fbtee-example",
+              "message": "GET https://void-fbtee-example.gedw99.workers.dev/ar-EG/events",
+              "timestamp": 1795080841167,
+              "colo": "FRA",
+              "from": "Hetzner Online GmbH",
+              "outcome": "ok",
+              "wallTimeMs": 1098,
+              "cpuTimeMs": 146
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "what": "control: a visitor fetches /ar-EG/events directly again",
+      "id": "2ZkkGWQiZZDGuGiF700021X2c",
+      "createdAt": "2026-11-19T09:34:01.893Z",
+      "target": "void-fbtee-example.gedw99.workers.dev",
+      "locations": [
+        {
+          "magic": "Falkenstein+AS24940"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/ar-EG/events"
+      },
+      "results": [
+        {
+          "probe": {
+            "country": "DE",
+            "city": "Falkenstein",
+            "asn": 24940,
+            "network": "Hetzner Online"
+          },
+          "statusCode": 200,
+          "cfRay": "a5ce377e4aa6d37c-FRA",
+          "isr": "HIT",
+          "ours": null,
+          "timings": {
+            "total": 416,
+            "dns": 25,
+            "tcp": 6,
+            "tls": 28,
+            "firstByte": 355,
+            "download": 2
+          },
+          "targetLog": [
+            {
+              "service": "void-fbtee-example",
+              "message": "GET https://void-fbtee-example.gedw99.workers.dev/ar-EG/events",
+              "timestamp": 1795080842305,
+              "colo": "FRA",
+              "from": "Hetzner Online GmbH",
+              "outcome": "ok",
+              "wallTimeMs": 37,
+              "cpuTimeMs": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "what": "treatment: our /run fetches /th-TH/events (first in FRA)",
+      "id": "2zsxD4Kuvf5RMw4wV00021X2c",
+      "createdAt": "2026-11-19T09:34:04.110Z",
+      "target": "cloudflare-ping.gedw99.workers.dev",
+      "locations": [
+        {
+          "magic": "Falkenstein+AS24940"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/run",
+        "query": "url=https%3A%2F%2Fvoid-fbtee-example.gedw99.workers.dev%2Fth-TH%2Fevents"
+      },
+      "results": [
+        {
+          "probe": {
+            "country": "DE",
+            "city": "Falkenstein",
+            "asn": 24940,
+            "network": "Hetzner Online"
+          },
+          "statusCode": 200,
+          "cfRay": "a5ce378c1ad4d2e7-FRA",
+          "isr": null,
+          "ours": {
+            "colo": "FRA",
+            "target": "https://void-fbtee-example.gedw99.workers.dev/th-TH/events",
+            "status": 200,
+            "ray": "a5ce378dcadad28a-FRA",
+            "rayColo": "FRA",
+            "isr": "STALE",
+            "ms": 141,
+            "bytes": 34929
+          },
+          "timings": {
+            "total": 477,
+            "dns": 29,
+            "tcp": 6,
+            "tls": 17,
+            "firstByte": 424,
+            "download": 1
+          },
+          "targetLog": [
+            {
+              "service": "void-fbtee-example",
+              "message": "GET https://void-fbtee-example.gedw99.workers.dev/th-TH/events",
+              "timestamp": 1795080844848,
+              "colo": "FRA",
+              "from": "Cloudflare, Inc.",
+              "outcome": "ok",
+              "wallTimeMs": 406,
+              "cpuTimeMs": 52
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "what": "treatment: a visitor fetches /th-TH/events directly",
+      "id": "2gr1YHwoYSVsVyADq00021X2c",
+      "createdAt": "2026-11-19T09:34:06.117Z",
+      "target": "void-fbtee-example.gedw99.workers.dev",
+      "locations": [
+        {
+          "magic": "Falkenstein+AS24940"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/th-TH/events"
+      },
+      "results": [
+        {
+          "probe": {
+            "country": "DE",
+            "city": "Falkenstein",
+            "asn": 24940,
+            "network": "Hetzner Online"
+          },
+          "statusCode": 200,
+          "cfRay": "a5ce3798ff8d68a5-FRA",
+          "isr": "HIT",
+          "ours": null,
+          "timings": {
+            "total": 383,
+            "dns": 40,
+            "tcp": 6,
+            "tls": 17,
+            "firstByte": 317,
+            "download": 3
+          },
+          "targetLog": [
+            {
+              "service": "void-fbtee-example",
+              "message": "GET https://void-fbtee-example.gedw99.workers.dev/th-TH/events",
+              "timestamp": 1795080846541,
+              "colo": "FRA",
+              "from": "Hetzner Online GmbH",
+              "outcome": "ok",
+              "wallTimeMs": 37,
+              "cpuTimeMs": 2
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

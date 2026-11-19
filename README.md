@@ -13,8 +13,8 @@ that spends Globalping tests needs you signed in (Void's auth).
   probes fetch. `?wait=<ms>` answers after that long and `?size=<bytes>` pads the answer, which
   found Globalping's limits: 15 seconds and 10,000 bytes per test (plan step 2).
 - `routes/run.ts`: `/run?url=<address>` fetches an address from the data centre it ran in and
-  answers what the target said (status, `cf-ray`, cache, time). Only the addresses in
-  `src/targets.ts`. Needs `global_fetch_strictly_public` (`void.config.ts`) to reach other
+  answers what the target said (status, `cf-ray`, cache, time); `&repeat=<n>` fetches it n times
+  in a row. Only the addresses in `src/targets.ts`. Needs `global_fetch_strictly_public` (`void.config.ts`) to reach other
   Workers on `gedw99.workers.dev`.
 - `scripts/probe-trace.ts`: `vp run probe:trace -- <ray id>` finds a request in the account's
   Workers logs (Cloudflare's `cf` CLI, with your Cloudflare sign-in): where it ran, from where,
@@ -22,7 +22,7 @@ that spends Globalping tests needs you signed in (Void's auth).
 - `routes/api/probe.ts`: `POST /api/probe`, signed in only: the app sends one Globalping test to
   `/where` and answers what came back (`src/globalping.ts`).
 - `scripts/probe-test.ts`: `vp run probe:test -- --from <place>` calls `POST /api/probe` and
-  prints the answer.
+  prints the answer. `--host <target>` tests an allowed target directly, as a visitor would.
 - Signing in: `auth.ts` (Void's auth, with Better Auth's device login and bearer plugins). Only
   the addresses in the `ALLOWED_EMAILS` secret can make an account (`env.ts`). The first time a
   command needs it, it shows a link and a code (`scripts/sign-in.ts`); open it, sign in
@@ -34,3 +34,14 @@ that spends Globalping tests needs you signed in (Void's auth).
 The tasks are in `vite.config.ts`. `vp check` formats, lints and type-checks. Deploy with
 `void deploy --platform cloudflare`; the first time from a new machine, with
 `CLOUDFLARE_WORKERS_SUBDOMAIN=gedw99`.
+
+If a deploy stops with "the active Worker Version is not the latest upload" (or "could not verify
+which Worker Version would supply inherited secrets"), an earlier deploy uploaded a version and
+stopped before making it active, and Void (1.10.0) refuses every deploy after it; retrying only
+adds more. Make the newest upload active, then deploy again:
+
+```sh
+pnpm exec cf workers versions list --worker-id cloudflare-ping --per-page 3   # newest first
+pnpm exec cf workers deployments create --worker cloudflare-ping \
+  --body '{"strategy":"percentage","versions":[{"version_id":"<newest id>","percentage":100}]}'
+```
