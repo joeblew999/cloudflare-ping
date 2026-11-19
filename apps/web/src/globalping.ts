@@ -4,6 +4,7 @@
 // are the same. Run by the app (`POST /api/probe`, plan step 6), not by the machine asking.
 // Without a token, Globalping allows 250 tests an hour per IP address; with an account's token,
 // 500 (globalping.io/credits, checked 2026-11-19).
+import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { SITE } from "@cloudflare-ping/shared/site";
 import { ALLOWED_HOSTS } from "@cloudflare-ping/shared/targets";
@@ -34,6 +35,7 @@ const measurement = z.object({
   ),
 });
 const answer = z.object({ colo: z.string() });
+const refusal = z.object({ error: z.object({ message: z.string() }) });
 
 // The data centre an answer names; from the text itself when the answer was cut off (step 2).
 function coloOf(raw: string): string {
@@ -84,10 +86,17 @@ export async function probeFrom(options: ProbeOptions) {
       },
     }),
   });
-  const body: unknown = await started.json();
+  const body: unknown = await started.json().catch(() => null);
   const made = created.safeParse(body);
   if (!started.ok || !made.success) {
-    throw new Error(`Globalping answered ${started.status}: ${JSON.stringify(body)}`);
+    // Globalping's own words for it (`{ error: { type, message } }`), to the page or the CLI as
+    // they are: a refusal (its hourly limit, a place it has no probes in) isn't our failure.
+    const refused = refusal.safeParse(body);
+    const words = refused.success ? refused.data.error.message : JSON.stringify(body);
+    console.error(`Globalping refused a test (${started.status}): ${words}`);
+    throw new HTTPException(502, {
+      message: `Globalping refused the test (${started.status}): ${words}`,
+    });
   }
   const id = made.data.id;
 
@@ -96,8 +105,18 @@ export async function probeFrom(options: ProbeOptions) {
   let done = measurement.parse({ status: "in-progress", results: [] });
   for (let tries = 0; tries < 37 && done.status === "in-progress"; tries += 1) {
     await new Promise((wait) => setTimeout(wait, tries < 10 ? 1000 : 3000));
-    const polled: unknown = await (await fetch(`${API}/${id}`)).json();
-    done = measurement.parse(polled);
+    const response = await fetch(`${API}/${id}`, { headers });
+    const polled: unknown = await response.json().catch(() => null);
+    const read = measurement.safeParse(polled);
+    if (!response.ok || !read.success) {
+      const refused = refusal.safeParse(polled);
+      const words = refused.success ? refused.data.error.message : `HTTP ${response.status}`;
+      console.error(`Globalping's measurement ${id} couldn't be read: ${words}`);
+      throw new HTTPException(502, {
+        message: `Globalping's measurement ${id} couldn't be read: ${words}`,
+      });
+    }
+    done = read.data;
   }
 
   return {

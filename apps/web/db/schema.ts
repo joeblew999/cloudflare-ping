@@ -17,6 +17,8 @@ export const runs = sqliteTable("runs", {
   repeat: integer("repeat"),
   background: integer("background", { mode: "boolean" }),
   measurement: text("measurement"),
+  // Why it never started, if it didn't (Globalping refusing the test, say).
+  error: text("error"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`),

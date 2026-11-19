@@ -152,6 +152,9 @@ export default function RunsPage({ email, runs }: Props) {
                     From {run.fromPlace ?? "?"} · {run.probes ?? "?"} probes × {run.repeat ?? 1} ·{" "}
                     {run.fetches} fetches recorded
                   </p>
+                  {run.error ? (
+                    <p className="card-details different">Didn&apos;t start: {run.error}</p>
+                  ) : null}
                   <p className="card-details">
                     {run.createdAt.slice(0, 16).replace("T", " ")} · {run.id}
                   </p>

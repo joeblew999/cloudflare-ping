@@ -53,6 +53,12 @@ export default function RunPage({ run, fetches: first }: Props) {
           </>
         ) : null}
       </p>
+      {run.error ? (
+        <div className="custom-block danger">
+          <p className="custom-block-title">This run didn&apos;t start</p>
+          <p>{run.error}</p>
+        </div>
+      ) : null}
       <p>
         The same from a terminal: <code>cloudflare-ping show {run.id}</code>
       </p>

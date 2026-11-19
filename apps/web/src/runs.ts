@@ -32,12 +32,21 @@ export async function startRun(options: StartRun) {
   if (options.background) {
     query.set("background", "1");
   }
-  const test = await probeFrom({
-    from: options.from,
-    path: `/run?${query.toString()}`,
-    probes: options.probes,
-    token: options.token,
-  });
+  let test;
+  try {
+    test = await probeFrom({
+      from: options.from,
+      path: `/run?${query.toString()}`,
+      probes: options.probes,
+      token: options.token,
+    });
+  } catch (caught) {
+    // The run stays, saying why it never started (its page, `show`), and the caller is told too.
+    const error = caught instanceof Error ? caught.message : String(caught);
+    console.error(`Run ${id} didn't start: ${error}`);
+    await db.update(runs).set({ error }).where(eq(runs.id, id));
+    throw caught;
+  }
   await db.update(runs).set({ measurement: test.measurement }).where(eq(runs.id, id));
   const reached = test.results.filter((each) => each.status === "finished").length;
   return { id, expected: reached * options.repeat, test };
@@ -54,6 +63,7 @@ export async function listRuns(limit = 50) {
       repeat: runs.repeat,
       background: runs.background,
       measurement: runs.measurement,
+      error: runs.error,
       createdAt: runs.createdAt,
       fetches: count(fetches.id),
     })

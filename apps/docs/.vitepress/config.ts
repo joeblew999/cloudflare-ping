@@ -5,7 +5,6 @@ import { defineConfig } from "vitepress";
 import { SITE } from "@cloudflare-ping/shared/site";
 
 const APP = `https://${SITE}`;
-const REPO = "https://github.com/joeblew999/cloudflare-ping";
 
 export default defineConfig({
   title: "cloudflare-ping",
@@ -44,7 +43,5 @@ export default defineConfig({
     ],
     search: { provider: "local" },
     outline: [2, 3],
-    socialLinks: [{ icon: "github", link: REPO }],
-    editLink: { pattern: `${REPO}/edit/main/apps/docs/:path`, text: "Edit this page on GitHub" },
   },
 });

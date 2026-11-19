@@ -31,6 +31,9 @@ export async function show(args: Array<string>) {
   if (run.measurement) {
     console.log(`  Globalping measurement ${run.measurement}`);
   }
+  if (run.error) {
+    console.log(`  Didn't start: ${run.error}`);
+  }
   console.log(`  ${site}/runs/${run.id}\n`);
   for (const row of fetches) {
     printRow(row);

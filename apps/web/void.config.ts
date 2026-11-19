@@ -21,6 +21,10 @@ export default defineConfig({
     workers_dev: true,
     preview_urls: false,
     routes: [],
+    // The Worker's own logs in Cloudflare (Workers Logs), so a failed request says why; and so
+    // `/api/trace` can find our own requests, not only the targets'. Void passes `cloudflare`
+    // fields through to the Worker's config (its reference: config.md, `cloudflare`).
+    observability: { enabled: true },
   },
   worker: {
     compatibility_date: "2026-02-24",
