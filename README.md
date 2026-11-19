@@ -10,7 +10,8 @@ One way in: the app's own API. The CLI (`vp run …`) and the web pages both cal
 that spends Globalping tests needs you signed in (Void's auth).
 
 - `routes/where.ts`: answers which Cloudflare data centre it ran in (`/where`). What Globalping's
-  probes fetch.
+  probes fetch. `?wait=<ms>` answers after that long and `?size=<bytes>` pads the answer, which
+  found Globalping's limits: 15 seconds and 10,000 bytes per test (plan step 2).
 - `routes/api/probe.ts`: `POST /api/probe`, signed in only: the app sends one Globalping test to
   `/where` and answers what came back (`src/globalping.ts`).
 - `scripts/probe-test.ts`: `vp run probe:test -- --from <place>` calls `POST /api/probe` and

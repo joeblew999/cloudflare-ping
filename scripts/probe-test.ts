@@ -45,7 +45,11 @@ console.log(
 );
 for (const each of answer.results) {
   console.log(`${each.city}, ${each.country} (${each.network}, AS${each.asn})`);
+  if (each.error) {
+    console.log(`  ${each.status}: ${each.error}`);
+  }
   console.log(`  HTTP ${each.httpStatus ?? "-"}, cf-ray ${each.ray}, ${each.totalMs ?? "-"} ms`);
+  console.log(`  ${each.bodyBytes} bytes back${each.truncated ? ", cut off by Globalping" : ""}`);
   console.log(`  answer: ${each.answer}`);
   console.log(
     `  ${each.same ? "same" : "DIFFERENT"}: answer ${each.colo || "-"}, cf-ray ${each.rayColo || "-"}\n`,

@@ -1,0 +1,567 @@
+{
+  "what": "Step 2 of .claude/plans/2026-11-19-01-cloudflare-ping.md: how long Globalping waits for an answer (/where?wait=<ms>, and with ?stream=1 the answer begun at once and finished after the wait) and how much of it it gives back (/where?size=<bytes>). One probe from TH each, sent by the app through POST /api/probe. Copied from Globalping's API (api.globalping.io/v1/measurements/<id>) on 2026-11-19, because its measurements expire; long bodies kept as their length and first 120 characters.",
+  "measurements": [
+    {
+      "id": "2FtOU4JfSxLcpfRHK00021X2E",
+      "createdAt": "2026-11-19T09:10:25.232Z",
+      "locations": [
+        {
+          "magic": "TH"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/where",
+        "query": "wait=5000"
+      },
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "status": "finished",
+          "statusCode": 200,
+          "cfRay": "a5ce14e89f42a955-BKK",
+          "truncated": false,
+          "bodyBytes": 73,
+          "bodyStart": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Bangkok\",\"asn\":133481,\"waited\":5000}",
+          "timings": {
+            "total": 5039,
+            "dns": 9,
+            "tcp": 4,
+            "tls": 13,
+            "firstByte": 5013,
+            "download": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "2nspnMRDEuKiFZWPz00021X2E",
+      "createdAt": "2026-11-19T09:10:32.337Z",
+      "locations": [
+        {
+          "magic": "TH"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/where",
+        "query": "wait=10000"
+      },
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "status": "finished",
+          "statusCode": 200,
+          "cfRay": "a5ce15156c49ee5e-BKK",
+          "truncated": false,
+          "bodyBytes": 74,
+          "bodyStart": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Bangkok\",\"asn\":133481,\"waited\":10000}",
+          "timings": {
+            "total": 10166,
+            "dns": 19,
+            "tcp": 23,
+            "tls": 33,
+            "firstByte": 10090,
+            "download": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "2yKBvNSCd3oqUBuO700021X2E",
+      "createdAt": "2026-11-19T09:10:43.741Z",
+      "locations": [
+        {
+          "magic": "TH"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/where",
+        "query": "wait=20000"
+      },
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "status": "failed",
+          "rawOutput": "Request timed out while waiting for the first response byte.",
+          "statusCode": null,
+          "truncated": false,
+          "bodyBytes": 0,
+          "bodyStart": "",
+          "timings": {
+            "total": 15001,
+            "dns": 12,
+            "tcp": 5,
+            "tls": 52,
+            "firstByte": null,
+            "download": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "2QXZeUBjPj5yKqlvc00021X2F",
+      "createdAt": "2026-11-19T09:11:00.590Z",
+      "locations": [
+        {
+          "magic": "TH"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/where",
+        "query": "wait=30000"
+      },
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "status": "failed",
+          "rawOutput": "Request timed out while waiting for the first response byte.",
+          "statusCode": null,
+          "truncated": false,
+          "bodyBytes": 0,
+          "bodyStart": "",
+          "timings": {
+            "total": 14999,
+            "dns": 22,
+            "tcp": 4,
+            "tls": 11,
+            "firstByte": null,
+            "download": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "2NtBichDHNfI2SC4g00021X2F",
+      "createdAt": "2026-11-19T09:11:17.541Z",
+      "locations": [
+        {
+          "magic": "TH"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/where",
+        "query": "wait=60000"
+      },
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "status": "failed",
+          "rawOutput": "Request timed out while waiting for the first response byte.",
+          "statusCode": null,
+          "truncated": false,
+          "bodyBytes": 0,
+          "bodyStart": "",
+          "timings": {
+            "total": 15000,
+            "dns": 12,
+            "tcp": 24,
+            "tls": 29,
+            "firstByte": null,
+            "download": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "2tHtypK3BkE4EmQb100021X2F",
+      "createdAt": "2026-11-19T09:11:43.947Z",
+      "locations": [
+        {
+          "magic": "TH"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/where",
+        "query": "size=5000"
+      },
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "status": "finished",
+          "statusCode": 200,
+          "cfRay": "a5ce16d48b361ec7-BKK",
+          "truncated": false,
+          "bodyBytes": 5000,
+          "bodyStart": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Bangkok\",\"asn\":133481,\"pad\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "timings": {
+            "total": 59,
+            "dns": 1,
+            "tcp": 4,
+            "tls": 12,
+            "firstByte": 42,
+            "download": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "2IMlEMU1XZh5BAHAW00021X2F",
+      "createdAt": "2026-11-19T09:11:46.112Z",
+      "locations": [
+        {
+          "magic": "TH"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/where",
+        "query": "size=10000"
+      },
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "status": "finished",
+          "statusCode": 200,
+          "cfRay": "a5ce16e26e1f09b2-BKK",
+          "truncated": false,
+          "bodyBytes": 10000,
+          "bodyStart": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Bangkok\",\"asn\":133481,\"pad\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "timings": {
+            "total": 79,
+            "dns": 27,
+            "tcp": 5,
+            "tls": 27,
+            "firstByte": 16,
+            "download": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "2jpMMBuFGwP20MekJ00021X2F",
+      "createdAt": "2026-11-19T09:11:48.368Z",
+      "locations": [
+        {
+          "magic": "TH"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/where",
+        "query": "size=20000"
+      },
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "status": "finished",
+          "statusCode": 200,
+          "cfRay": "a5ce16f01b917c7d-BKK",
+          "truncated": true,
+          "bodyBytes": 10000,
+          "bodyStart": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Bangkok\",\"asn\":133481,\"pad\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "timings": {
+            "total": 32,
+            "dns": 1,
+            "tcp": 4,
+            "tls": 10,
+            "firstByte": 16,
+            "download": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "2dKQqjXTySNygC47n00021X2F",
+      "createdAt": "2026-11-19T09:11:50.394Z",
+      "locations": [
+        {
+          "magic": "TH"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/where",
+        "query": "size=100000"
+      },
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "status": "finished",
+          "statusCode": 200,
+          "cfRay": "a5ce16fd3a71ee2d-BKK",
+          "truncated": true,
+          "bodyBytes": 10000,
+          "bodyStart": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Bangkok\",\"asn\":133481,\"pad\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "timings": {
+            "total": 198,
+            "dns": 15,
+            "tcp": 6,
+            "tls": 61,
+            "firstByte": 111,
+            "download": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "2nF9gZr4tpwDwFo2400021X2F",
+      "createdAt": "2026-11-19T09:11:52.633Z",
+      "locations": [
+        {
+          "magic": "TH"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/where",
+        "query": "size=1000000"
+      },
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "status": "finished",
+          "statusCode": 200,
+          "cfRay": "a5ce170ad8f5b4ae-BKK",
+          "truncated": true,
+          "bodyBytes": 10000,
+          "bodyStart": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Bangkok\",\"asn\":133481,\"pad\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "timings": {
+            "total": 79,
+            "dns": 15,
+            "tcp": 4,
+            "tls": 10,
+            "firstByte": 50,
+            "download": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "2bVJ3v4zM7NsOYV7I00021X2H",
+      "createdAt": "2026-11-19T09:13:00.603Z",
+      "locations": [
+        {
+          "magic": "TH"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/where",
+        "query": "stream=1&wait=20000"
+      },
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "status": "failed",
+          "rawOutput": "Request timed out while downloading the response.",
+          "statusCode": 200,
+          "cfRay": "a5ce18b3ff9a694f-BKK",
+          "truncated": false,
+          "bodyBytes": 0,
+          "bodyStart": "",
+          "timings": {
+            "total": 14999,
+            "dns": 8,
+            "tcp": 5,
+            "tls": 57,
+            "firstByte": 143,
+            "download": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "2EeX7ta1jeKLI360p00021X2H",
+      "createdAt": "2026-11-19T09:13:17.957Z",
+      "locations": [
+        {
+          "magic": "TH"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/where",
+        "query": "stream=1&wait=40000"
+      },
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "status": "failed",
+          "rawOutput": "Request timed out while downloading the response.",
+          "statusCode": 200,
+          "cfRay": "a5ce19202bd8fa70-BKK",
+          "truncated": false,
+          "bodyBytes": 0,
+          "bodyStart": "",
+          "timings": {
+            "total": 15001,
+            "dns": 21,
+            "tcp": 4,
+            "tls": 10,
+            "firstByte": 14,
+            "download": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "2vWNUrHUqxSrdOIgG00021X2H",
+      "createdAt": "2026-11-19T09:13:35.003Z",
+      "locations": [
+        {
+          "magic": "TH"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/where",
+        "query": "stream=1&wait=90000"
+      },
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "status": "failed",
+          "rawOutput": "Request timed out while downloading the response.",
+          "statusCode": 200,
+          "cfRay": "a5ce198b2da37b58-BKK",
+          "truncated": false,
+          "bodyBytes": 0,
+          "bodyStart": "",
+          "timings": {
+            "total": 15000,
+            "dns": 15,
+            "tcp": 27,
+            "tls": 43,
+            "firstByte": 114,
+            "download": null
+          }
+        }
+      ]
+    }
+  ]
+}

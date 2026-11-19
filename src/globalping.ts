@@ -25,12 +25,27 @@ const measurement = z.object({
         statusCode: z.number().nullish(),
         headers: z.record(z.string(), z.union([z.string(), z.array(z.string())])).nullish(),
         rawBody: z.string().nullish(),
+        rawOutput: z.string().nullish(),
+        truncated: z.boolean().nullish(),
         timings: z.object({ total: z.number().nullish() }).nullish(),
       }),
     }),
   ),
 });
 const answer = z.object({ colo: z.string() });
+
+// The data centre an answer names; from the text itself when the answer was cut off (step 2).
+function coloOf(raw: string): string {
+  try {
+    const parsed = answer.safeParse(JSON.parse(raw));
+    if (parsed.success) {
+      return parsed.data.colo;
+    }
+  } catch {
+    // Cut off, or not JSON: read it from the text.
+  }
+  return /"colo":"([A-Z]{3})"/.exec(raw)?.[1] ?? "";
+}
 
 export type ProbeOptions = { from: string; path: string; probes: number; token?: string };
 
@@ -39,6 +54,10 @@ export async function probeFrom(options: ProbeOptions) {
   if (options.token) {
     headers.set("authorization", `Bearer ${options.token}`);
   }
+  // Globalping takes the query string apart from the path.
+  const mark = options.path.indexOf("?");
+  const path = mark === -1 ? options.path : options.path.slice(0, mark);
+  const query = mark === -1 ? "" : options.path.slice(mark + 1);
   const started = await fetch(API, {
     method: "POST",
     headers,
@@ -46,7 +65,10 @@ export async function probeFrom(options: ProbeOptions) {
       type: "http",
       target: SITE,
       locations: [{ magic: options.from, limit: options.probes }],
-      measurementOptions: { protocol: "HTTPS", request: { method: "GET", path: options.path } },
+      measurementOptions: {
+        protocol: "HTTPS",
+        request: { method: "GET", path, ...(query ? { query } : {}) },
+      },
     }),
   });
   const body: unknown = await started.json();
@@ -56,10 +78,11 @@ export async function probeFrom(options: ProbeOptions) {
   }
   const id = made.data.id;
 
-  // Globalping's HTTP tests take a few seconds; a minute is the most this waits.
+  // Each second for the first ten, then each three, for at most about 90 seconds: under the 50
+  // requests a Worker on the Free plan may make for one request.
   let done = measurement.parse({ status: "in-progress", results: [] });
-  for (let tries = 0; tries < 60 && done.status === "in-progress"; tries += 1) {
-    await new Promise((wait) => setTimeout(wait, 1000));
+  for (let tries = 0; tries < 37 && done.status === "in-progress"; tries += 1) {
+    await new Promise((wait) => setTimeout(wait, tries < 10 ? 1000 : 3000));
     const polled: unknown = await (await fetch(`${API}/${id}`)).json();
     done = measurement.parse(polled);
   }
@@ -75,24 +98,21 @@ export async function probeFrom(options: ProbeOptions) {
       const ray = (Array.isArray(header) ? header[0] : header) ?? "";
       const rayColo = ray.split("-").pop() ?? "";
       const raw = result.rawBody ?? "";
-      let colo = "";
-      try {
-        const parsed = answer.safeParse(JSON.parse(raw));
-        colo = parsed.success ? parsed.data.colo : "";
-      } catch {
-        colo = "";
-      }
+      const colo = coloOf(raw);
       return {
         city: probe.city,
         country: probe.country,
         network: probe.network,
         asn: probe.asn,
         status: result.status,
+        error: result.status === "finished" ? "" : (result.rawOutput ?? ""),
         httpStatus: result.statusCode ?? null,
         totalMs: result.timings?.total ?? null,
+        bodyBytes: raw.length,
+        truncated: result.truncated ?? false,
         ray,
         rayColo,
-        answer: raw,
+        answer: raw.length > 200 ? `${raw.slice(0, 200)}…` : raw,
         colo,
         same: colo !== "" && colo === rayColo,
       };

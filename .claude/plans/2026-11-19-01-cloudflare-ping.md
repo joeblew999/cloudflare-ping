@@ -1,6 +1,6 @@
 # 2026-11-19-01-cloudflare-ping.md: our own Globalping, run from Cloudflare's data centres
 
-Status: 2026-11-19, approved; step 1 proven; step 6 built and deployed, ahead of 2 to 5. Built on Void 1.10.0 (the user's call, 2026-11-19:
+Status: 2026-11-19, approved; steps 1 and 2 proven; step 6 built and deployed, ahead of 3 to 5. Built on Void 1.10.0 (the user's call, 2026-11-19:
 1.11.0 was hours old, and a release is installed a day after it comes out), with Vite+ held at
 1.6.0, since Void 1.10.0 writes a Vite+ range that takes 1.7.0, whose core it doesn't match.
 Changed the same day (the user's call): the app's own API is the one way in, for the CLI and the
@@ -115,6 +115,25 @@ again: nothing after it is built on a guess.
   back, each found by a few tests. Together they say how many fetches fit in one test.
 - If it's only a few seconds: the probe answers at once and does the work in `waitUntil`'s 30
   seconds, writing its results itself (step 5).
+- **Result, 2026-11-19: 15 seconds and 10,000 bytes.** One probe from TH (Bangkok, AIS Fibre)
+  each, sent by the app (`POST /api/probe`; Globalping takes the query string apart from the
+  path, so `src/globalping.ts` splits it off):
+  - wait 5 s and 10 s: answered (5,039 ms, 10,166 ms); 20, 30 and 60 s: "Request timed out
+    while waiting for the first response byte", each at 15,000 ms.
+  - Answering at once and finishing after the wait (a streamed answer, tried and then removed)
+    doesn't buy more: at 20, 40 and 90 s, "Request timed out while downloading the response",
+    again at 15,000 ms, and the part already sent is thrown away (0 bytes back). So 15 seconds
+    is for the whole answer.
+  - 5,000 and 10,000 bytes came back whole; 20,000, 100,000 and 1,000,000 came back as their
+    first 10,000 bytes, marked `truncated`.
+  - Even a test that timed out has the response's `cf-ray`, so it still says which data centre
+    it reached.
+
+  Copied into `evidence/2026-11-19-step-2.json` (13 measurements). **What that changes:** a test
+  can carry what fits in about 12 seconds and a 10,000-byte answer: enough for step 3's single
+  fetch, done inline. For runs of many fetches, the fallback above: `/run` answers at once and
+  does the fetches in `waitUntil`'s 30 seconds, writing each result itself (step 5), so neither
+  limit applies.
 
 ### 3. A fetch from our Worker runs the target in the same data centre
 
