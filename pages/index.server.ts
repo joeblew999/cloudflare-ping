@@ -1,18 +1,15 @@
 import { defineHandler, type InferProps } from "void";
-import { db, desc } from "void/db";
-import { messages } from "@schema";
-import { createInsertSchema } from "void/drizzle-zod";
+import { getUser } from "void/auth";
 
 export type Props = InferProps<typeof loader>;
 
-export const loader = defineHandler(async () => {
-  const rows = await db.select().from(messages).orderBy(desc(messages.id));
-  return { messages: rows };
-});
-export const action = defineHandler.withValidator({
-  body: createInsertSchema(messages, { text: (schema) => schema.trim().min(1).max(1000) }).pick({
-    text: true,
-  }),
-})(async (_c, { body }) => {
-  await db.insert(messages).values(body);
+const text = (value: unknown): string | null => (typeof value === "string" ? value : null);
+
+export const loader = defineHandler((c) => {
+  // Where this page was served from, as Cloudflare tells the Worker (as `/where` does).
+  const cf = c.req.raw.cf;
+  return {
+    email: getUser()?.email ?? null,
+    here: { colo: text(cf?.colo), city: text(cf?.city), country: text(cf?.country) },
+  };
 });

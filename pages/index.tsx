@@ -1,127 +1,202 @@
-import { Form, useForm } from "@void/react";
+// The app's home page: where this page was served from, and a probe run from the browser through
+// the same API the CLI uses (`POST /api/probe`, plan step 6). Void's starter look (style.css).
+import { useState } from "react";
+import { FetchError, auth, fetch } from "void/client";
 import type { Props } from "./index.server";
 import "./style.css";
 
-export default function HomePage({ messages }: Props) {
-  const form = useForm("/", { text: "" });
+const REPO = "https://github.com/joeblew999/cloudflare-ping";
+const PLAN = `${REPO}/blob/main/.claude/plans/2026-11-19-01-cloudflare-ping.md`;
+
+const runProbe = (body: { from: string; path: string; probes: number }) =>
+  fetch("/api/probe", { method: "POST", body });
+type Answer = Awaited<ReturnType<typeof runProbe>>;
+
+export default function HomePage({ email, here }: Props) {
+  const [from, setFrom] = useState("TH");
+  const [path, setPath] = useState("/where");
+  const [probes, setProbes] = useState("2");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState("");
+  const [answer, setAnswer] = useState<Answer | null>(null);
+
+  async function run() {
+    setPending(true);
+    setError("");
+    try {
+      setAnswer(await runProbe({ from, path, probes: Number(probes) }));
+    } catch (caught) {
+      if (caught instanceof FetchError) {
+        setError(caught.status === 401 ? "Sign in first." : `Failed (${caught.status}).`);
+      } else {
+        setError(caught instanceof Error ? caught.message : "Failed.");
+      }
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function signOut() {
+    await auth.signOut();
+    window.location.reload();
+  }
 
   return (
     <main className="starter">
-      <section id="center" aria-labelledby="welcome-title">
+      <section id="center" aria-labelledby="title">
         <div className="hero">
           <img className="base" src="/stack.svg" width="170" height="179" alt="" />
-          <img className="framework" src="/react.svg" alt="React logo" />
-          <img className="void" src="/void.svg" alt="Void logo" />
+          <img className="framework" src="/react.svg" alt="" />
+          <img className="void" src="/void.svg" alt="" />
         </div>
         <div className="starter-intro">
-          <h1 id="welcome-title">Welcome to Void</h1>
+          <h1 id="title">cloudflare-ping</h1>
           <div className="starter-description">
             <p>
-              This starter is running in Pages mode. The list below is loaded from your database in{" "}
-              <code>pages/index.server.ts</code>.
+              Our own Globalping, run from Cloudflare&apos;s data centres. A Globalping probe is
+              only the way in: it reaches our Worker in a data centre, and the Worker says which.
             </p>
             <p>
-              API example: <a href="/api/hello">/api/hello</a>
+              This page was served from <code>{here.colo ?? "?"}</code>
+              {here.city ? ` (${here.city}, ${here.country ?? "?"})` : ""}.
+            </p>
+            <p>
+              {email ? (
+                <>
+                  Signed in as {email}.{" "}
+                  <button type="button" className="link-button" onClick={() => void signOut()}>
+                    Sign out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <a href="/login?next=/">Sign in</a> to run probes.
+                </>
+              )}
             </p>
           </div>
         </div>
       </section>
       <div className="ticks" aria-hidden="true"></div>
-      <section className="starter-demo" aria-labelledby="messages-title">
+      <section className="starter-demo" aria-labelledby="probe-title">
         <div className="demo-content">
-          <h2 id="messages-title">Messages</h2>
-          {messages.length === 0 ? (
-            <p className="empty-state">
-              No messages yet. Run <code>void db seed</code> to load the sample row from{" "}
-              <code>db/seed.ts</code>.
-            </p>
-          ) : (
-            <ul className="messages">
-              {messages.map((message) => (
-                <li key={message.id}>
-                  <strong>{message.text}</strong>
-                  <small>{String(message.createdAt)}</small>
-                </li>
-              ))}
-            </ul>
-          )}
-          <Form form={form} className="message-form">
-            <label htmlFor="message-text">Message</label>
-            <div className="message-fields">
-              <input
-                id="message-text"
-                name="text"
-                value={form.data.text}
-                onChange={(event) => form.setData("text", event.target.value)}
-                required
-                maxLength={1000}
-              />
-              <button type="submit" disabled={form.pending}>
-                Add message
-              </button>
+          <h2 id="probe-title">Run a probe</h2>
+          <p className="note">
+            Globalping sends a test from probes in a place (a country such as TH, a city, a network)
+            to this app&apos;s <code>/where</code>, and each answers the data centre it reached. It
+            spends Globalping tests, so it needs you signed in.
+          </p>
+          <form
+            className="form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void run();
+            }}
+          >
+            <div className="form-row">
+              <label>
+                From
+                <input value={from} onChange={(event) => setFrom(event.target.value)} required />
+              </label>
+              <label>
+                Path
+                <input value={path} onChange={(event) => setPath(event.target.value)} required />
+              </label>
+              <label>
+                Probes
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={probes}
+                  onChange={(event) => setProbes(event.target.value)}
+                  required
+                />
+              </label>
             </div>
-          </Form>
+            <button type="submit" disabled={pending || !email}>
+              {pending ? "Waiting for Globalping…" : "Run"}
+            </button>
+            {error ? (
+              <p className="error" role="alert">
+                {error}
+              </p>
+            ) : null}
+            <p className="note">
+              The same from a terminal:{" "}
+              <code>
+                vp run probe:test -- --from {from} --path {path} --probes {probes}
+              </code>
+            </p>
+          </form>
+          {answer ? (
+            <>
+              <p className="note">
+                Globalping measurement{" "}
+                <a href={`https://api.globalping.io/v1/measurements/${answer.measurement}`}>
+                  {answer.measurement}
+                </a>
+                , from {answer.from}, {answer.site}
+                {answer.path}
+              </p>
+              <ul className="results">
+                {answer.results.map((each) => (
+                  <li key={`${each.city}-${each.network}-${each.ray}`}>
+                    <strong>
+                      {each.city}, {each.country}
+                    </strong>
+                    <span>
+                      {each.network} (AS{each.asn})
+                    </span>
+                    <small className={each.same ? "same" : "different"}>
+                      {each.same ? "Same" : "Different"}: answered {each.colo || "-"}, cf-ray{" "}
+                      {each.rayColo || "-"} · HTTP {each.httpStatus ?? "-"} · {each.totalMs ?? "-"}{" "}
+                      ms
+                    </small>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
         </div>
       </section>
       <div className="ticks" aria-hidden="true"></div>
-      <section id="next-steps" aria-label="Resources">
+      <section id="next-steps" aria-label="More">
         <div id="docs">
           <svg className="icon" role="presentation" aria-hidden="true">
             <use href="/icons.svg#documentation-icon"></use>
           </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
+          <h2>From a terminal</h2>
+          <p>
+            The same API. The first run shows a link and a code; approve it here, and the command
+            stays signed in.
+          </p>
           <ul>
             <li>
-              <a href="https://void.cloud/guide/quickstart" target="_blank" rel="noreferrer">
-                Quickstart
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank" rel="noreferrer">
-                <img className="button-icon" src="/react.svg" alt="" />
-                Learn more
+              <a href={`${REPO}#readme`} target="_blank" rel="noreferrer">
+                How to use it
               </a>
             </li>
           </ul>
         </div>
         <div id="social">
           <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
+            <use href="/icons.svg#github-icon"></use>
           </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Void community</p>
+          <h2>How it&apos;s built</h2>
+          <p>One proof at a time</p>
           <ul>
             <li>
-              <a href="https://github.com/voidzero-dev/void" target="_blank" rel="noreferrer">
+              <a href={PLAN} target="_blank" rel="noreferrer">
+                The plan
+              </a>
+            </li>
+            <li>
+              <a href={REPO} target="_blank" rel="noreferrer">
                 <svg className="button-icon" role="presentation" aria-hidden="true">
                   <use href="/icons.svg#github-icon"></use>
                 </svg>
                 GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://discord.gg/cC6TEVFKSx" target="_blank" rel="noreferrer">
-                <svg className="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/deploytovoid" target="_blank" rel="noreferrer">
-                <svg className="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/voidzero.dev" target="_blank" rel="noreferrer">
-                <svg className="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
               </a>
             </li>
           </ul>
