@@ -55,7 +55,9 @@ export default function RunPage({ run, fetches: first }: Props) {
       </p>
       {run.error ? (
         <div className="custom-block danger">
-          <p className="custom-block-title">This run didn&apos;t start</p>
+          <p className="custom-block-title">
+            {run.measurement ? "Something went wrong" : "This run didn't start"}
+          </p>
           <p>{run.error}</p>
         </div>
       ) : null}

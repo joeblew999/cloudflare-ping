@@ -1,0 +1,21 @@
+// `cloudflare-ping limits`: how many Globalping tests the app has left this hour (`GET
+// /api/limits`), as the Worker sees it. The Runs page's line above the form.
+import { parseArgs } from "node:util";
+import { fetch } from "void/client";
+import { limitsLine } from "@cloudflare-ping/shared/limits";
+import { asked, headers, siteOf } from "../api";
+
+export async function limits(args: Array<string>) {
+  const { values } = parseArgs({
+    args,
+    options: { json: { type: "boolean", default: false }, site: { type: "string" } },
+  });
+  const site = siteOf(values.site);
+
+  const found = await asked(() => fetch("/api/limits", { baseURL: site, headers: headers() }));
+  if (values.json) {
+    console.log(JSON.stringify(found, null, 2));
+    return;
+  }
+  console.log(limitsLine(found));
+}

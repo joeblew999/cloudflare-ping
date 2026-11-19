@@ -25,5 +25,10 @@ export const POST = defineHandler.withValidator({
   if (!ALLOWED_HOSTS.has(host)) {
     throw new HTTPException(403, { message: `Not on the allowed list: ${host}` });
   }
-  return startRun({ ...body, token: env.GLOBALPING_TOKEN });
+  // Seen through even if the page or CLI that asked goes away while the test is out: a client
+  // that disconnects can cancel its request's work, unless `waitUntil` holds it (Cloudflare's
+  // docs: Workers, "Request cancellation").
+  const started = startRun({ ...body, token: env.GLOBALPING_TOKEN });
+  c.executionCtx.waitUntil(started.catch(() => undefined));
+  return started;
 });

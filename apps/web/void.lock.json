@@ -7,7 +7,16 @@
     "preview_urls": false,
     "routes": [],
     "observability": {
-      "enabled": true
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "logs": {
+        "enabled": true,
+        "invocation_logs": true
+      },
+      "traces": {
+        "enabled": true,
+        "head_sampling_rate": 1
+      }
     }
   },
   "resolved": {
@@ -16,6 +25,18 @@
     "workers_dev": true,
     "preview_urls": false,
     "routes": [],
+    "observability": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "logs": {
+        "enabled": true,
+        "invocation_logs": true
+      },
+      "traces": {
+        "enabled": true,
+        "head_sampling_rate": 1
+      }
+    },
     "d1_databases": [
       {
         "binding": "DB",
@@ -24,10 +45,7 @@
         "migrations_dir": "./db/migrations"
       }
     ],
-    "compatibility_date": "2026-02-24",
-    "observability": {
-      "enabled": true
-    }
+    "compatibility_date": "2026-02-24"
   },
-  "text": "{\n  \"name\": \"cloudflare-ping\",\n  \"account_id\": \"7384af54e33b8a54ff240371ea368440\",\n  \"workers_dev\": true,\n  \"preview_urls\": false,\n  \"routes\": [],\n  \"d1_databases\": [\n    {\n      \"binding\": \"DB\",\n      \"database_name\": \"cloudflare-ping-db\",\n      \"database_id\": \"b2d176c0-b34b-45eb-9f98-9b48ef370406\",\n      \"migrations_dir\": \"./db/migrations\"\n    }\n  ],\n  \"compatibility_date\": \"2026-02-24\",\n  \"observability\": {\n    \"enabled\": true\n  }\n}\n"
+  "text": "{\n  \"name\": \"cloudflare-ping\",\n  \"account_id\": \"7384af54e33b8a54ff240371ea368440\",\n  \"workers_dev\": true,\n  \"preview_urls\": false,\n  \"routes\": [],\n  \"observability\": {\n    \"enabled\": true,\n    \"head_sampling_rate\": 1,\n    \"logs\": {\n      \"enabled\": true,\n      \"invocation_logs\": true\n    },\n    \"traces\": {\n      \"enabled\": true,\n      \"head_sampling_rate\": 1\n    }\n  },\n  \"d1_databases\": [\n    {\n      \"binding\": \"DB\",\n      \"database_name\": \"cloudflare-ping-db\",\n      \"database_id\": \"b2d176c0-b34b-45eb-9f98-9b48ef370406\",\n      \"migrations_dir\": \"./db/migrations\"\n    }\n  ],\n  \"compatibility_date\": \"2026-02-24\"\n}\n"
 }

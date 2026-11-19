@@ -63,12 +63,24 @@ export const GET = defineHandler.withValidator({
   const colo = c.req.raw.cf?.colo ?? null;
   const ray = c.req.header("cf-ray") ?? "";
   const times = query.repeat ?? 1;
+  const where = typeof colo === "string" ? colo : "?";
+  console.log({
+    message: `/run in ${where}: ${times} × ${target.toString()}${query.background ? ", in the background" : ""}`,
+    run: runId ?? null,
+    colo: where,
+  });
 
   const fetchAll = async () => {
     const done = [];
     for (let attempt = 1; attempt <= times; attempt += 1) {
       const one = await fetchOnce(target);
       done.push(one);
+      console.log({
+        message: `/run in ${where}, fetch ${attempt}: HTTP ${one.status} in ${one.ms} ms, the target ran in ${one.rayColo || "?"} (${one.isr ?? "no page cache"})`,
+        run: runId ?? null,
+        colo: where,
+        targetRay: one.ray,
+      });
       if (runId) {
         await db.insert(fetches).values({
           runId,
@@ -89,7 +101,15 @@ export const GET = defineHandler.withValidator({
   };
 
   if (query.background) {
-    c.executionCtx.waitUntil(fetchAll());
+    // No one is waiting for these: a failure is logged and kept on the run (its page, `show`).
+    const failed = async (caught: unknown) => {
+      const error = `Fetching from ${where} failed: ${caught instanceof Error ? caught.message : String(caught)}`;
+      console.error({ message: error, run: runId ?? null, colo: where });
+      if (runId) {
+        await db.update(runs).set({ error }).where(eq(runs.id, runId));
+      }
+    };
+    c.executionCtx.waitUntil(fetchAll().then(() => undefined, failed));
     return { colo, run: runId, ray, fetching: times };
   }
   const [first, ...rest] = await fetchAll();

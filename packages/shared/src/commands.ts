@@ -46,6 +46,14 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     task: "ping:show",
   },
   {
+    name: "limits",
+    use: "limits",
+    about: "How many Globalping tests the app has left this hour",
+    page: "/runs",
+    api: "GET /api/limits",
+    task: "ping:limits",
+  },
+  {
     name: "trace",
     use: "trace <ray id> [--minutes 60]",
     about: "A request's Cloudflare log, by its cf-ray",

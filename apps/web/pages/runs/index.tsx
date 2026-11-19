@@ -1,9 +1,10 @@
 // Runs: start one (`POST /api/runs`, the CLI's `run`) and the newest ones (`GET /api/runs`, the
 // CLI's `runs`). A run sends one Globalping test to `/run`, and each fetch it makes is recorded
 // (plan step 5).
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { fetch } from "void/client";
 import { failure } from "@cloudflare-ping/shared/failure";
+import { limitsLine } from "@cloudflare-ping/shared/limits";
 import { ALLOWED_HOSTS, DEFAULT_TARGET } from "@cloudflare-ping/shared/targets";
 import type { Props } from "./index.server";
 
@@ -19,7 +20,16 @@ export default function RunsPage({ email, runs }: Props) {
   const [background, setBackground] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  // Globalping's limit, asked after the page shows (`GET /api/limits`, the CLI's `limits`).
+  const [quota, setQuota] = useState("");
   const target = `https://${host}${path}`;
+
+  useEffect(() => {
+    void fetch("/api/limits").then(
+      (found) => setQuota(limitsLine(found)),
+      (caught: unknown) => setQuota(failure(caught)),
+    );
+  }, []);
 
   async function start() {
     setPending(true);
@@ -59,6 +69,10 @@ export default function RunsPage({ email, runs }: Props) {
           A run sends one Globalping test from probes in a place to our <code>/run</code>, which
           fetches the target from each data centre the probes reach and records every fetch. In the
           background, the test only has to reach the data centre; the fetches come after.
+        </p>
+        <p>
+          {quota || "Asking Globalping how many tests are left…"} The same from a terminal:{" "}
+          <code>cloudflare-ping limits</code>
         </p>
         <form
           className="form"
@@ -153,7 +167,9 @@ export default function RunsPage({ email, runs }: Props) {
                     {run.fetches} fetches recorded
                   </p>
                   {run.error ? (
-                    <p className="card-details different">Didn&apos;t start: {run.error}</p>
+                    <p className="card-details different">
+                      {run.measurement ? "Went wrong" : "Didn't start"}: {run.error}
+                    </p>
                   ) : null}
                   <p className="card-details">
                     {run.createdAt.slice(0, 16).replace("T", " ")} · {run.id}

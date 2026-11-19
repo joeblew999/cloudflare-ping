@@ -26,6 +26,7 @@ terminal do the same things, the same way.
 | Start a run and follow it  | `/runs`, "Start a run" | `vp run ping:run -- --from TH`   | `cloudflare-ping run --from TH`  | `POST /api/runs` (signed in)          |
 | The newest runs            | `/runs`                | `vp run ping:runs`               | `cloudflare-ping runs`           | `GET /api/runs`                       |
 | One run and its fetches    | `/runs/<id>`           | `vp run ping:show -- <id>`       | `cloudflare-ping show <id>`      | `GET /api/runs/<id>`                  |
+| Globalping tests left      | `/runs`                | `vp run ping:limits`             | `cloudflare-ping limits`         | `GET /api/limits`                     |
 | A request's Cloudflare log | `/trace/<ray id>`      | `vp run probe:trace -- <ray id>` | `cloudflare-ping trace <ray id>` | `GET /api/trace/<ray id>` (signed in) |
 
 `cloudflare-ping help` lists every option. Every command also takes `--json` (the API's answer as
@@ -35,7 +36,9 @@ command that needs it shows a link and a code to approve at `/device`.
 
 A run sends one Globalping test, from probes in a place, to `/run` for that run; `/run` fetches
 the target from each data centre the probes reach and records every fetch. Reading runs is open;
-starting one, or reading Cloudflare's logs, needs you signed in.
+starting one, or reading Cloudflare's logs, needs you signed in. When a run goes wrong, its page
+and `show` say why; Globalping counts tests by the Worker's address unless the app has a token,
+so `limits` shows what's left.
 
 <!-- #endregion use -->
 
@@ -107,6 +110,11 @@ In `apps/web`:
   both use. `src/trace.ts` reads the account's Workers logs with the app's own Cloudflare API
   token (`CLOUDFLARE_OBSERVABILITY_TOKEN`, "Workers Observability Read"); without it, the log
   lookups say they're not set up.
+- Logs and traces: on for every request (`void.config.ts`, `cloudflare.observability`). Each step
+  of a run logs a line under the run's ID: started, Globalping's test made (with its tests left
+  this hour), what each probe did, each fetch `/run` made, and anything that went wrong, which is
+  also kept on the run. Read them in the dashboard (the Worker's Observability tab) or with
+  `pnpm exec cf o11y telemetry query`.
 - `pages/layout.tsx`: every page's frame and links, as the docs' bar, with light or dark;
   `middleware/01.auth.ts` shares who's signed in and where the page is; `middleware/00.head.ts`
   sets light or dark before the page paints, as VitePress does and under its key
