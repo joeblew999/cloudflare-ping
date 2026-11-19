@@ -15,6 +15,20 @@
       "when": 1795078099067,
       "tag": "20261119084819_greedy_cerise",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1795081113065,
+      "tag": "20261119093833_friendly_spitfire",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1795081118594,
+      "tag": "20261119093838_legal_ted_forrester",
+      "breakpoints": true
     }
   ]
 }

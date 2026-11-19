@@ -1,6 +1,6 @@
 # 2026-11-19-01-cloudflare-ping.md: our own Globalping, run from Cloudflare's data centres
 
-Status: 2026-11-19, approved; steps 1 to 4 proven; step 6 built and deployed, ahead of 5. Built on Void 1.10.0 (the user's call, 2026-11-19:
+Status: 2026-11-19, approved; steps 1 to 5 proven; step 6 built and deployed. Built on Void 1.10.0 (the user's call, 2026-11-19:
 1.11.0 was hours old, and a release is installed a day after it comes out), with Vite+ held at
 1.6.0, since Void 1.10.0 writes a Vite+ range that takes 1.7.0, whose core it doesn't match.
 Changed the same day (the user's call): the app's own API is the one way in, for the CLI and the
@@ -198,6 +198,24 @@ again: nothing after it is built on a guess.
   per fetch, with the run's ID.
 - Proof: the row for a test is there, with the same `cf-ray` the test saw.
 - If it can't: results come back through Globalping's answer, within step 2's limits.
+- **Result, 2026-11-19: proven.** `db/schema.ts`: `runs` (a random, unguessable ID: `/run`
+  records only into a run that exists, so a public `/run` can't be used to write into the
+  database) and `fetches` (one row per fetch: our request's `cf-ray`, our data centre, which
+  attempt, and the target's status, `cf-ray`, data centre, cache, time and size). The starter's
+  `messages` table, empty, dropped (two migrations, so drizzle-kit had nothing to ask; Void wants
+  `-- void:allow-destructive` on a `DROP`). `/run?run=<id>` records each fetch; with
+  `&background=1` it answers at once and fetches in `waitUntil`.
+  - One run (ad4c83d6-7a07-4d8f-be59-dbf4f635c565, made with `void db execute --remote`, since
+    `POST /api/runs` is step 8). From TH, inline (29gRLfVI7Dj4ZFCt700021X2i): two probes, two
+    rows. From DE, `background=1&repeat=3` (2wVzShZGUjksMNApM00021X2i): each probe's answer came
+    back at once ("fetching": 3), and three rows each arrived within 0.4 seconds. Each of the
+    eight rows has the `cf-ray` its test saw, and each test has its rows. In
+    `evidence/2026-11-19-step-5.json`.
+  - In the background runs, the first fetch took 270 to 322 ms and the next two 13 to 15 ms:
+    step 4's warm edge cache, in our own records.
+  - So a run of many fetches isn't held to step 2's 15 seconds and 10,000 bytes: the test only
+    has to reach the data centre; `waitUntil` gives the fetches 30 seconds after the answer, and
+    the rows carry the results.
 
 ### 6. The app's API is the one way in, behind Void's auth
 

@@ -14,7 +14,9 @@ that spends Globalping tests needs you signed in (Void's auth).
   found Globalping's limits: 15 seconds and 10,000 bytes per test (plan step 2).
 - `routes/run.ts`: `/run?url=<address>` fetches an address from the data centre it ran in and
   answers what the target said (status, `cf-ray`, cache, time); `&repeat=<n>` fetches it n times
-  in a row. Only the addresses in `src/targets.ts`. Needs `global_fetch_strictly_public` (`void.config.ts`) to reach other
+  in a row. Only the addresses in `src/targets.ts`. `&run=<id>` records each fetch in the
+  database (`db/schema.ts`: `runs`, `fetches`), only for a run that exists; `&background=1`
+  answers at once and fetches afterwards. Needs `global_fetch_strictly_public` (`void.config.ts`) to reach other
   Workers on `gedw99.workers.dev`.
 - `scripts/probe-trace.ts`: `vp run probe:trace -- <ray id>` finds a request in the account's
   Workers logs (Cloudflare's `cf` CLI, with your Cloudflare sign-in): where it ran, from where,
