@@ -1,0 +1,30 @@
+{
+  "name": "cloudflare-ping",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Our own Globalping, run from Cloudflare's data centres: the commands for the cloudflare-ping app.",
+  "keywords": [
+    "cli",
+    "cloudflare",
+    "globalping",
+    "latency",
+    "workers"
+  ],
+  "homepage": "https://cloudflare-ping.gedw99.workers.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joeblew999/cloudflare-ping.git",
+    "directory": "cli"
+  },
+  "bin": {
+    "cloudflare-ping": "dist/main.mjs"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  }
+}

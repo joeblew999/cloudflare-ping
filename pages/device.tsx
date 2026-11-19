@@ -1,4 +1,4 @@
-// Where the CLI's sign-in is approved (scripts/sign-in.ts): the command shows a link to this page
+// Where the CLI's sign-in is approved (cli/sign-in.ts): the command shows a link to this page
 // with its code; approving it here, signed in, gives the command its token.
 import { useState } from "react";
 import type { Props } from "./device.server";

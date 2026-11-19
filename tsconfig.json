@@ -9,7 +9,9 @@
     "skipLibCheck": true,
     "types": ["void/env", "node"],
     "jsx": "react-jsx",
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true
   },
-  "include": ["src", "pages", "routes", "middleware", "crons", "queues", "db", "scripts", "*.ts"]
+  "include": ["src", "pages", "routes", "middleware", "crons", "queues", "db", "cli", "*.ts"],
+  "exclude": ["cli/dist"]
 }

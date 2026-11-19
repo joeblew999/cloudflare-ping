@@ -13,18 +13,39 @@ page and its command both call that route with Void's typed fetch (`void/client`
 loaders and API routes share the same server code (`src/`). So the web and the terminal do the
 same things, the same way.
 
-| What                       | Web page               | Terminal                                                              | API                                   |
-| -------------------------- | ---------------------- | --------------------------------------------------------------------- | ------------------------------------- |
-| Sign in                    | `/login`               | the first command that needs it (device login, approved at `/device`) | Void's auth (`/api/auth/…`)           |
-| One Globalping test        | `/`, "Run a probe"     | `vp run probe:test -- --from TH [--path …] [--host <target>]`         | `POST /api/probe` (signed in)         |
-| Start a run and follow it  | `/runs`, "Start a run" | `vp run ping:run -- --target <url> --from TH [--repeat 3] [--inline]` | `POST /api/runs` (signed in)          |
-| The newest runs            | `/runs`                | `vp run ping:runs`                                                    | `GET /api/runs`                       |
-| One run and its fetches    | `/runs/<id>`           | `vp run ping:show -- <id>`                                            | `GET /api/runs/<id>`                  |
-| A request's Cloudflare log | `/trace/<ray id>`      | `vp run probe:trace -- <ray id>`                                      | `GET /api/trace/<ray id>` (signed in) |
+| What                       | Web page               | In the repo                      | Anywhere (the package)           | API                                   |
+| -------------------------- | ---------------------- | -------------------------------- | -------------------------------- | ------------------------------------- |
+| Sign in                    | `/login`               | `vp run ping:sign-in`            | `cloudflare-ping sign-in`        | Void's auth (`/api/auth/…`)           |
+| Sign out                   | "Sign out"             | `vp run ping:sign-out`           | `cloudflare-ping sign-out`       | Void's auth                           |
+| Who's signed in            | the top bar            | `vp run ping:whoami`             | `cloudflare-ping whoami`         | Void's auth                           |
+| One Globalping test        | `/`, "Run a probe"     | `vp run probe:test -- --from TH` | `cloudflare-ping test --from TH` | `POST /api/probe` (signed in)         |
+| Start a run and follow it  | `/runs`, "Start a run" | `vp run ping:run -- --from TH`   | `cloudflare-ping run --from TH`  | `POST /api/runs` (signed in)          |
+| The newest runs            | `/runs`                | `vp run ping:runs`               | `cloudflare-ping runs`           | `GET /api/runs`                       |
+| One run and its fetches    | `/runs/<id>`           | `vp run ping:show -- <id>`       | `cloudflare-ping show <id>`      | `GET /api/runs/<id>`                  |
+| A request's Cloudflare log | `/trace/<ray id>`      | `vp run probe:trace -- <ray id>` | `cloudflare-ping trace <ray id>` | `GET /api/trace/<ray id>` (signed in) |
 
-Every command also takes `--json` (the API's answer as it is) and `--site <url>` (another copy
-of the app, such as `vp dev`'s). Each page shows its command. The tasks are in `vite.config.ts`,
-the scripts in `scripts/` (`scripts/api.ts`: what they share).
+`cloudflare-ping help` lists every option. Every command also takes `--json` (the API's answer as
+it is) and `--site <url>` (another copy of the app, such as `vp dev`'s); `vp run cli -- <command>`
+runs any of them from source. Each page shows its command. Signing in is also automatic: the first
+command that needs it shows a link and a code to approve at `/device`.
+
+### The CLI, as a package
+
+The commands are in `cli/` (`cli/main.ts`, one file per command in `cli/commands/`, what they
+share in `cli/api.ts`). In the repo, the `vp run` tasks (`vite.config.ts`) run them from source.
+As the `cloudflare-ping` npm package (`cli/package.json`, `cli/README.md`), `vp run cli:pack`
+builds them into one file, `cli/dist/main.mjs` (about 275 kB; every dependency is inside it, so
+installing it installs nothing else), and `vp run cli:try -- <command>` runs that file.
+
+It isn't published: `cli/package.json` says `"private": true`, which npm refuses to publish (only
+`npm publish --dry-run` skips that check). To publish: remove that line, `vp run cli:pack`, then
+`npm publish` in `cli/`. After that, `npx cloudflare-ping <command>` works on any machine with
+Node 22 or later.
+
+The CLI says which version of the API it was built for (`src/version.ts`), and the app refuses a
+CLI built for another one, telling it to update (`middleware/02.api-version.ts`). Raise
+`API_VERSION` when an API route changes in a way an older CLI can't use, and publish a new
+version of the package with it.
 
 A run sends one Globalping test, from probes in a place, to `/run` for that run; `/run` fetches
 the target from each data centre the probes reach and records every fetch. Reading runs is open;
@@ -49,7 +70,7 @@ starting one, or reading Cloudflare's logs, needs you signed in.
   in.
 - Signing in: `auth.ts` (Void's auth, with Better Auth's device login and bearer plugins). Only
   the addresses in the `ALLOWED_EMAILS` secret can make an account (`env.ts`). The first time a
-  command needs it, it shows a link and a code (`scripts/sign-in.ts`); open it, sign in
+  command needs it, it shows a link and a code (`cli/sign-in.ts`); open it, sign in
   (`/login`), approve the code (`/device`), and the command keeps its token in
   `~/.config/cloudflare-ping/tokens.json`. In CI, set `CLOUDFLARE_PING_TOKEN` instead.
 - `evidence/`: each step's raw results, copied from Globalping before its measurements expire.

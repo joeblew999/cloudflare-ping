@@ -1,7 +1,8 @@
 // The CLI's sign-in (plan step 6): Better Auth's device login. The command shows a link and a
 // code, the user approves it in the browser (pages/device.tsx, signed in), and the command keeps
 // the token it gets, per site, in ~/.config/cloudflare-ping/tokens.json. In CI, where no one is
-// there to approve, CLOUDFLARE_PING_TOKEN is used instead.
+// there to approve, CLOUDFLARE_PING_TOKEN is used instead. `cloudflare-ping sign-in` and
+// `sign-out` (cli/commands/account.ts) do it on purpose.
 import { execFile } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
@@ -38,6 +39,11 @@ async function save(all: Record<string, string>) {
 }
 
 export const fromEnv = (): string | undefined => process.env.CLOUDFLARE_PING_TOKEN || undefined;
+
+// This machine's token for the site if it has one, without signing in.
+export async function tokenIfAny(site: string): Promise<string | undefined> {
+  return fromEnv() ?? (await saved())[site];
+}
 
 // This machine's token for the site, signing in first if it has none.
 export async function token(site: string): Promise<string> {

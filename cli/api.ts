@@ -1,20 +1,25 @@
 // What every command shares: which copy of the app it talks to (`--site`, the deployed one unless
-// given), and calling the app's API signed in (scripts/sign-in.ts), signing in again once if the
-// app no longer takes this machine's token. The commands call the API with Void's typed fetch
-// (`void/client`), the same calls the pages make.
+// given), and calling the app's API, signed in when it must be (cli/sign-in.ts), signing in again
+// once if the app no longer takes this machine's token. The commands call the API with Void's
+// typed fetch (`void/client`), the same calls the pages make, and say the API version they were
+// built for (src/version.ts). A failure prints the same words a page shows.
 import { FetchError } from "void/client";
 import { SITE } from "../src/site";
 import { failure } from "../src/ui/failure";
+import { API_VERSION, API_VERSION_HEADER } from "../src/version";
 import { forget, fromEnv, token } from "./sign-in";
 
 export const siteOf = (given: string | undefined) =>
   (given ?? `https://${SITE}`).replace(/\/+$/, "");
 
-// `vp run` passes its own "--" through.
-export const argv = () => process.argv.slice(2).filter((arg) => arg !== "--");
+// The headers every call sends; with `authorization` when signed in.
+export const headers = (authorization?: string): Record<string, string> => ({
+  [API_VERSION_HEADER]: String(API_VERSION),
+  ...(authorization ? { authorization } : {}),
+});
 
 // When a call fails: the same words a page shows (src/ui/failure.ts), and a failed exit.
-function stop(error: unknown): never {
+export function stop(error: unknown): never {
   console.error(failure(error));
   process.exit(1);
 }
@@ -44,7 +49,7 @@ export async function signedIn<T>(
   }
 }
 
-// A row of a run, as the CLI prints it (ping:run, ping:show).
+// A row of a run, as the CLI prints it (run, show).
 export type Row = {
   colo: string | null;
   targetColo: string | null;

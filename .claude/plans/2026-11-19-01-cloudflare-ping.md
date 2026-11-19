@@ -34,9 +34,12 @@ code (`src/`); each page shows its command; every command takes `--json` and `--
   app's own Cloudflare API token, `CLOUDFLARE_OBSERVABILITY_TOKEN`, not the machine's sign-in).
   Until the map (step 7), `ping:run` takes `--from <place>` (Globalping's place), not `--where`.
 - **The CLI:** commands run with `vp`, the same on the Mac, in CI and in a Claude session. Each is
-  a short script in `scripts/` that calls the API with Void's typed fetch (`fetch` from
+  a short function in `cli/commands/` that calls the API with Void's typed fetch (`fetch` from
   `void/client`, `baseURL` set to the deployed app), so its paths, inputs and answers are checked
-  against the routes.
+  against the routes. The same commands are the `cloudflare-ping` npm package (`cli/`, built by
+  `vp pack` into one file with every dependency inside; the user's call, 2026-11-19: not published
+  yet, so `"private": true`), for `npx cloudflare-ping <command>` anywhere. A CLI built for
+  another API version is told to update (`src/version.ts`, `middleware/02.api-version.ts`).
   - `vp run ping:map` asks the app to build or refresh the map (`POST /api/map`).
   - `vp run ping:run -- --target <site> --where <all | region | codes>` asks the app to start a
     run (`POST /api/runs`). The app puts it on its own queue and does the work on Cloudflare, so it

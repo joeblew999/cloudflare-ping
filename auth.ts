@@ -1,6 +1,6 @@
 // Who may use what spends Globalping tests (plan step 6): Void's auth (Better Auth), with two of
 // Better Auth's own plugins. Device login: the CLI signs in once per machine, approved in the
-// browser (scripts/sign-in.ts, pages/device.tsx). Bearer: the CLI's token is read from its
+// browser (cli/sign-in.ts, pages/device.tsx). Bearer: the CLI's token is read from its
 // Authorization header. Only the addresses in ALLOWED_EMAILS (env.ts) can make an account.
 import { bearer } from "better-auth/plugins/bearer";
 import { deviceAuthorization } from "better-auth/plugins/device-authorization";

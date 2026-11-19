@@ -1,41 +1,43 @@
-// `vp run probe:test -- --from <place> --path <path> [--probes <n>] [--host <target>] [--site <url>]`:
+// `cloudflare-ping test [--from <place>] [--path <path>] [--probes <n>] [--host <target>]`:
 // one Globalping test, sent by the app through its API (`POST /api/probe`): to our probe, or with
 // `--host` straight to an allowed target, as a visitor would. Prints what came back, as it came
-// back. The home page's "Run a probe". `--json` prints the API's answer as it is.
+// back. The home page's "Run a probe".
 import { parseArgs } from "node:util";
 import { fetch } from "void/client";
-import { argv, signedIn, siteOf } from "./api";
+import { headers, signedIn, siteOf } from "../api";
 
-const { values } = parseArgs({
-  args: argv(),
-  options: {
-    from: { type: "string", default: "TH" },
-    path: { type: "string", default: "/where" },
-    probes: { type: "string", default: "1" },
-    host: { type: "string" },
-    site: { type: "string" },
-    json: { type: "boolean", default: false },
-  },
-});
-const site = siteOf(values.site);
-
-const answer = await signedIn(site, (authorization) =>
-  fetch("/api/probe", {
-    method: "POST",
-    baseURL: site,
-    headers: { authorization },
-    body: {
-      from: values.from,
-      path: values.path,
-      probes: Number(values.probes),
-      ...(values.host ? { host: values.host } : {}),
+export async function test(args: Array<string>) {
+  const { values } = parseArgs({
+    args,
+    options: {
+      from: { type: "string", default: "TH" },
+      path: { type: "string", default: "/where" },
+      probes: { type: "string", default: "1" },
+      host: { type: "string" },
+      site: { type: "string" },
+      json: { type: "boolean", default: false },
     },
-  }),
-);
+  });
+  const site = siteOf(values.site);
 
-if (values.json) {
-  console.log(JSON.stringify(answer, null, 2));
-} else {
+  const answer = await signedIn(site, (authorization) =>
+    fetch("/api/probe", {
+      method: "POST",
+      baseURL: site,
+      headers: headers(authorization),
+      body: {
+        from: values.from,
+        path: values.path,
+        probes: Number(values.probes),
+        ...(values.host ? { host: values.host } : {}),
+      },
+    }),
+  );
+
+  if (values.json) {
+    console.log(JSON.stringify(answer, null, 2));
+    return;
+  }
   console.log(
     `Globalping measurement ${answer.measurement}, from ${answer.from}, ${answer.site}${answer.path}\n`,
   );
