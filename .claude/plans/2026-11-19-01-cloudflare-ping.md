@@ -77,6 +77,21 @@ again: nothing after it is built on a guess.
   a run records each result under the data centre it really reached, and a data centre that
   wasn't reached is tried again with another probe the map has for it. The map keeps, per probe,
   how often it reached each data centre, so the steadiest probe is tried first.
+- **What has to be kept, from step 1:** Globalping says probes "don't expose unique IDs", and
+  that measurements expire ("lifetime depends on user type"), so a reused measurement ID is the
+  only handle on a probe, and only until it expires (Globalping's README and API spec, checked
+  2026-11-19). So:
+  - **each probe's newest measurement ID** is kept, and replaced each time the probe is used (a
+    reuse makes a new measurement, with a new ID), so the handle never runs out while the probe is
+    in use; when a probe goes offline, its data centre is found again from the place;
+  - **each probe's own details** (country, city, network, ASN, position), since the ID won't say
+    them once it has expired; and Cloudflare's own view of the same request (`cf.country`,
+    `cf.city`, `cf.asn`), which can differ: Globalping's Pattani probe was Yala to Cloudflare;
+  - **the evidence** for each step: its results, copied from Globalping into `evidence/` (step 1:
+    `evidence/2026-11-19-step-1.json`, 8 measurements, 28 results), since the IDs named here will
+    stop working.
+
+  Until step 5 gives the app a database, these live in the repo; from step 6 the map lives in D1.
 
 ### 2. How much one Globalping test can carry
 

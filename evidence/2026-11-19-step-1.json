@@ -1,0 +1,773 @@
+{
+  "what": "Step 1 of .claude/plans/2026-11-19-01-cloudflare-ping.md: Globalping HTTP tests to https://cloudflare-ping.gedw99.workers.dev/where. Copied from Globalping's API (api.globalping.io/v1/measurements/<id>) on 2026-11-19, because its measurements expire.",
+  "measurements": [
+    {
+      "id": "2cJRvCt2HmjAL4aV500021X0s",
+      "createdAt": "2026-11-19T07:46:03.462Z",
+      "locations": [
+        {
+          "magic": "TH",
+          "limit": 3
+        }
+      ],
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd99551e42ee29-BKK",
+          "body": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Bangkok\",\"asn\":133481}",
+          "timings": {
+            "total": 391,
+            "dns": 39,
+            "tcp": 23,
+            "tls": 35,
+            "firstByte": 293,
+            "download": 1
+          }
+        },
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Pattani",
+            "asn": 138524,
+            "network": "ADVANCED WIRELESS NETWORK COMPANY",
+            "latitude": 6.87,
+            "longitude": 101.25
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9955afc84b9b-BKK",
+          "body": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Yala\",\"asn\":138524}",
+          "timings": {
+            "total": 312,
+            "dns": 89,
+            "tcp": 38,
+            "tls": 46,
+            "firstByte": 139,
+            "download": 0
+          }
+        },
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Phuket",
+            "asn": 138524,
+            "network": "ADVANCED WIRELESS NETWORK COMPANY",
+            "latitude": 7.89,
+            "longitude": 98.4
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd99551cf2ee2d-BKK",
+          "body": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Phuket\",\"asn\":138524}",
+          "timings": {
+            "total": 391,
+            "dns": 37,
+            "tcp": 24,
+            "tls": 34,
+            "firstByte": 296,
+            "download": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "251SNuhfewnCNvuGc00021X0v",
+      "createdAt": "2026-11-19T07:49:23.260Z",
+      "locations": [
+        {
+          "magic": "TH",
+          "limit": 3
+        }
+      ],
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9e37cf9c7b42-BKK",
+          "body": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Bangkok\",\"asn\":133481}",
+          "timings": {
+            "total": 507,
+            "dns": 348,
+            "tcp": 23,
+            "tls": 37,
+            "firstByte": 98,
+            "download": 1
+          }
+        },
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Pattani",
+            "asn": 138524,
+            "network": "ADVANCED WIRELESS NETWORK COMPANY",
+            "latitude": 6.87,
+            "longitude": 101.25
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9e35fb7758d4-BKK",
+          "body": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Yala\",\"asn\":138524}",
+          "timings": {
+            "total": 178,
+            "dns": 22,
+            "tcp": 38,
+            "tls": 45,
+            "firstByte": 72,
+            "download": 1
+          }
+        },
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Phuket",
+            "asn": 138524,
+            "network": "ADVANCED WIRELESS NETWORK COMPANY",
+            "latitude": 7.89,
+            "longitude": 98.4
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9e35cde4f6d7-BKK",
+          "body": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Phuket\",\"asn\":138524}",
+          "timings": {
+            "total": 158,
+            "dns": 33,
+            "tcp": 26,
+            "tls": 32,
+            "firstByte": 66,
+            "download": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "24UmIuDrwDoulM6OE00021X0v",
+      "createdAt": "2026-11-19T07:49:26.433Z",
+      "locations": [
+        {
+          "magic": "TH",
+          "limit": 3
+        }
+      ],
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9e497ea41206-BKK",
+          "body": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Bangkok\",\"asn\":133481}",
+          "timings": {
+            "total": 128,
+            "dns": 13,
+            "tcp": 24,
+            "tls": 31,
+            "firstByte": 59,
+            "download": 1
+          }
+        },
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Pattani",
+            "asn": 138524,
+            "network": "ADVANCED WIRELESS NETWORK COMPANY",
+            "latitude": 6.87,
+            "longitude": 101.25
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9e4a0c065776-BKK",
+          "body": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Yala\",\"asn\":138524}",
+          "timings": {
+            "total": 222,
+            "dns": 71,
+            "tcp": 35,
+            "tls": 41,
+            "firstByte": 74,
+            "download": 1
+          }
+        },
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Phuket",
+            "asn": 138524,
+            "network": "ADVANCED WIRELESS NETWORK COMPANY",
+            "latitude": 7.89,
+            "longitude": 98.4
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9e4998fa7b42-BKK",
+          "body": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Phuket\",\"asn\":138524}",
+          "timings": {
+            "total": 349,
+            "dns": 37,
+            "tcp": 23,
+            "tls": 29,
+            "firstByte": 259,
+            "download": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "2DDQdJQJ9YNemSvb400021X0v",
+      "createdAt": "2026-11-19T07:49:29.258Z",
+      "locations": [
+        {
+          "magic": "TH",
+          "limit": 3
+        }
+      ],
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9e5b2b967c91-BKK",
+          "body": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Bangkok\",\"asn\":133481}",
+          "timings": {
+            "total": 106,
+            "dns": 13,
+            "tcp": 25,
+            "tls": 34,
+            "firstByte": 34,
+            "download": 0
+          }
+        },
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Pattani",
+            "asn": 138524,
+            "network": "ADVANCED WIRELESS NETWORK COMPANY",
+            "latitude": 6.87,
+            "longitude": 101.25
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9e5b6f545c32-BKK",
+          "body": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Yala\",\"asn\":138524}",
+          "timings": {
+            "total": 146,
+            "dns": 22,
+            "tcp": 36,
+            "tls": 41,
+            "firstByte": 46,
+            "download": 1
+          }
+        },
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Phuket",
+            "asn": 138524,
+            "network": "ADVANCED WIRELESS NETWORK COMPANY",
+            "latitude": 7.89,
+            "longitude": 98.4
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9e5b48510f11-BKK",
+          "body": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Phuket\",\"asn\":138524}",
+          "timings": {
+            "total": 159,
+            "dns": 25,
+            "tcp": 30,
+            "tls": 35,
+            "firstByte": 68,
+            "download": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "2euZuj8SKQSD9O0RN00021X0v",
+      "createdAt": "2026-11-19T07:49:39.020Z",
+      "locations": [
+        {
+          "magic": "Germany",
+          "limit": 4
+        }
+      ],
+      "results": [
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Falkenstein",
+            "asn": 24940,
+            "network": "Hetzner Online",
+            "latitude": 50.48,
+            "longitude": 12.37
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9e975ed7b10b-FRA",
+          "body": "{\"colo\":\"FRA\",\"country\":\"DE\",\"city\":\"Falkenstein\",\"asn\":24940}",
+          "timings": {
+            "total": 183,
+            "dns": 22,
+            "tcp": 17,
+            "tls": 18,
+            "firstByte": 125,
+            "download": 1
+          }
+        },
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Nuremberg",
+            "asn": 24940,
+            "network": "Hetzner Online",
+            "latitude": 49.45,
+            "longitude": 11.08
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9e978a72d140-CDG",
+          "body": "{\"colo\":\"CDG\",\"country\":\"DE\",\"city\":\"Nuremberg\",\"asn\":24940}",
+          "timings": {
+            "total": 276,
+            "dns": 40,
+            "tcp": 15,
+            "tls": 28,
+            "firstByte": 190,
+            "download": 3
+          }
+        },
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Nuremberg",
+            "asn": 197540,
+            "network": "netcup",
+            "latitude": 49.45,
+            "longitude": 11.08
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9e97ac35c4bf-HAM",
+          "body": "{\"colo\":\"HAM\",\"country\":\"DE\",\"city\":\"Nuremberg\",\"asn\":197540}",
+          "timings": {
+            "total": 211,
+            "dns": 37,
+            "tcp": 17,
+            "tls": 32,
+            "firstByte": 123,
+            "download": 2
+          }
+        },
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Frankfurt",
+            "asn": 31898,
+            "network": "Oracle",
+            "latitude": 50.1,
+            "longitude": 8.63
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9e972970dbeb-FRA",
+          "body": "{\"colo\":\"FRA\",\"country\":\"DE\",\"city\":\"Frankfurt am Main\",\"asn\":31898}",
+          "timings": {
+            "total": 164,
+            "dns": 22,
+            "tcp": 1,
+            "tls": 10,
+            "firstByte": 127,
+            "download": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "2O2j3d4BTZJdUSruW00021X0w",
+      "createdAt": "2026-11-19T07:50:02.195Z",
+      "locations": [
+        {
+          "magic": "Germany",
+          "limit": 4
+        }
+      ],
+      "results": [
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Falkenstein",
+            "asn": 24940,
+            "network": "Hetzner Online",
+            "latitude": 50.48,
+            "longitude": 12.37
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9f283f40dfa3-FRA",
+          "body": "{\"colo\":\"FRA\",\"country\":\"DE\",\"city\":\"Falkenstein\",\"asn\":24940}",
+          "timings": {
+            "total": 401,
+            "dns": 22,
+            "tcp": 7,
+            "tls": 37,
+            "firstByte": 334,
+            "download": 1
+          }
+        },
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Nuremberg",
+            "asn": 24940,
+            "network": "Hetzner Online",
+            "latitude": 49.45,
+            "longitude": 11.08
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9f284e70dd47-CDG",
+          "body": "{\"colo\":\"CDG\",\"country\":\"DE\",\"city\":\"Nuremberg\",\"asn\":24940}",
+          "timings": {
+            "total": 171,
+            "dns": 7,
+            "tcp": 16,
+            "tls": 32,
+            "firstByte": 112,
+            "download": 4
+          }
+        },
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Nuremberg",
+            "asn": 197540,
+            "network": "netcup",
+            "latitude": 49.45,
+            "longitude": 11.08
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9f282b1cae5f-FRA",
+          "body": "{\"colo\":\"FRA\",\"country\":\"DE\",\"city\":\"Nuremberg\",\"asn\":197540}",
+          "timings": {
+            "total": 104,
+            "dns": 33,
+            "tcp": 5,
+            "tls": 16,
+            "firstByte": 49,
+            "download": 1
+          }
+        },
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Frankfurt",
+            "asn": 31898,
+            "network": "Oracle",
+            "latitude": 50.1,
+            "longitude": 8.63
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9f282e11d28e-FRA",
+          "body": "{\"colo\":\"FRA\",\"country\":\"DE\",\"city\":\"Frankfurt am Main\",\"asn\":31898}",
+          "timings": {
+            "total": 197,
+            "dns": 1,
+            "tcp": 2,
+            "tls": 15,
+            "firstByte": 178,
+            "download": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "2129MqsbU6dYWToEM00021X0w",
+      "createdAt": "2026-11-19T07:50:25.349Z",
+      "locations": [
+        {
+          "magic": "Germany",
+          "limit": 4
+        }
+      ],
+      "results": [
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Falkenstein",
+            "asn": 24940,
+            "network": "Hetzner Online",
+            "latitude": 50.48,
+            "longitude": 12.37
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9fb8cc3dd9d3-FRA",
+          "body": "{\"colo\":\"FRA\",\"country\":\"DE\",\"city\":\"Falkenstein\",\"asn\":24940}",
+          "timings": {
+            "total": 110,
+            "dns": 23,
+            "tcp": 7,
+            "tls": 17,
+            "firstByte": 58,
+            "download": 5
+          }
+        },
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Nuremberg",
+            "asn": 24940,
+            "network": "Hetzner Online",
+            "latitude": 49.45,
+            "longitude": 11.08
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9fb8fb84f0f0-CDG",
+          "body": "{\"colo\":\"CDG\",\"country\":\"DE\",\"city\":\"Nuremberg\",\"asn\":24940}",
+          "timings": {
+            "total": 236,
+            "dns": 8,
+            "tcp": 14,
+            "tls": 37,
+            "firstByte": 167,
+            "download": 10
+          }
+        },
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Nuremberg",
+            "asn": 197540,
+            "network": "netcup",
+            "latitude": 49.45,
+            "longitude": 11.08
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9fb90935dbf8-FRA",
+          "body": "{\"colo\":\"FRA\",\"country\":\"DE\",\"city\":\"Nuremberg\",\"asn\":197540}",
+          "timings": {
+            "total": 134,
+            "dns": 60,
+            "tcp": 4,
+            "tls": 18,
+            "firstByte": 51,
+            "download": 1
+          }
+        },
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Frankfurt",
+            "asn": 31898,
+            "network": "Oracle",
+            "latitude": 50.1,
+            "longitude": 8.63
+          },
+          "statusCode": 200,
+          "cfRay": "a5cd9fb8986fdc79-FRA",
+          "body": "{\"colo\":\"FRA\",\"country\":\"DE\",\"city\":\"Frankfurt am Main\",\"asn\":31898}",
+          "timings": {
+            "total": 61,
+            "dns": 1,
+            "tcp": 2,
+            "tls": 11,
+            "firstByte": 46,
+            "download": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "2fgMbUoQwEpabBsC300021X0w",
+      "createdAt": "2026-11-19T07:50:48.797Z",
+      "locations": [
+        {
+          "magic": "Germany",
+          "limit": 4
+        }
+      ],
+      "results": [
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Falkenstein",
+            "asn": 24940,
+            "network": "Hetzner Online",
+            "latitude": 50.48,
+            "longitude": 12.37
+          },
+          "statusCode": 200,
+          "cfRay": "a5cda04b4ea1d2f2-FRA",
+          "body": "{\"colo\":\"FRA\",\"country\":\"DE\",\"city\":\"Falkenstein\",\"asn\":24940}",
+          "timings": {
+            "total": 87,
+            "dns": 21,
+            "tcp": 7,
+            "tls": 12,
+            "firstByte": 46,
+            "download": 1
+          }
+        },
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Nuremberg",
+            "asn": 24940,
+            "network": "Hetzner Online",
+            "latitude": 49.45,
+            "longitude": 11.08
+          },
+          "statusCode": 200,
+          "cfRay": "a5cda04b9af458fb-CDG",
+          "body": "{\"colo\":\"CDG\",\"country\":\"DE\",\"city\":\"Nuremberg\",\"asn\":24940}",
+          "timings": {
+            "total": 240,
+            "dns": 27,
+            "tcp": 17,
+            "tls": 33,
+            "firstByte": 160,
+            "download": 3
+          }
+        },
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Nuremberg",
+            "asn": 197540,
+            "network": "netcup",
+            "latitude": 49.45,
+            "longitude": 11.08
+          },
+          "statusCode": 200,
+          "cfRay": "a5cda04b6c42bba4-FRA",
+          "body": "{\"colo\":\"FRA\",\"country\":\"DE\",\"city\":\"Nuremberg\",\"asn\":197540}",
+          "timings": {
+            "total": 247,
+            "dns": 30,
+            "tcp": 4,
+            "tls": 20,
+            "firstByte": 192,
+            "download": 1
+          }
+        },
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Frankfurt",
+            "asn": 31898,
+            "network": "Oracle",
+            "latitude": 50.1,
+            "longitude": 8.63
+          },
+          "statusCode": 200,
+          "cfRay": "a5cda04b2f9dbb44-FRA",
+          "body": "{\"colo\":\"FRA\",\"country\":\"DE\",\"city\":\"Frankfurt am Main\",\"asn\":31898}",
+          "timings": {
+            "total": 229,
+            "dns": 2,
+            "tcp": 1,
+            "tls": 14,
+            "firstByte": 211,
+            "download": 1
+          }
+        }
+      ]
+    }
+  ]
+}
