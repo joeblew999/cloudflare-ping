@@ -34,7 +34,8 @@ export default defineConfig({
   },
   run: {
     tasks: {
-      // One Globalping test to the deployed probe, and what came back (scripts/probe-test.ts).
+      // One Globalping test to the deployed probe, sent by the app through its API (`POST
+      // /api/probe`), and what came back (scripts/probe-test.ts). Signs in first if needed.
       "probe:test": { command: "vpx scripts/probe-test.ts", cache: false },
     },
   },

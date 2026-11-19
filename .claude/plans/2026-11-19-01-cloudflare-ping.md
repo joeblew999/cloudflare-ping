@@ -1,6 +1,6 @@
 # 2026-11-19-01-cloudflare-ping.md: our own Globalping, run from Cloudflare's data centres
 
-Status: 2026-11-19, approved; step 1 proven. Built on Void 1.10.0 (the user's call, 2026-11-19:
+Status: 2026-11-19, approved; step 1 proven; step 6 built and deployed, ahead of 2 to 5. Built on Void 1.10.0 (the user's call, 2026-11-19:
 1.11.0 was hours old, and a release is installed a day after it comes out), with Vite+ held at
 1.6.0, since Void 1.10.0 writes a Vite+ range that takes 1.7.0, whose core it doesn't match.
 Changed the same day (the user's call): the app's own API is the one way in, for the CLI and the
@@ -48,7 +48,7 @@ pages are both thin callers of it, so everything the app does lives in one place
 - While proving it (steps 1 to 5), before the API exists: `vp run probe:test -- --from <place>
   --path <path>` sends one Globalping test to the deployed probe and prints what came back (data
   centre, `cf-ray`, timings, the answer); `vp run probe:trace -- <ray id>` prints Cloudflare's
-  trace of that request (`cf o11y telemetry query`). From step 6, `probe:test` goes through the
+  trace of that request (`cf o11y telemetry query`). Since step 6, `probe:test` goes through the
   API too.
 
 ## How it's built: one proof at a time
@@ -152,6 +152,32 @@ again: nothing after it is built on a guess.
   sends them, since a Worker's requests leave from addresses Cloudflare shares with others. If
   not: a Globalping account's token (500 tests an hour), set with `void secret put`.
 - If device login doesn't work under Void: API keys on the Mac too.
+- **Result so far, 2026-11-19: built and deployed; not yet proven with an account on the
+  deployed app.** Built ahead of steps 2 to 5 (the user's call: it needs only `/where`). Void's
+  auth with Better Auth 1.7.25's `bearer` and `deviceAuthorization` plugins (`auth.ts`); accounts
+  only for the addresses in `ALLOWED_EMAILS` (`env.ts`; unset, no one); `POST /api/probe`
+  (`routes/api/probe.ts`, step 1's Globalping code moved into `src/globalping.ts`); the `/login`
+  and `/device` pages; the CLI's sign-in, `scripts/sign-in.ts`. Better Auth 1.7 approves a code
+  only once the signed-in page has claimed it (`GET /api/auth/device?user_code=`), so
+  `pages/device.tsx` does that first.
+  - Locally (`vp dev`): not signed in, `POST /api/probe` answered 401; an address not allowed
+    couldn't make an account. `vp run probe:test -- --site http://localhost:5199 --from TH
+    --probes 2` signed in by device login (approved as the allowed account), then answered through
+    the API, Globalping measurement 2qV1nmSd0Zc6FKmOO00021X1t: Bangkok (AIS Fibre) `BKK` and Ubon
+    Ratchathani (ADVANCED WIRELESS NETWORK COMPANY) `BKK`, each matching its `cf-ray`. Run again,
+    it used the kept token, with no sign-in: 2buhLjRfqgzbWoTEQ00021X1u, Falkenstein (Hetzner)
+    `FRA`. Copied into `evidence/2026-11-19-step-6.json`.
+  - Deployed (`void deploy --platform cloudflare`; the first time from a new machine it needs
+    `CLOUDFLARE_WORKERS_SUBDOMAIN=gedw99`; the auth tables' migration applied): not signed in,
+    `POST /api/probe` answers 401; with `ALLOWED_EMAILS` not yet set, no one can make an account;
+    `/device` sends a visitor who isn't signed in to `/login`.
+  - Still to prove: on the deployed app, with the user's own account once `ALLOWED_EMAILS` is set,
+    the same answer through the API; and whether Globalping's free limit holds when the deployed
+    Worker sends the tests (locally they left from the Mac). Not built: the CI API key, since an
+    API key plugin isn't among Better Auth 1.7.25's own; until then, CI can use a device-login
+    token as `CLOUDFLARE_PING_TOKEN`.
+  - For steps 2 to 5: `probe:test` now goes through the API, so a session without a browser shows
+    its link and code, and the user approves it from any browser.
 
 ### 7. The map: which data centres we can reach, and what it costs
 

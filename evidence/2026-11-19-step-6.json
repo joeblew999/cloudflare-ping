@@ -1,0 +1,100 @@
+{
+  "what": "Step 6 of .claude/plans/2026-11-19-01-cloudflare-ping.md: Globalping HTTP tests to https://cloudflare-ping.gedw99.workers.dev/where, sent by the app through POST /api/probe (run locally with vp dev, the CLI signed in by device login). Copied from Globalping's API (api.globalping.io/v1/measurements/<id>) on 2026-11-19, because its measurements expire.",
+  "measurements": [
+    {
+      "id": "2qV1nmSd0Zc6FKmOO00021X1t",
+      "createdAt": "2026-11-19T08:49:39.484Z",
+      "locations": [
+        {
+          "magic": "TH",
+          "limit": 2
+        }
+      ],
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "statusCode": 200,
+          "cfRay": "a5cdf67edb8cfa70-BKK",
+          "body": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Bangkok\",\"asn\":133481}",
+          "timings": {
+            "total": 148,
+            "dns": 13,
+            "tcp": 6,
+            "tls": 30,
+            "firstByte": 95,
+            "download": 4
+          }
+        },
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Ubon Ratchathani",
+            "asn": 138524,
+            "network": "ADVANCED WIRELESS NETWORK COMPANY",
+            "latitude": 15.24,
+            "longitude": 104.85
+          },
+          "statusCode": 200,
+          "cfRay": "a5cdf67f58487b56-BKK",
+          "body": "{\"colo\":\"BKK\",\"country\":\"TH\",\"city\":\"Ubon Ratchathani\",\"asn\":138524}",
+          "timings": {
+            "total": 216,
+            "dns": 39,
+            "tcp": 32,
+            "tls": 40,
+            "firstByte": 104,
+            "download": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "2buhLjRfqgzbWoTEQ00021X1u",
+      "createdAt": "2026-11-19T08:50:01.503Z",
+      "locations": [
+        {
+          "magic": "DE"
+        }
+      ],
+      "results": [
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Falkenstein",
+            "asn": 24940,
+            "network": "Hetzner Online",
+            "latitude": 50.48,
+            "longitude": 12.37
+          },
+          "statusCode": 200,
+          "cfRay": "a5cdf707cbb571dc-FRA",
+          "body": "{\"colo\":\"FRA\",\"country\":\"DE\",\"city\":\"Falkenstein\",\"asn\":24940}",
+          "timings": {
+            "total": 260,
+            "dns": 22,
+            "tcp": 6,
+            "tls": 21,
+            "firstByte": 211,
+            "download": 0
+          }
+        }
+      ]
+    }
+  ]
+}
