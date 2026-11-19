@@ -3,6 +3,8 @@
 Status: 2026-11-19, approved; step 1 proven. Built on Void 1.10.0 (the user's call, 2026-11-19:
 1.11.0 was hours old, and a release is installed a day after it comes out), with Vite+ held at
 1.6.0, since Void 1.10.0 writes a Vite+ range that takes 1.7.0, whose core it doesn't match.
+Changed the same day (the user's call): the app's own API is the one way in, for the CLI and the
+pages alike, behind Void's auth (How we use it; step 6).
 
 ## The idea
 
@@ -19,23 +21,35 @@ region by region, that it behaves as designed (`void-fbtee/plans/read-latency.md
 
 ## How we use it
 
-Through commands run with `vp`, the same on the Mac, in CI and in a Claude session, each using
-the Cloudflare sign-in that machine already has (in CI, the token it already deploys with). The
-app has no sign-in or key of its own.
+One way in: the app's own API (`routes/api/…`, on the deployed Worker). The CLI and the app's web
+pages are both thin callers of it, so everything the app does lives in one place, the Worker.
 
-- While proving it (steps 1 to 5): `vp run probe:test -- --from <place> --path <path>` sends one
-  Globalping test to the deployed probe and prints what came back (data centre, `cf-ray`, timings,
-  the answer); `vp run probe:trace -- <ray id>` prints Cloudflare's trace of that request
-  (`cf o11y telemetry query`).
-- Once it works (steps 6 and 7): `vp run ping:map` builds or refreshes the map; `vp run ping:run --
-  --target <site> --where <all | region | codes>` puts the run on the app's queue (Cloudflare's
-  Queues API, with the machine's sign-in), so the app does the work on Cloudflare and it carries on
-  if the machine stops, then reads the results from the app's database as they arrive: a table by
-  region, or JSON with `--json`.
-- To look around: the app's own pages, the map and each run by region, each request linked to its
-  trace. Read-only, so no sign-in.
-- void-fbtee's deploy job: `vp run ping:run -- --target <the example> --where all --json`, then its
-  global check reads that and the traces.
+- **The CLI:** commands run with `vp`, the same on the Mac, in CI and in a Claude session. Each is
+  a short script in `scripts/` that calls the API with Void's typed fetch (`fetch` from
+  `void/client`, `baseURL` set to the deployed app), so its paths, inputs and answers are checked
+  against the routes.
+  - `vp run ping:map` asks the app to build or refresh the map (`POST /api/map`).
+  - `vp run ping:run -- --target <site> --where <all | region | codes>` asks the app to start a
+    run (`POST /api/runs`). The app puts it on its own queue and does the work on Cloudflare, so it
+    carries on if the machine stops. The command reads the results from the API as they arrive
+    (`GET /api/runs/[id]`): a table by region, or JSON with `--json`.
+- **The web pages:** the map and each run by region, each request linked to its trace, reading
+  the same API.
+- **Who may do what: Void's auth** (Better Auth, built into Void: `void/auth`, set up in
+  `auth.ts`). Reading the map and the runs is open. Anything that spends Globalping tests
+  (`POST /api/map`, `POST /api/runs`) calls `requireAuth(c)`, and answers 401 to anyone not signed
+  in. On the web, sign-in is Void's own (`auth` from `void/client`). The CLI signs in once per
+  machine with Better Auth's device login (it shows a code, the user approves it in the browser,
+  it keeps the token). CI, with no one there to approve, uses a Better Auth API key kept as a CI
+  secret. Void makes the auth secret on deploy; the auth tables are in the app's own D1, in its
+  migrations (`void db generate`).
+- void-fbtee's deploy job: `vp run ping:run -- --target <the example> --where all --json`, with
+  its API key, then its global check reads that and the traces.
+- While proving it (steps 1 to 5), before the API exists: `vp run probe:test -- --from <place>
+  --path <path>` sends one Globalping test to the deployed probe and prints what came back (data
+  centre, `cf-ray`, timings, the answer); `vp run probe:trace -- <ray id>` prints Cloudflare's
+  trace of that request (`cf o11y telemetry query`). From step 6, `probe:test` goes through the
+  API too.
 
 ## How it's built: one proof at a time
 
@@ -91,7 +105,7 @@ again: nothing after it is built on a guess.
     `evidence/2026-11-19-step-1.json`, 8 measurements, 28 results), since the IDs named here will
     stop working.
 
-  Until step 5 gives the app a database, these live in the repo; from step 6 the map lives in D1.
+  Until step 5 gives the app a database, these live in the repo; from step 7 the map lives in D1.
 
 ### 2. How much one Globalping test can carry
 
@@ -124,26 +138,42 @@ again: nothing after it is built on a guess.
 - Proof: the row for a test is there, with the same `cf-ray` the test saw.
 - If it can't: results come back through Globalping's answer, within step 2's limits.
 
-### 6. The map: which data centres we can reach, and what it costs
+### 6. The app's API is the one way in, behind Void's auth
 
-- Build: a command that walks Globalping's probe list (`api.globalping.io/v1/probes`, one free
-  call; 5,582 probes in 124 countries on 2026-11-19) country by country, one `/where` test each,
-  and stores, per probe (the measurement it was found in and its place there, with its country,
+- Build: Void's auth (`auth.ts`, with Better Auth's device login and API key plugins; its tables
+  in the migrations), and one route, `POST /api/probe`: signed in only, it sends one Globalping
+  test to `/where` from the place given, waits for it, and answers what came back, as
+  `probe:test` does now. `probe:test` becomes a caller of it (`fetch` from `void/client`), signing
+  in by device login first.
+- Proof: not signed in, `POST /api/probe` answers 401. Signed in by device login, `vp run
+  probe:test --from TH` gets the same answer through the API as step 1 got from the Mac: `BKK`,
+  matching the `cf-ray`. An API key made for CI does the same.
+- Also found here: whether Globalping's free tests, counted per IP address, last when the Worker
+  sends them, since a Worker's requests leave from addresses Cloudflare shares with others. If
+  not: a Globalping account's token (500 tests an hour), set with `void secret put`.
+- If device login doesn't work under Void: API keys on the Mac too.
+
+### 7. The map: which data centres we can reach, and what it costs
+
+- Build: `POST /api/map` (signed in): the app walks Globalping's probe list
+  (`api.globalping.io/v1/probes`, one free call; 5,582 probes in 124 countries on 2026-11-19)
+  country by country on its queue, one `/where` test each, and stores, per probe (the measurement it was found in and its place there, with its country,
   city and network as reference), the data centres it reached and how often, with the dates. Cloudflare's own list of
   data centres (`www.cloudflarestatus.com/api/v2/components.json`, 348 on 2026-11-19) is stored
-  beside it as reference.
+  beside it as reference. `GET /api/map` answers it; `vp run ping:map` calls both.
 - Proof: how many data centres it reaches, for how many tests. Run again a day later: how many
   rows changed.
 - If too few, or it changes too often: decide then whether it's still worth it.
 
-### 7. A run across many data centres
+### 8. A run across many data centres
 
-- Build: `ping:run`: the run goes on a Void queue, one message per data centre, each sending that
-  one Globalping test; done when every data centre's rows are in, or a sweep marks those that
-  never answered.
+- Build: `POST /api/runs` (signed in): the run goes on a Void queue, one message per data centre,
+  each sending that one Globalping test; done when every data centre's rows are in, or a sweep
+  marks those that never answered. `GET /api/runs/[id]` answers its rows; `vp run ping:run` calls
+  both.
 - Proof: one data centre first, then every mapped one; the run's rows, and its total tests.
 
-### 8. Then, and only then
+### 9. Then, and only then
 
-The pages for the map and the runs, `--json` for void-fbtee's deploy check, and a cron that
-re-maps. Each gets its own step, written here once 7 has passed.
+The pages for the map and the runs (reading the same API), `--json` for void-fbtee's deploy check,
+and a cron that re-maps. Each gets its own step, written here once 8 has passed.
