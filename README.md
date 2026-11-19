@@ -12,6 +12,13 @@ that spends Globalping tests needs you signed in (Void's auth).
 - `routes/where.ts`: answers which Cloudflare data centre it ran in (`/where`). What Globalping's
   probes fetch. `?wait=<ms>` answers after that long and `?size=<bytes>` pads the answer, which
   found Globalping's limits: 15 seconds and 10,000 bytes per test (plan step 2).
+- `routes/run.ts`: `/run?url=<address>` fetches an address from the data centre it ran in and
+  answers what the target said (status, `cf-ray`, cache, time). Only the addresses in
+  `src/targets.ts`. Needs `global_fetch_strictly_public` (`void.config.ts`) to reach other
+  Workers on `gedw99.workers.dev`.
+- `scripts/probe-trace.ts`: `vp run probe:trace -- <ray id>` finds a request in the account's
+  Workers logs (Cloudflare's `cf` CLI, with your Cloudflare sign-in): where it ran, from where,
+  how long.
 - `routes/api/probe.ts`: `POST /api/probe`, signed in only: the app sends one Globalping test to
   `/where` and answers what came back (`src/globalping.ts`).
 - `scripts/probe-test.ts`: `vp run probe:test -- --from <place>` calls `POST /api/probe` and

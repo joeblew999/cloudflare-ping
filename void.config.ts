@@ -17,5 +17,8 @@ export default defineConfig({
   },
   worker: {
     compatibility_date: "2026-02-24",
+    // `/run`'s fetches go out as any visitor's would. Without it, fetching another Worker on
+    // gedw99.workers.dev (void-fbtee's example) answers "error code: 1042" (plan step 3).
+    compatibility_flags: ["global_fetch_strictly_public"],
   },
 });

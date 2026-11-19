@@ -1,6 +1,6 @@
 # 2026-11-19-01-cloudflare-ping.md: our own Globalping, run from Cloudflare's data centres
 
-Status: 2026-11-19, approved; steps 1 and 2 proven; step 6 built and deployed, ahead of 3 to 5. Built on Void 1.10.0 (the user's call, 2026-11-19:
+Status: 2026-11-19, approved; steps 1 to 3 proven; step 6 built and deployed, ahead of 4 and 5. Built on Void 1.10.0 (the user's call, 2026-11-19:
 1.11.0 was hours old, and a release is installed a day after it comes out), with Vite+ held at
 1.6.0, since Void 1.10.0 writes a Vite+ range that takes 1.7.0, whose core it doesn't match.
 Changed the same day (the user's call): the app's own API is the one way in, for the CLI and the
@@ -143,6 +143,29 @@ again: nothing after it is built on a guess.
   example's own trace for that request (it has tracing on) shows it ran in the same data centre
   as our Worker, and which D1 copy answered its reads.
 - If the target runs elsewhere: our probes can't stand in for visitors there; the idea is dead.
+- **Result, 2026-11-19: proven.** `routes/run.ts` fetches an address on the allowed list
+  (`src/targets.ts`: void-fbtee's example only) and answers our data centre first, then the
+  target's status, `cf-ray`, `x-isr-cache`, time and size (and the start of its answer when it
+  isn't OK). `vp run probe:trace -- <ray id>` (`scripts/probe-trace.ts`) finds a request in the
+  account's Workers logs by its ray ID, with Cloudflare's own CLI (`cf o11y telemetry query`;
+  `cf` 1.0.0-beta.26, pinned in the project) and this machine's Cloudflare sign-in.
+  - First, Cloudflare refused: our Worker fetching another Worker on `gedw99.workers.dev` got
+    `error code: 1042`. The `global_fetch_strictly_public` compatibility flag (`void.config.ts`)
+    sends `/run`'s fetches out as any visitor's would; it reached every data centre about 20
+    seconds after the deploy.
+  - Globalping, through the app (`POST /api/probe`), to `/run` fetching the example's
+    `/en-US/events`: from TH (2SlQ1cc1o5Nfd8Whj00021X2Q), Bangkok, Chon Buri and Phuket: our
+    Worker `BKK`, the example's `cf-ray` `BKK`. From DE (2P8DT0j8mqJOTdNMA00021X2Q): Falkenstein
+    `FRA`/`FRA`; Hetzner Nuremberg `CDG`/`CDG` (the probe that reached Paris in step 1, and the
+    example followed it there); netcup Nuremberg `FRA`/`FRA`. And the example's own log for each
+    of the six, found by its ray ID, says the same data centre, for a request from
+    `Cloudflare, Inc.` (our Worker). In `evidence/2026-11-19-step-3.json`. The fetch took 300 to
+    500 ms.
+  - Not answered: which D1 copy answered the example's reads. All six were edge-cache hits
+    (`x-isr-cache: HIT`), so no read reached D1; and the example records no trace spans (its
+    traces are empty, so "it has tracing on" above was wrong). To know, the example needs tracing
+    on (or to report D1's `served_by_region`), and a request that misses its cache: a change in
+    void-fbtee, for when a run needs it.
 
 ### 4. That fetch warms that data centre
 

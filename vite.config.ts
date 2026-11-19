@@ -37,6 +37,8 @@ export default defineConfig({
       // One Globalping test to the deployed probe, sent by the app through its API (`POST
       // /api/probe`), and what came back (scripts/probe-test.ts). Signs in first if needed.
       "probe:test": { command: "vpx scripts/probe-test.ts", cache: false },
+      // Cloudflare's own record of a request, by its ray ID (scripts/probe-trace.ts).
+      "probe:trace": { command: "vpx scripts/probe-trace.ts", cache: false },
     },
   },
 });

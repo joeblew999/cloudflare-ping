@@ -1,0 +1,261 @@
+{
+  "what": "Step 3 of .claude/plans/2026-11-19-01-cloudflare-ping.md: Globalping HTTP tests to /run?url=https://void-fbtee-example.gedw99.workers.dev/en-US/events, sent by the app through POST /api/probe; each answer is our Worker's data centre and what the example answered, with its cf-ray. targetLog is the example's own Workers log for that request, found by the example's ray ID (cf o11y telemetry query, 2026-11-19). Copied from Globalping's API because its measurements expire.",
+  "measurements": [
+    {
+      "id": "2SlQ1cc1o5Nfd8Whj00021X2Q",
+      "createdAt": "2026-11-19T09:22:03.778Z",
+      "locations": [
+        {
+          "magic": "TH",
+          "limit": 3
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/run",
+        "query": "url=https%3A%2F%2Fvoid-fbtee-example.gedw99.workers.dev%2Fen-US%2Fevents"
+      },
+      "results": [
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Bangkok",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.75,
+            "longitude": 100.5
+          },
+          "statusCode": 200,
+          "cfRay": "a5ce25f68bce8152-BKK",
+          "body": "{\"colo\":\"BKK\",\"target\":\"https://void-fbtee-example.gedw99.workers.dev/en-US/events\",\"status\":200,\"ray\":\"a5ce25f789c2fa38-BKK\",\"rayColo\":\"BKK\",\"isr\":\"HIT\",\"ms\":418,\"bytes\":32718}",
+          "timings": {
+            "total": 611,
+            "dns": 16,
+            "tcp": 4,
+            "tls": 13,
+            "firstByte": 577,
+            "download": 1
+          },
+          "targetLog": [
+            {
+              "service": "void-fbtee-example",
+              "message": "GET https://void-fbtee-example.gedw99.workers.dev/en-US/events",
+              "timestamp": 1795080124469,
+              "colo": "BKK",
+              "from": "Cloudflare, Inc.",
+              "outcome": "ok",
+              "wallTimeMs": 230,
+              "cpuTimeMs": 1,
+              "traceId": "82814de091f7b0dd4e9fc9eb099ab06c"
+            }
+          ]
+        },
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Chon Buri",
+            "asn": 133481,
+            "network": "AIS Fibre",
+            "latitude": 13.36,
+            "longitude": 100.98
+          },
+          "statusCode": 200,
+          "cfRay": "a5ce25f76bd158d4-BKK",
+          "body": "{\"colo\":\"BKK\",\"target\":\"https://void-fbtee-example.gedw99.workers.dev/en-US/events\",\"status\":200,\"ray\":\"a5ce25f789c5fa38-BKK\",\"rayColo\":\"BKK\",\"isr\":\"HIT\",\"ms\":414,\"bytes\":32718}",
+          "timings": {
+            "total": 613,
+            "dns": 78,
+            "tcp": 33,
+            "tls": 39,
+            "firstByte": 462,
+            "download": 1
+          },
+          "targetLog": [
+            {
+              "service": "void-fbtee-example",
+              "message": "GET https://void-fbtee-example.gedw99.workers.dev/en-US/events",
+              "timestamp": 1795080124491,
+              "colo": "BKK",
+              "from": "Cloudflare, Inc.",
+              "outcome": "ok",
+              "wallTimeMs": 232,
+              "cpuTimeMs": 3,
+              "traceId": "64d9ea4d25fd68fb0548e26b3af096e6"
+            }
+          ]
+        },
+        {
+          "probe": {
+            "continent": "AS",
+            "region": "South-eastern Asia",
+            "country": "TH",
+            "state": null,
+            "city": "Phuket",
+            "asn": 138524,
+            "network": "Triple T Broadband",
+            "latitude": 7.98,
+            "longitude": 98.37
+          },
+          "statusCode": 200,
+          "cfRay": "a5ce25f7484d5be1-BKK",
+          "body": "{\"colo\":\"BKK\",\"target\":\"https://void-fbtee-example.gedw99.workers.dev/en-US/events\",\"status\":200,\"ray\":\"a5ce25f789c3fa38-BKK\",\"rayColo\":\"BKK\",\"isr\":\"HIT\",\"ms\":415,\"bytes\":32718}",
+          "timings": {
+            "total": 608,
+            "dns": 62,
+            "tcp": 27,
+            "tls": 33,
+            "firstByte": 484,
+            "download": 2
+          },
+          "targetLog": [
+            {
+              "service": "void-fbtee-example",
+              "message": "GET https://void-fbtee-example.gedw99.workers.dev/en-US/events",
+              "timestamp": 1795080124492,
+              "colo": "BKK",
+              "from": "Cloudflare, Inc.",
+              "outcome": "ok",
+              "wallTimeMs": 232,
+              "cpuTimeMs": 1,
+              "traceId": "746fdee32bb4fe4047534e98bee1c548"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2P8DT0j8mqJOTdNMA00021X2Q",
+      "createdAt": "2026-11-19T09:22:05.843Z",
+      "locations": [
+        {
+          "magic": "DE",
+          "limit": 3
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/run",
+        "query": "url=https%3A%2F%2Fvoid-fbtee-example.gedw99.workers.dev%2Fen-US%2Fevents"
+      },
+      "results": [
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Falkenstein",
+            "asn": 24940,
+            "network": "Hetzner Online",
+            "latitude": 50.48,
+            "longitude": 12.37
+          },
+          "statusCode": 200,
+          "cfRay": "a5ce2602ed75284d-FRA",
+          "body": "{\"colo\":\"FRA\",\"target\":\"https://void-fbtee-example.gedw99.workers.dev/en-US/events\",\"status\":200,\"ray\":\"a5ce26050df71db8-FRA\",\"rayColo\":\"FRA\",\"isr\":\"HIT\",\"ms\":306,\"bytes\":32718}",
+          "timings": {
+            "total": 689,
+            "dns": 21,
+            "tcp": 6,
+            "tls": 20,
+            "firstByte": 641,
+            "download": 1
+          },
+          "targetLog": [
+            {
+              "service": "void-fbtee-example",
+              "message": "GET https://void-fbtee-example.gedw99.workers.dev/en-US/events",
+              "timestamp": 1795080126535,
+              "colo": "FRA",
+              "from": "Cloudflare, Inc.",
+              "outcome": "ok",
+              "wallTimeMs": 56,
+              "cpuTimeMs": 4,
+              "traceId": "370e3b9d308b446631cdcdb9e1bd46ef"
+            }
+          ]
+        },
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Nuremberg",
+            "asn": 24940,
+            "network": "Hetzner Online",
+            "latitude": 49.45,
+            "longitude": 11.08
+          },
+          "statusCode": 200,
+          "cfRay": "a5ce26032e7d2a52-CDG",
+          "body": "{\"colo\":\"CDG\",\"target\":\"https://void-fbtee-example.gedw99.workers.dev/en-US/events\",\"status\":200,\"ray\":\"a5ce2604fec82a1d-CDG\",\"rayColo\":\"CDG\",\"isr\":\"HIT\",\"ms\":372,\"bytes\":32718}",
+          "timings": {
+            "total": 746,
+            "dns": 37,
+            "tcp": 16,
+            "tls": 29,
+            "firstByte": 663,
+            "download": 1
+          },
+          "targetLog": [
+            {
+              "service": "void-fbtee-example",
+              "message": "GET https://void-fbtee-example.gedw99.workers.dev/en-US/events",
+              "timestamp": 1795080126589,
+              "colo": "CDG",
+              "from": "Cloudflare, Inc.",
+              "outcome": "ok",
+              "wallTimeMs": 60,
+              "cpuTimeMs": 5,
+              "traceId": "65f6abeba2eb812b97a3a056a96876ca"
+            }
+          ]
+        },
+        {
+          "probe": {
+            "continent": "EU",
+            "region": "Western Europe",
+            "country": "DE",
+            "state": null,
+            "city": "Nuremberg",
+            "asn": 197540,
+            "network": "netcup",
+            "latitude": 49.45,
+            "longitude": 11.08
+          },
+          "statusCode": 200,
+          "cfRay": "a5ce2602ed2fd20a-FRA",
+          "body": "{\"colo\":\"FRA\",\"target\":\"https://void-fbtee-example.gedw99.workers.dev/en-US/events\",\"status\":200,\"ray\":\"a5ce26045b50d3ad-FRA\",\"rayColo\":\"FRA\",\"isr\":\"HIT\",\"ms\":502,\"bytes\":32718}",
+          "timings": {
+            "total": 772,
+            "dns": 17,
+            "tcp": 4,
+            "tls": 27,
+            "firstByte": 723,
+            "download": 1
+          },
+          "targetLog": [
+            {
+              "service": "void-fbtee-example",
+              "message": "GET https://void-fbtee-example.gedw99.workers.dev/en-US/events",
+              "timestamp": 1795080126610,
+              "colo": "FRA",
+              "from": "Cloudflare, Inc.",
+              "outcome": "ok",
+              "wallTimeMs": 26,
+              "cpuTimeMs": 4,
+              "traceId": "663eabb5034e8094dd897ec96bfb7306"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
