@@ -9,6 +9,14 @@ import { index, integer, sqliteTable, text } from "void/schema-d1";
 export const runs = sqliteTable("runs", {
   id: text("id").primaryKey(),
   target: text("target").notNull(),
+  // How it was started (`POST /api/runs`): from where (Globalping's place), with how many probes,
+  // how many fetches each, and whether in the background; and the Globalping measurement that
+  // carried it. Empty for a run made by hand (step 5's).
+  fromPlace: text("from_place"),
+  probes: integer("probes"),
+  repeat: integer("repeat"),
+  background: integer("background", { mode: "boolean" }),
+  measurement: text("measurement"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`),

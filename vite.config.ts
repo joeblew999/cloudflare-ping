@@ -33,12 +33,19 @@ export default defineConfig({
     ignorePatterns: ["**/db/migrations/**", "**/AGENTS.md"],
   },
   run: {
+    // The CLI: one task per thing the app does, each calling the app's API, as its page does (the
+    // README's table). Those that spend Globalping tests sign this machine in first if needed.
     tasks: {
-      // One Globalping test to the deployed probe, sent by the app through its API (`POST
-      // /api/probe`), and what came back (scripts/probe-test.ts). Signs in first if needed.
+      // One Globalping test (`POST /api/probe`): the home page's "Run a probe".
       "probe:test": { command: "vpx scripts/probe-test.ts", cache: false },
-      // Cloudflare's own record of a request, by its ray ID (scripts/probe-trace.ts).
+      // A request's Cloudflare log, by ray ID (`GET /api/trace/<ray>`): /trace/<ray>.
       "probe:trace": { command: "vpx scripts/probe-trace.ts", cache: false },
+      // Start a run and follow its fetches (`POST /api/runs`): the Runs page's "Start a run".
+      "ping:run": { command: "vpx scripts/ping-run.ts", cache: false },
+      // The newest runs (`GET /api/runs`): the Runs page's list.
+      "ping:runs": { command: "vpx scripts/ping-runs.ts", cache: false },
+      // One run and its fetches (`GET /api/runs/<id>`): /runs/<id>.
+      "ping:show": { command: "vpx scripts/ping-show.ts", cache: false },
     },
   },
 });

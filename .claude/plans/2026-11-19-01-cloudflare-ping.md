@@ -23,7 +23,16 @@ region by region, that it behaves as designed (`void-fbtee/plans/read-latency.md
 
 One way in: the app's own API (`routes/api/…`, on the deployed Worker). The CLI and the app's web
 pages are both thin callers of it, so everything the app does lives in one place, the Worker.
+**Each thing the app does is one API route, one page and one command, doing the same** (the
+user's call, 2026-11-19; the README's table): page loaders and API routes share the same server
+code (`src/`); each page shows its command; every command takes `--json` and `--site`.
 
+- **Built so far (2026-11-19):** one Globalping test (`/`, `probe:test`, `POST /api/probe`);
+  start a run and follow it (`/runs`, `ping:run`, `POST /api/runs`), the newest runs (`/runs`,
+  `ping:runs`, `GET /api/runs`), one run (`/runs/<id>`, `ping:show`, `GET /api/runs/<id>`); a
+  request's Cloudflare log (`/trace/<ray>`, `probe:trace`, `GET /api/trace/<ray>`, read with the
+  app's own Cloudflare API token, `CLOUDFLARE_OBSERVABILITY_TOKEN`, not the machine's sign-in).
+  Until the map (step 7), `ping:run` takes `--from <place>` (Globalping's place), not `--where`.
 - **The CLI:** commands run with `vp`, the same on the Mac, in CI and in a Claude session. Each is
   a short script in `scripts/` that calls the API with Void's typed fetch (`fetch` from
   `void/client`, `baseURL` set to the deployed app), so its paths, inputs and answers are checked
@@ -49,7 +58,7 @@ pages are both thin callers of it, so everything the app does lives in one place
   --path <path>` sends one Globalping test to the deployed probe and prints what came back (data
   centre, `cf-ray`, timings, the answer); `vp run probe:trace -- <ray id>` prints Cloudflare's
   trace of that request (`cf o11y telemetry query`). Since step 6, `probe:test` goes through the
-  API too.
+  API too; and since the CLI and pages were matched, `probe:trace` as well (`GET /api/trace`).
 
 ## How it's built: one proof at a time
 

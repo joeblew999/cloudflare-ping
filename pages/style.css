@@ -277,6 +277,7 @@ code {
   }
 
   input,
+  select,
   button {
     font: inherit;
     color: var(--text-h);
@@ -291,9 +292,20 @@ code {
     }
   }
 
-  input {
+  input,
+  select {
     flex: 1;
     min-width: 0;
+  }
+
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    input {
+      flex: none;
+    }
   }
 
   button {
@@ -439,4 +451,104 @@ code {
     right: 0;
     border-right-color: var(--border);
   }
+}
+
+/* Every page's frame (pages/layout.tsx): the same width and lines as the starter's. */
+.nav {
+  width: 1126px;
+  max-width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+  border-inline: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 32px;
+  font-size: 16px;
+
+  a {
+    color: var(--text-h);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--accent);
+    }
+  }
+
+  .brand {
+    font-weight: 500;
+  }
+
+  nav {
+    display: flex;
+    gap: 16px;
+  }
+
+  .who {
+    margin-left: auto;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    padding: 12px 20px;
+
+    .who {
+      margin-left: 0;
+      width: 100%;
+    }
+  }
+}
+
+/* A run's fetches (pages/runs/[id].tsx). */
+.table {
+  overflow-x: auto;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+  }
+
+  th,
+  td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  th {
+    color: var(--text-h);
+    font-weight: 500;
+  }
+
+  a {
+    color: var(--accent);
+  }
+
+  .same {
+    color: var(--accent);
+  }
+
+  .different {
+    color: var(--error);
+  }
+}
+
+.demo-content h1 {
+  font-size: 36px;
+  margin: 0;
+}
+
+.results a,
+.demo-content > p a {
+  color: var(--accent);
+}
+
+.demo-content > .error {
+  color: var(--error);
 }

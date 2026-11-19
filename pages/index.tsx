@@ -1,45 +1,55 @@
-// The app's home page: where this page was served from, and a probe run from the browser through
-// the same API the CLI uses (`POST /api/probe`, plan step 6). Void's starter look (style.css).
+// The app's home page: where this page was served from, and one Globalping test from the browser,
+// through the same API as the CLI's `probe:test` (`POST /api/probe`): to our probe, or to an
+// allowed target directly (`--host`). Void's starter look (style.css).
 import { useState } from "react";
-import { FetchError, auth, fetch } from "void/client";
+import { fetch } from "void/client";
+import { SITE } from "../src/site";
+import { ALLOWED_HOSTS } from "../src/targets";
+import { failure } from "../src/ui/failure";
 import type { Props } from "./index.server";
-import "./style.css";
 
 const REPO = "https://github.com/joeblew999/cloudflare-ping";
 const PLAN = `${REPO}/blob/main/.claude/plans/2026-11-19-01-cloudflare-ping.md`;
+const HOSTS = [SITE, ...ALLOWED_HOSTS];
 
-const runProbe = (body: { from: string; path: string; probes: number }) =>
+const runProbe = (body: { from: string; path: string; probes: number; host?: string }) =>
   fetch("/api/probe", { method: "POST", body });
 type Answer = Awaited<ReturnType<typeof runProbe>>;
 
 export default function HomePage({ email, here }: Props) {
+  const [host, setHost] = useState(SITE);
   const [from, setFrom] = useState("TH");
   const [path, setPath] = useState("/where");
   const [probes, setProbes] = useState("2");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [answer, setAnswer] = useState<Answer | null>(null);
+  const ours = host === SITE;
 
   async function run() {
     setPending(true);
     setError("");
     try {
-      setAnswer(await runProbe({ from, path, probes: Number(probes) }));
+      setAnswer(await runProbe({ from, path, probes: Number(probes), ...(ours ? {} : { host }) }));
     } catch (caught) {
-      if (caught instanceof FetchError) {
-        setError(caught.status === 401 ? "Sign in first." : `Failed (${caught.status}).`);
-      } else {
-        setError(caught instanceof Error ? caught.message : "Failed.");
-      }
+      setError(failure(caught));
     } finally {
       setPending(false);
     }
   }
 
-  async function signOut() {
-    await auth.signOut();
-    window.location.reload();
+  function pickHost(next: string) {
+    setHost(next);
+    setPath(next === SITE ? "/where" : "/en-US/events");
   }
+
+  const command = [
+    "vp run probe:test --",
+    `--from ${from}`,
+    `--path ${path}`,
+    `--probes ${probes}`,
+    ...(ours ? [] : [`--host ${host}`]),
+  ].join(" ");
 
   return (
     <main className="starter">
@@ -54,25 +64,12 @@ export default function HomePage({ email, here }: Props) {
           <div className="starter-description">
             <p>
               Our own Globalping, run from Cloudflare&apos;s data centres. A Globalping probe is
-              only the way in: it reaches our Worker in a data centre, and the Worker says which.
+              only the way in: it reaches our Worker in a data centre, and the Worker says which,
+              and fetches from there.
             </p>
             <p>
               This page was served from <code>{here.colo ?? "?"}</code>
               {here.city ? ` (${here.city}, ${here.country ?? "?"})` : ""}.
-            </p>
-            <p>
-              {email ? (
-                <>
-                  Signed in as {email}.{" "}
-                  <button type="button" className="link-button" onClick={() => void signOut()}>
-                    Sign out
-                  </button>
-                </>
-              ) : (
-                <>
-                  <a href="/login?next=/">Sign in</a> to run probes.
-                </>
-              )}
             </p>
           </div>
         </div>
@@ -82,9 +79,10 @@ export default function HomePage({ email, here }: Props) {
         <div className="demo-content">
           <h2 id="probe-title">Run a probe</h2>
           <p className="note">
-            Globalping sends a test from probes in a place (a country such as TH, a city, a network)
-            to this app&apos;s <code>/where</code>, and each answers the data centre it reached. It
-            spends Globalping tests, so it needs you signed in.
+            One Globalping test, from probes in a place (a country such as TH, a city, a network):
+            to our probe (<code>/where</code> answers the data centre it reached;{" "}
+            <code>/run?url=…</code> fetches a target from there), or straight to a target, as a
+            visitor would. It spends Globalping tests, so it needs you signed in.
           </p>
           <form
             className="form"
@@ -93,6 +91,14 @@ export default function HomePage({ email, here }: Props) {
               void run();
             }}
           >
+            <label htmlFor="host">To</label>
+            <select id="host" value={host} onChange={(event) => pickHost(event.target.value)}>
+              {HOSTS.map((each) => (
+                <option key={each} value={each}>
+                  {each === SITE ? `${each} (our probe)` : each}
+                </option>
+              ))}
+            </select>
             <div className="form-row">
               <label>
                 From
@@ -115,7 +121,7 @@ export default function HomePage({ email, here }: Props) {
               </label>
             </div>
             <button type="submit" disabled={pending || !email}>
-              {pending ? "Waiting for Globalping…" : "Run"}
+              {pending ? "Waiting for Globalping…" : email ? "Run" : "Sign in to run"}
             </button>
             {error ? (
               <p className="error" role="alert">
@@ -123,10 +129,7 @@ export default function HomePage({ email, here }: Props) {
               </p>
             ) : null}
             <p className="note">
-              The same from a terminal:{" "}
-              <code>
-                vp run probe:test -- --from {from} --path {path} --probes {probes}
-              </code>
+              The same from a terminal: <code>{command}</code>
             </p>
           </form>
           {answer ? (
@@ -148,10 +151,15 @@ export default function HomePage({ email, here }: Props) {
                     <span>
                       {each.network} (AS{each.asn})
                     </span>
-                    <small className={each.same ? "same" : "different"}>
-                      {each.same ? "Same" : "Different"}: answered {each.colo || "-"}, cf-ray{" "}
-                      {each.rayColo || "-"} · HTTP {each.httpStatus ?? "-"} · {each.totalMs ?? "-"}{" "}
-                      ms
+                    {each.error ? <small className="different">{each.error}</small> : null}
+                    <small className={each.same || !ours ? "same" : "different"}>
+                      {ours
+                        ? `${each.same ? "Same" : "Different"}: answered ${each.colo || "-"}, `
+                        : ""}
+                      cf-ray {each.ray ? <a href={`/trace/${each.ray}`}>{each.ray}</a> : "-"} · HTTP{" "}
+                      {each.httpStatus ?? "-"} · {each.totalMs ?? "-"} ms
+                      {each.isr ? ` · ${each.isr}` : ""}
+                      {each.truncated ? " · cut off" : ""}
                     </small>
                   </li>
                 ))}
@@ -168,13 +176,13 @@ export default function HomePage({ email, here }: Props) {
           </svg>
           <h2>From a terminal</h2>
           <p>
-            The same API. The first run shows a link and a code; approve it here, and the command
-            stays signed in.
+            Everything here is a command too, through the same API. The first one shows a link and a
+            code; approve it here, and the commands stay signed in.
           </p>
           <ul>
             <li>
               <a href={`${REPO}#readme`} target="_blank" rel="noreferrer">
-                How to use it
+                The commands
               </a>
             </li>
           </ul>
