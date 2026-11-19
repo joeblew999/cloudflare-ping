@@ -62,6 +62,22 @@ again: nothing after it is built on a guess.
   Paris rather than Frankfurt. The answer and the `cf-ray` agreed every time. And it shows the map
   is needed: which data centre a probe reaches isn't where it is.
 
+- **Found by step 1, checked the same day: does the same probe go back to the same data centre?**
+  Globalping sends a test from exactly the probes of an earlier measurement when its ID is given as
+  the location, so a probe can be chosen again. Reused three times, the three Thai probes went to
+  `BKK` every time (measurements 251SNuhfewnCNvuGc00021X0v, 24UmIuDrwDoulM6OE00021X0v,
+  2DDQdJQJ9YNemSvb400021X0v). Four German probes, reused three times (2euZuj8SKQSD9O0RN00021X0v,
+  then 2O2j3d4BTZJdUSruW00021X0w, 2129MqsbU6dYWToEM00021X0w, 2fgMbUoQwEpabBsC300021X0w): Hetzner
+  Falkenstein `FRA` 4 of 4, Hetzner Nuremberg `CDG` 4 of 4, Oracle Frankfurt `FRA` 4 of 4, netcup
+  Nuremberg `HAM` once then `FRA` 3 times.
+- **What that changes:** the map is keyed by the probe itself (the measurement it was found in, and
+  its place in that measurement's results), not by country, city and network, which can't tell two
+  probes on one network apart. And a probe mostly, but not always, goes back to the same data
+  centre. That's not fatal, because every probe's answer says where it actually ran (this step):
+  a run records each result under the data centre it really reached, and a data centre that
+  wasn't reached is tried again with another probe the map has for it. The map keeps, per probe,
+  how often it reached each data centre, so the steadiest probe is tried first.
+
 ### 2. How much one Globalping test can carry
 
 - Build: `/where` takes `?wait=<ms>` (answers after that long) and `?size=<bytes>` (that long an
@@ -97,7 +113,8 @@ again: nothing after it is built on a guess.
 
 - Build: a command that walks Globalping's probe list (`api.globalping.io/v1/probes`, one free
   call; 5,582 probes in 124 countries on 2026-11-19) country by country, one `/where` test each,
-  and stores data centre → probe (country, city, network) with the date. Cloudflare's own list of
+  and stores, per probe (the measurement it was found in and its place there, with its country,
+  city and network as reference), the data centres it reached and how often, with the dates. Cloudflare's own list of
   data centres (`www.cloudflarestatus.com/api/v2/components.json`, 348 on 2026-11-19) is stored
   beside it as reference.
 - Proof: how many data centres it reaches, for how many tests. Run again a day later: how many
