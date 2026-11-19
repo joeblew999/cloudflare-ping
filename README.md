@@ -131,9 +131,11 @@ deploy, one site.
 
 They're written once, from the sources: the guide includes this README's sections (the
 `#region` comments), the command reference is the CLI's own list
-(`packages/shared/src/commands.ts`, read by `apps/docs/cli.data.ts`), the plan page includes the
-plan, and the home page's newest runs come live from the app's API (`GET /api/runs`, with
-`void/client`, as the Runs page and `cloudflare-ping runs` do). The theme is VitePress's, in
+(`packages/shared/src/commands.ts`, read by `apps/docs/cli.data.ts`), and the home page's newest
+runs come live from the app's API (`GET /api/runs`, with `void/client`, as the Runs page and
+`cloudflare-ping runs` do). The plan isn't in them, nor on the app's pages: it's how the repo is
+worked on, not how the app is used; "How it works" tells each step's question, answer and evidence
+for readers. The theme is VitePress's, in
 Void's colours (`apps/docs/.vitepress/theme`, with `packages/theme/brand.css`).
 
 The docs are their own package, and the app's package doesn't depend on VitePress (the app takes

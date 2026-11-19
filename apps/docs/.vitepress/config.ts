@@ -39,10 +39,7 @@ export default defineConfig({
       },
       {
         text: "How it's built",
-        items: [
-          { text: "How it works", link: "/how-it-works" },
-          { text: "The plan", link: "/plan" },
-        ],
+        items: [{ text: "How it works", link: "/how-it-works" }],
       },
     ],
     search: { provider: "local" },

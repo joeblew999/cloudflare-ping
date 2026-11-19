@@ -50,7 +50,9 @@ code (`src/`); each page shows its command; every command takes `--json` and `--
   the same API.
 - **The docs** (the user's call, 2026-11-19): VitePress 2 in `apps/docs`, at `/docs/` on the same
   Worker, built and shipped by the same `void deploy`. Written once, from the sources: the README's
-  sections, the CLI's own command list, this plan, and the newest runs live from the API. Their
+  sections, the CLI's own command list, and the newest runs live from the API. Not this plan
+  (the user's call, 2026-11-19): it's how the repo is worked on, so it stays in the repo, off the
+  docs and the app's pages; "How it works" tells the steps' results for readers. Their
   own package, since Void 1.10.0's Cloudflare deploy won't deploy an app whose package depends on
   VitePress (README, "The docs").
 - **The repo** (the user's call, 2026-11-19): a Vite+ monorepo, as Vite+'s `vite:monorepo`

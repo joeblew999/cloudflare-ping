@@ -28,5 +28,3 @@ copied from Globalping before its measurements expire, and from Cloudflare's own
   Cloudflare's data centres, and how often.
 - **Runs everywhere:** one run that reaches every mapped data centre, each through the steadiest
   probe the map has for it.
-
-The whole plan, with every result as it was written: [The plan](./plan).

@@ -30,8 +30,8 @@ const FEATURES = [
     title: "Proven a step at a time",
     details:
       "Each step's question, its answer, and the raw evidence, from Globalping and from Cloudflare's own logs.",
-    link: "/docs/plan",
-    linkText: "The plan",
+    link: "/docs/how-it-works#what-each-step-proved",
+    linkText: "Each step's answer",
   },
 ];
 
