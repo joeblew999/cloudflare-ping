@@ -429,6 +429,22 @@ Later too (the user, 2026-11-20): two world maps, named by the user.
   each probe's request is drawn from its city to the data centre it landed in, on the live
   stream `/run` already publishes to.
 
+Both everywhere, as every command is: written once (`src/commands/`), in the commands list, so
+`help`, the docs, the skill and the MCP tools follow.
+
+- Coverage (`coverage`, open: it spends no tests):
+  - the page `/coverage` draws the map;
+  - `GET /api/coverage` and the MCP tool `coverage` give its data (each data centre with its
+    coordinates and whether a map run has reached it; each probe city with its coordinates and
+    probe count);
+  - the CLI prints a summary (reached and not yet, by region; probes by country), and `--json`
+    gives the whole data.
+- The probe map:
+  - drawn live on the web;
+  - the CLI follows it, printing each probe's line as it lands, as `run` follows its fetches;
+  - the API and the MCP tool give a snapshot so far, since a tool call is one request and one
+    answer.
+
 Build the coverage map first (standalone, free), then the probe map on it. "The map" on its own
 stays step 7's table: which data centre each place reaches.
 
