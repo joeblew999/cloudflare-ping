@@ -9,12 +9,21 @@ import { asked, commonOptions, headers, printedJson, siteOf } from "../api";
 export async function coverage(args: Array<string>) {
   const { values } = parseArgs({
     args,
-    options: { country: { type: "string" }, ...commonOptions },
+    options: {
+      country: { type: "string" },
+      cities: { type: "boolean", default: false },
+      ...commonOptions,
+    },
   });
   const site = siteOf(values.site);
+  // The same options as the page, the API and the MCP tool. The cities are asked for, as anyone
+  // asks for them: with `--cities`, or because a country's cities are listed below.
   const found = await asked(() =>
     fetch("/api/coverage", {
-      query: values.country ? { country: values.country } : {},
+      query: {
+        ...(values.country ? { country: values.country } : {}),
+        ...(values.cities || values.country ? { cities: "true" } : {}),
+      },
       baseURL: site,
       headers: headers(),
     }),

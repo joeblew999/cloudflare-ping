@@ -15,14 +15,9 @@ import {
   placedDatacentres,
   probes,
 } from "../sources/lists";
-import { coverageFilter } from "./coverage-filter";
+import { coverageOptions } from "./coverage-options";
 
-export { coverageFilter };
-
-export const coverageQuery = coverageFilter.extend({
-  // With every probe city (about 1,100), not only the totals, regions and data centres.
-  cities: z.boolean().optional(),
-});
+export { coverageOptions };
 
 // The country asked for: its code as given, or the country the one place search finds for a name
 // ("japan", "thialand"); none: null.
@@ -34,7 +29,7 @@ async function countryCode(asked: string): Promise<string | null> {
   return found?.magic ?? null;
 }
 
-export async function coverage(options: z.infer<typeof coverageQuery> = {}) {
+export async function coverage(options: z.infer<typeof coverageOptions> = {}) {
   const asked = options.country?.trim() ?? "";
   const code = asked === "" ? undefined : ((await countryCode(asked)) ?? undefined);
   const [
@@ -108,6 +103,6 @@ export async function coverage(options: z.infer<typeof coverageQuery> = {}) {
       .sort((a, b) => a.name.localeCompare(b.name, "en")),
     datacentres: all,
     // The probe cities, the most probes first: the page's and the CLI's "Probes, by city" in order.
-    cities: options.cities === false ? [] : [...cities].sort((a, b) => b.probes - a.probes),
+    cities: options.cities === true ? [...cities].sort((a, b) => b.probes - a.probes) : [],
   };
 }

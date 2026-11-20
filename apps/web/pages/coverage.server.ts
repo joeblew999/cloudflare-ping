@@ -3,15 +3,17 @@
 // (Void's ISR, one page per country); the API isn't (Void never caches /api); both are built from
 // the lists kept in KV (src/sources/lists.ts).
 import { defineHandler, defineHead, type InferProps } from "void";
-import { coverage, coverageFilter } from "../src/commands/coverage";
+import { coverage } from "../src/commands/coverage";
+import { coveragePageOptions } from "../src/commands/coverage-options";
 
 export type Props = InferProps<typeof loader>;
 
 export const revalidate = 300;
 
 // `/coverage?country=TH`: one country, a link people can share.
-export const loader = defineHandler.withValidator({ query: coverageFilter })((_c, { query }) =>
-  coverage(query),
+// The page draws every probe city, so it asks for them, as any caller would.
+export const loader = defineHandler.withValidator({ query: coveragePageOptions })((_c, { query }) =>
+  coverage({ ...query, cities: true }),
 );
 
 export const head = defineHead<Props>((_c, props) => ({

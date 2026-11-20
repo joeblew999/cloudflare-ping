@@ -8,7 +8,7 @@ import { CfWorkerJsonSchemaValidator } from "@modelcontextprotocol/server/valida
 import { COMMAND_LIST } from "@cloudflare-ping/shared/commands";
 import { API_VERSION } from "@cloudflare-ping/shared/version";
 import type { CommandContext } from "./commands/context";
-import { coverage, coverageQuery } from "./commands/coverage";
+import { coverage, coverageOptions } from "./commands/coverage";
 import { limits } from "./commands/limits";
 import { map, mapQuery, remap, remapInput } from "./commands/map";
 import { places, placesQuery } from "./commands/places";
@@ -82,11 +82,11 @@ export function mcpServer(context: CommandContext) {
       // Without its ~1,100 probe cities unless asked: the totals, regions and data centres answer
       // most questions.
       description: `${describe("coverage")} Pass country (a code, as places gives it: TH) for one country; cities: true for every probe city too.`,
-      inputSchema: coverageQuery,
+      inputSchema: coverageOptions,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
-    // Everything the agent asked (its country too), with the cities only when asked.
-    (query) => answer(() => coverage({ ...query, cities: query.cities ?? false })),
+    // Exactly what the agent asked: the same options and defaults as the API and the page.
+    (query) => answer(() => coverage(query)),
   );
   server.registerTool(
     "places",
