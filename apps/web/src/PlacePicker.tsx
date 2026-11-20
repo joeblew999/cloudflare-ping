@@ -96,9 +96,13 @@ function useSuggestions(options: {
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       setActive((at) => Math.max(at - 1, 0));
-    } else if (event.key === "Enter" && shown && flat[active]) {
+    } else if (event.key === "Enter") {
+      // Enter in a place box picks; it never submits the form, which on the test, run and map
+      // forms would spend Globalping tests (a map with no countries picked is every country).
       event.preventDefault();
-      pick(flat[active]);
+      if (shown && flat[active]) {
+        pick(flat[active]);
+      }
     } else if (event.key === "Escape" && shown) {
       event.preventDefault();
       setOpen(false);
