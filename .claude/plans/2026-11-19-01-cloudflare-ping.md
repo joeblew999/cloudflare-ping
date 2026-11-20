@@ -373,6 +373,11 @@ again: nothing after it is built on a guess.
 The pages for the map and the runs (reading the same API), `--json` for void-fbtee's deploy check,
 and a cron that re-maps. Each gets its own step, written here once 8 has passed.
 
+Later too (the user, 2026-11-20): the map drawn on a real world map. A page with the data centres
+reached as dots, lines from the probe places that reach them, and the ones not reached greyed
+out. Its data is there: Globalping gives each probe's latitude and longitude, and Cloudflare's
+list (`datacentres`) names each data centre's city.
+
 Later, after 8 (the user, 2026-11-20: "something we should do later"): other users. Each user's
 own allowed targets; their own read-only Cloudflare token (one per user, "Workers Observability
 Read" on their accounts, which covers every Worker on them), kept encrypted per user; and which
