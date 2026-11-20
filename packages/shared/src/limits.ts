@@ -2,6 +2,8 @@
 // `limits` both show.
 export type Limits = {
   colo: string | null;
+  // The address the Worker went out from, which Globalping counts without a token.
+  address: string | null;
   globalping: {
     by: string;
     limit: number;
@@ -12,10 +14,10 @@ export type Limits = {
   };
 };
 
-export function limitsLine({ colo, globalping }: Limits) {
+export function limitsLine({ colo, address, globalping }: Limits) {
   const whose = globalping.token
     ? "the app's Globalping account"
-    : `the Worker's address in ${colo ?? "?"} (no Globalping token set)`;
+    : `the Worker's address${address ? ` ${address}` : ""} in ${colo ?? "?"}, shared with other Cloudflare customers (no Globalping token set)`;
   const reset =
     globalping.resetSeconds > 0 ? `, more in ${Math.ceil(globalping.resetSeconds / 60)} min` : "";
   const credits = globalping.credits === null ? "" : `, and ${globalping.credits} credits`;

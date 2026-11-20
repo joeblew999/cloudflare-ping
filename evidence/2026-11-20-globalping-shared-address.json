@@ -1,0 +1,269 @@
+{
+  "what": "Who used up the Worker's Globalping allowance (0 of 250 seen 2026-11-20 03:29 UTC). GET /api/limits on the deployed Worker, 30 times over 2 minutes from 03:37 UTC: the address the Worker went out from (api64.ipify.org, not on Cloudflare) and what Globalping (api.globalping.io, behind Fastly) said was left for the address it counted.",
+  "ourTests": {
+    "source": "The Worker's own logs (Workers Logs, every request since logging was turned on 2026-11-19 11:27 UTC), every POST: the only routes that spend a Globalping test are POST /api/probe, POST /api/runs and the pages' actions, all behind requireAuth.",
+    "tests": [
+      {
+        "at": "2026-11-19T11:28:23Z",
+        "route": "POST /api/runs"
+      },
+      {
+        "at": "2026-11-19T12:27:17Z",
+        "route": "POST /api/runs"
+      },
+      {
+        "at": "2026-11-20T00:52:25Z",
+        "route": "POST /api/probe"
+      }
+    ],
+    "accounts": "One account in the deployed database (the allowed address), one credential, four sessions, all its own, from two Thai ISPs."
+  },
+  "outboundAddress": {
+    "address": "2a06:98c0:3600::103",
+    "owner": "Cloudflare, Inc. (CLOUDFLARENET-EU, AS13335): the address Cloudflare's Workers send outbound requests from, shared by every customer's Workers",
+    "seenIn": "30 of 30 requests"
+  },
+  "samples": [
+    {
+      "at": "03:37:27",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:37:31",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 179,
+      "limit": 250,
+      "resetSeconds": 3165
+    },
+    {
+      "at": "03:37:37",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 178,
+      "limit": 250,
+      "resetSeconds": 3161
+    },
+    {
+      "at": "03:37:40",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:37:44",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:37:47",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 178,
+      "limit": 250,
+      "resetSeconds": 3148
+    },
+    {
+      "at": "03:37:51",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:37:55",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:37:58",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 178,
+      "limit": 250,
+      "resetSeconds": 3137
+    },
+    {
+      "at": "03:38:02",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 216,
+      "limit": 250,
+      "resetSeconds": 1888
+    },
+    {
+      "at": "03:38:05",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:38:09",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:38:12",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:38:16",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 124,
+      "limit": 250,
+      "resetSeconds": 419
+    },
+    {
+      "at": "03:38:19",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:38:23",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:38:26",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:38:30",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:38:33",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 177,
+      "limit": 250,
+      "resetSeconds": 3102
+    },
+    {
+      "at": "03:38:37",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:38:40",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:38:44",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 123,
+      "limit": 250,
+      "resetSeconds": 391
+    },
+    {
+      "at": "03:38:47",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 177,
+      "limit": 250,
+      "resetSeconds": 3088
+    },
+    {
+      "at": "03:38:51",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:38:54",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 216,
+      "limit": 250,
+      "resetSeconds": 1836
+    },
+    {
+      "at": "03:38:58",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 249,
+      "limit": 250,
+      "resetSeconds": 3462
+    },
+    {
+      "at": "03:39:01",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:39:05",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 249,
+      "limit": 250,
+      "resetSeconds": 3455
+    },
+    {
+      "at": "03:39:09",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 250,
+      "limit": 250,
+      "resetSeconds": 0
+    },
+    {
+      "at": "03:39:12",
+      "colo": "BKK",
+      "address": "2a06:98c0:3600::103",
+      "remaining": 177,
+      "limit": 250,
+      "resetSeconds": 3063
+    }
+  ],
+  "reading": "At least five different Globalping allowances in two minutes, each with its own reset clock (179/3165s falling to 177; 216/1888s; 124/419s falling to 123; 249/3462s; and fresh ones at 250). Two fell while this app made no test. Globalping counts unauthenticated tests by the address it sees, and from a Worker that is one of Cloudflare's shared outbound addresses, so other Cloudflare customers' Workers calling Globalping use the same allowance. Who they are can't be known: Globalping only sees the address."
+}

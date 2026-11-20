@@ -285,6 +285,24 @@ again: nothing after it is built on a guess.
     token as `CLOUDFLARE_PING_TOKEN`.
   - For steps 2 to 5: `probe:test` now goes through the API, so a session without a browser shows
     its link and code, and the user approves it from any browser.
+  - **Answered 2026-11-20: Globalping's free limit does not hold from the Worker.** Root cause of
+    the "0 of 250" the user saw, and of the run that failed on 2026-11-19
+    (`evidence/2026-11-20-globalping-shared-address.json`):
+    - Not this app. The Worker's logs hold every POST since logging was turned on; it spent
+      three tests (19 Nov 11:28 and 12:27, 20 Nov 00:52), all from the one account. The
+      database holds one account (the allowed address) and four sessions, all its own, from two
+      Thai ISPs.
+    - The Worker goes out from `2a06:98c0:3600::103`, Cloudflare's own address (AS13335), the
+      same in 30 of 30 requests. It's shared by every customer's Workers.
+    - Globalping (behind Fastly) counts free tests by the address it sees. From the Worker it
+      reported at least five allowances in two minutes, each with its own reset clock, two of
+      them falling while this app made none. Other Cloudflare customers' Workers calling
+      Globalping use the same allowances. Who they are can't be known: Globalping only sees the
+      address.
+    - Fix: a Globalping account token (`GLOBALPING_TOKEN`, which the user sets), so tests count
+      by account, not by a shared address.
+    - `limits` (the Runs page, `cloudflare-ping limits`, `GET /api/limits`) now names the address
+      it went out from, so this can be seen at any time.
 
 ### 7. The map: which data centres we can reach, and what it costs
 

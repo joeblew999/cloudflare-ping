@@ -6,8 +6,14 @@ const globalping = { by: "ip", limit: 250, remaining: 248, resetSeconds: 0, cred
 
 describe("limitsLine", () => {
   it("names the Worker's address when the app has no token", () => {
-    expect(limitsLine({ colo: "BKK", globalping: { ...globalping, token: false } })).toBe(
-      "Globalping: 248 of 250 tests left this hour for the Worker's address in BKK (no Globalping token set).",
+    expect(
+      limitsLine({
+        colo: "BKK",
+        address: "203.0.113.7",
+        globalping: { ...globalping, token: false },
+      }),
+    ).toBe(
+      "Globalping: 248 of 250 tests left this hour for the Worker's address 203.0.113.7 in BKK, shared with other Cloudflare customers (no Globalping token set).",
     );
   });
 
@@ -15,6 +21,7 @@ describe("limitsLine", () => {
     expect(
       limitsLine({
         colo: "BKK",
+        address: null,
         globalping: { ...globalping, token: true, limit: 500, resetSeconds: 1500, credits: 40 },
       }),
     ).toBe(
