@@ -32,8 +32,15 @@ package is published; until then, `node <this repo>/packages/cli/dist/main.mjs i
 - puts the app's skill (`cloudflare-ping`: when to use the app, and how) in each agent's skills
   folder: linked when the package is installed in the project, copied otherwise;
 - adds a short cloudflare-ping section to `AGENTS.md`, leaving the rest as it is;
-- adds the MCP server to Claude Code's `.mcp.json`, and prints each other agent's way to add it
-  (opencode: `opencode mcp add cloudflare-ping --url …`).
+- adds the MCP server to each agent's own project config, in that agent's format, keeping what's
+  there: Claude Code (`.mcp.json`), Cursor (`.cursor/mcp.json`), VS Code and Copilot
+  (`.vscode/mcp.json`), Codex (`.codex/config.toml`), Gemini CLI (`.gemini/settings.json`),
+  opencode (`opencode.json`), Amp, Roo Code, Kilo Code, Continue, Trae, Junie, Kiro and Qwen Code.
+  Windsurf, Cline, Goose and Zencoder only take MCP servers in their global settings, which
+  `init` doesn't touch: it prints what to add.
+
+Claude Code and opencode are tried with the real agents; the others follow each agent's own docs.
+If one doesn't connect, tell us which agent and what it said.
 
 Running it again changes nothing that's already there.
 
