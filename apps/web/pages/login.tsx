@@ -1,10 +1,11 @@
-// Sign in, or make an account (only for the addresses the app allows: auth.ts).
+// Sign in, or make an account (only for the addresses the app allows: auth.ts). Also the first
+// page of an MCP client's sign-in: then signing in carries on to /consent (src/auth-client.ts).
 import { useState } from "react";
-import { auth } from "void/client";
+import { oauthAuth } from "../src/auth-client";
 import type { Props } from "./login.server";
 import "./style.css";
 
-export default function LoginPage({ next }: Props) {
+export default function LoginPage({ next, forAgent }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,14 +16,17 @@ export default function LoginPage({ next }: Props) {
     setError("");
     const result =
       kind === "sign-in"
-        ? await auth.signIn.email({ email, password })
-        : await auth.signUp.email({ email, password, name: email });
-    setPending(false);
+        ? await oauthAuth.signIn.email({ email, password })
+        : await oauthAuth.signUp.email({ email, password, name: email });
     if (result.error) {
+      setPending(false);
       setError(result.error.message ?? `Failed (${result.error.status})`);
       return;
     }
-    window.location.assign(next);
+    // For an agent, the answer says where its sign-in goes next, and the client goes there.
+    if (!forAgent) {
+      window.location.assign(next);
+    }
   }
 
   return (
@@ -32,6 +36,12 @@ export default function LoginPage({ next }: Props) {
         To run probes from <a href="/">cloudflare-ping</a>, and to approve a command&apos;s sign-in.
         Only the addresses this app allows can make an account.
       </p>
+      {forAgent ? (
+        <div className="custom-block tip">
+          <p className="custom-block-title">An agent is asking to use cloudflare-ping</p>
+          <p>Sign in, and you&apos;ll be asked whether to allow it, as you.</p>
+        </div>
+      ) : null}
       <form
         className="form"
         onSubmit={(event) => {

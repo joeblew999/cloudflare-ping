@@ -34,6 +34,7 @@ export default defineConfig({
         items: [
           { text: "What you can do", link: "/guide" },
           { text: "Commands", link: "/cli" },
+          { text: "From an AI agent", link: "/agents" },
         ],
       },
       {

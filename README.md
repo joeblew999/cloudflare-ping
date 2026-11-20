@@ -15,7 +15,7 @@ with its docs at https://cloudflare-ping.gedw99.workers.dev/docs/ (`apps/docs`, 
 Each thing the app does is written once (`apps/web/src/commands/`) and reached three ways: its
 API route (`apps/web/routes/api/`), which the command calls with Void's typed fetch
 (`void/client`); its web page, whose loader and action (Void's page actions) run the same code;
-and, next, its MCP tool. So the web and the terminal do the same things, the same way.
+and its MCP tool, which runs the same code too. So the web and the terminal do the same things, the same way.
 
 | What                       | Web page               | In the repo                      | Anywhere (the package)           | API                                   | MCP tool |
 | -------------------------- | ---------------------- | -------------------------------- | -------------------------------- | ------------------------------------- | -------- |
@@ -32,7 +32,8 @@ and, next, its MCP tool. So the web and the terminal do the same things, the sam
 `cloudflare-ping help` lists every option. Every command also takes `--json` (the API's answer as
 it is) and `--site <url>` (another copy of the app, such as `vp dev`'s); `vp run cli -- <command>`
 runs any of them from source. Each page shows its command. An agent can use the same things as MCP
-tools at `/mcp` (for now signed in with the CLI's token; plan 2026-11-20-01). Signing in is also automatic: the first
+tools at `/mcp`, signing itself in through your browser (the docs: "From an AI agent"):
+`claude mcp add --transport http cloudflare-ping https://cloudflare-ping.gedw99.workers.dev/mcp`. Signing in is also automatic: the first
 command that needs it shows a link and a code to approve at `/device`.
 
 A run sends one Globalping test, from probes in a place, to `/run` for that run; `/run` fetches
@@ -109,7 +110,7 @@ In `apps/web`:
   `gedw99.workers.dev`.
 - `src/commands/`: each thing the app does, written once: what it takes (one zod schema, which
   the route's and the page action's `withValidator` both use) and what it does. The API routes,
-  the pages' loaders and actions, and (next) the MCP tools run these; tests beside them
+  the pages' loaders and actions, and the MCP tools (`src/mcp.ts`, served at `/mcp`) run these; tests beside them
   (`vp test`).
 - `src/globalping.ts`, `src/runs.ts`, `src/trace.ts`: what the commands use. `src/trace.ts`
   reads the account's Workers logs with the app's own Cloudflare API token

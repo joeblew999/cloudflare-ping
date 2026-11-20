@@ -10,6 +10,9 @@
     "logs": "void project logs"
   },
   "dependencies": {
+    "@better-auth/cimd": "catalog:",
+    "@better-auth/mcp": "catalog:",
+    "@better-auth/oauth-provider": "catalog:",
     "@cfworker/json-schema": "catalog:",
     "@cloudflare-ping/shared": "workspace:*",
     "@cloudflare-ping/theme": "workspace:*",
