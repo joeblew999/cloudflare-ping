@@ -7,24 +7,33 @@
 // Narrowed to one country (plan 2026-11-20-04, "One filter, everywhere"): its data centres (by the
 // country their airport is in) and its probe cities. Nothing given: everything.
 import { z } from "zod";
-import { countries as countryNames, placedDatacentres, probes } from "../sources/lists";
+import { HTTPException } from "hono/http-exception";
+import { searchPlaces } from "@cloudflare-ping/shared/places";
+import { allPlaces, countries as countryNames, placedDatacentres, probes } from "../sources/lists";
+import { coverageFilter } from "./coverage-filter";
 
-// The filter, the same for the page's address, the API's query, the CLI's `--country` and the MCP
-// tool: a country's code, as the place picker gives it ("TH").
-export const coverageFilter = z.object({
-  country: z
-    .string()
-    .regex(/^[A-Za-z]{2}$/)
-    .optional(),
-});
+export { coverageFilter };
 
 export const coverageQuery = coverageFilter.extend({
   // With every probe city (about 1,100), not only the totals, regions and data centres.
   cities: z.boolean().optional(),
 });
 
+// The country asked for: its code as given, or the country the one place search finds for a name
+// ("japan", "thialand").
+async function countryCode(asked: string): Promise<string> {
+  if (/^[A-Za-z]{2}$/.test(asked)) {
+    return asked.toUpperCase();
+  }
+  const [found] = searchPlaces(await allPlaces(), { q: asked, kinds: ["country"], limit: 1 });
+  if (!found) {
+    throw new HTTPException(404, { message: `No country with probes matches "${asked}"` });
+  }
+  return found.magic;
+}
+
 export async function coverage(options: z.infer<typeof coverageQuery> = {}) {
-  const code = options.country?.toUpperCase();
+  const code = options.country ? await countryCode(options.country) : undefined;
   const [
     {
       data: { cities: everyCity },

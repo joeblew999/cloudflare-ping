@@ -207,6 +207,7 @@ export function PlacePicker({
           required={required}
           onFocus={load}
           onChange={(event) => {
+            load();
             onChange(event.target.value);
             typed();
           }}
@@ -283,6 +284,7 @@ export function PlaceChips({
             placeholder={value.length === 0 ? placeholder : ""}
             onFocus={load}
             onChange={(event) => {
+              load();
               setQuery(event.target.value);
               typed();
             }}
