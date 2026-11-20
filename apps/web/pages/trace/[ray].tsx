@@ -34,20 +34,33 @@ export default function TracePage({ ray, setUp, logs, error }: Props) {
       {setUp && !error && logs.length === 0 ? (
         <p>No Workers log for this request in the last day (logs can take a minute).</p>
       ) : null}
-      <ul className="results">
-        {logs.map((log) => (
-          <li key={`${log.at}-${log.service ?? ""}`} className="card">
-            <p className="card-title">{log.service ?? "?"}</p>
-            <p className="card-details">{log.message ?? ""}</p>
+      {logs
+        .filter((log) => log.kind === "request")
+        .map((log) => (
+          <div key={`${log.at}-${log.service ?? ""}`} className="card">
+            <p className="card-title">The {log.service ?? "?"} Worker</p>
             <p className="card-details">
-              Ran in {log.colo ?? "?"}, for a request from {log.from ?? "?"} ({log.city ?? "?"},{" "}
-              {log.country ?? "?"}) · {log.outcome ?? "?"} · {log.wallTimeMs ?? "?"} ms wall,{" "}
-              {log.cpuTimeMs ?? "?"} ms CPU ·{" "}
+              Ran in <strong>{log.colo ?? "?"}</strong>, for a request from {log.from ?? "?"} (
+              {log.city ?? "?"}, {log.country ?? "?"}) · {log.outcome ?? "?"} ·{" "}
+              {log.wallTimeMs ?? "?"} ms wall, {log.cpuTimeMs ?? "?"} ms CPU ·{" "}
               {log.spans > 0 ? `${log.spans} trace spans` : "no trace spans"} · {log.at}
             </p>
-          </li>
+          </div>
         ))}
-      </ul>
+      {logs.some((log) => log.kind === "line") ? (
+        <>
+          <h2>What it logged</h2>
+          <ul>
+            {logs
+              .filter((log) => log.kind === "line")
+              .map((log) => (
+                <li key={`${log.at}-${log.message ?? ""}`}>
+                  <code>{log.at.slice(11, 23)}</code> {log.message ?? ""}
+                </li>
+              ))}
+          </ul>
+        </>
+      ) : null}
     </main>
   );
 }

@@ -39,15 +39,21 @@ export async function trace(args: Array<string>) {
   } else if (found.logs.length === 0) {
     console.log(`No Workers log for ray ${found.ray} in the last ${found.minutes} minutes.`);
   } else {
-    for (const log of found.logs) {
-      console.log(`${log.at}  ${log.service ?? "?"}`);
-      console.log(`  ${log.message ?? ""}`);
+    for (const log of found.logs.filter((each) => each.kind === "request")) {
+      console.log(`${log.at}  the ${log.service ?? "?"} Worker`);
       console.log(
         `  ran in ${log.colo ?? "?"}, for a request from ${log.from ?? "?"} (${log.city ?? "?"}, ${log.country ?? "?"})`,
       );
       console.log(
-        `  ${log.outcome ?? "?"}, ${log.wallTimeMs ?? "?"} ms wall, ${log.cpuTimeMs ?? "?"} ms CPU, ${log.spans > 0 ? `${log.spans} trace spans` : "no trace spans"}\n`,
+        `  ${log.outcome ?? "?"}, ${log.wallTimeMs ?? "?"} ms wall, ${log.cpuTimeMs ?? "?"} ms CPU, ${log.spans > 0 ? `${log.spans} trace spans` : "no trace spans"}`,
       );
+    }
+    const lines = found.logs.filter((each) => each.kind === "line");
+    if (lines.length > 0) {
+      console.log("\nWhat it logged:");
+      for (const line of lines) {
+        console.log(`  ${line.at.slice(11, 23)}  ${line.message ?? ""}`);
+      }
     }
   }
 }
