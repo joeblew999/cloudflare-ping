@@ -180,8 +180,9 @@ export async function makeTest(options: ProbeOptions) {
 }
 
 // A test's result, waiting while it's in progress: each second for the first ten, then each
-// three, for at most about 90 seconds (under the 50 requests a Worker on the Free plan may make
-// for one request). Reading a measurement spends no test.
+// three, for at most about 90 seconds (37 reads: Globalping finishes well inside that, and the
+// account is on Workers Paid, so a request has subrequests to spare). Reading a measurement
+// spends no test.
 export async function testResult(id: string, token: string | undefined) {
   const headers = headersFor(token);
   let done = measurement.parse({ status: "in-progress", results: [] });

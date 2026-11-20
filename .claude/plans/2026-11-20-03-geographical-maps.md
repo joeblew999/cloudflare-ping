@@ -54,27 +54,38 @@ Things to know about source 2 (found 2026-11-20):
 - Cloudflare keeps a data centre's code when its airport closes or renames. Berlin's is still
   TXL, years after Tegel closed in 2020.
 
-## What's made at dev time, what's fetched, what's kept
+## Everything at runtime, held only in Void's caches
 
-|     | What                             | When                                                                             | How it's held                                                                                                                                                                                                     |
-| --- | -------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Data centre coordinates          | dev time: `vp run datacentres:places`, re-run when Cloudflare opens data centres | a JSON file in `packages/shared` (~10 KB), bundled into the Worker                                                                                                                                                |
-| 2   | The world outline                | dev time: a task run once (coastlines don't change)                              | an SVG path already projected, in `apps/web/public` (tens of KB)                                                                                                                                                  |
-| 3   | Globalping's probe list          | live                                                                             | 2.3 MB of JSON (267 KB compressed, 2026-11-20): too much to read on every view, given about 10 ms of CPU a request on Workers Free. Reduced to its ~1,100 cities (tens of KB) and cached for an hour (Void's ISR) |
-| 4   | Cloudflare's data centre list    | live                                                                             | 177 KB; cached the same way. The map already copies it into `datacentres` at each map's start                                                                                                                     |
-| 5   | Which data centres we've reached | as map runs happen                                                               | the map's `sightings` (D1), as now                                                                                                                                                                                |
+The account is on Workers Paid (checked 2026-11-20: recent requests use up to 48 ms of CPU), so
+reading big lists at runtime is fine. There's no dev-time step and no generated file. Each
+source is fetched by the Worker and reduced to what the map needs. The result is kept in Void's
+caching layers:
 
-Coordinates become positions on the picture in the browser, by the same projection the outline
-was drawn with. Nothing else is held.
+| Source                                               | Reduced to                                                     | Kept in                          |
+| ---------------------------------------------------- | -------------------------------------------------------------- | -------------------------------- |
+| Globalping's probe list (2.3 MB, 267 KB compressed)  | ~1,100 cities: country, city, coordinates, probes              | KV (`void/kv`), an hour          |
+| Cloudflare's data centre list (177 KB)               | ~345 data centres: code, place, region ("Place - (CODE)" only) | KV, a day                        |
+| OurAirports' `airports.csv` (12.7 MB, public domain) | the ~345 codes' coordinates and two-letter country             | KV, a week (airports don't move) |
+| Our map runs                                         | the data centres reached                                       | D1 (`sightings`), as now         |
 
-## The data centre coordinates file
+- **KV, the data layer, serves everyone,** signed in or not, since Void's page cache skips any
+  request with a cookie.
+- **ISR (`export const revalidate`) caches `/coverage` and `GET /api/coverage` whole** for
+  visitors who aren't signed in, refreshing in the background. When a map run finishes,
+  `revalidate({ paths })` from `void/isr` purges them, so newly reached data centres show at
+  once.
+- **The world outline is a static asset** in `apps/web/public`: a picture, like the icon, not
+  data.
+- **The client router (`cacheFor`)** reuses pages already loaded.
+- **The cold case:** the first read after a cache expires waits for its source; the airport
+  file is the slowest, about a second, once a week. A map's start warms all three. If a source
+  is down and its cache is empty, the page says what's missing rather than drawing it wrong.
 
-- A repo task, `vp run datacentres:places`, reads source 2 and the OurAirports dataset (12 MB,
-  read only by the task, never by the app). It writes `packages/shared/src/datacentre-places.json`
-  (code → latitude, longitude; about 345 entries, about 10 KB). The file is committed, so a re-run's
-  diff shows which data centres Cloudflare added, renamed or dropped.
-- Five codes aren't in the airport data. They're placed by hand, in the script, from
-  Cloudflare's own names:
+## Placing data centres
+
+- Cloudflare's codes are airport codes, so a data centre's place is its airport's coordinates,
+  read at runtime from OurAirports (above). On 2026-11-20 that placed 340 of the 345.
+- Five codes aren't in the airport data. They're placed in code, from Cloudflare's own names:
 
   | Code | Cloudflare's name   |
   | ---- | ------------------- |
@@ -84,48 +95,17 @@ was drawn with. Nothing else is held.
   | QWJ  | Americana, Brazil   |
   | JXG  | Jiaxing, China      |
 
-- The task names any new code it can't place, so it can go in the hand-placed list.
-- Each entry keeps the airport's two-letter country code beside its coordinates (the five get
-  theirs by hand). Globalping names a probe's country the same way ("TH"), while Cloudflare
-  writes it out ("Thailand", or not at all: "Hong Kong"). So probes and data centres line up by
-  country with no name-matching, which the by-country and by-region summaries need.
+- A new code the airport data can't place is logged, and drawn as unplaced on the page, so it
+  can join those five.
+- Each data centre keeps its airport's two-letter country code (the five get theirs in code).
+  Globalping names a probe's country the same way ("TH"), while Cloudflare writes it out
+  ("Thailand", or not at all: "Hong Kong"). So probes and data centres line up by country with
+  no name-matching, which the by-country and by-region summaries need.
 - Not solved, on purpose:
   - City names: Globalping's and Cloudflare's don't always match, and the map works from
     coordinates.
   - The airport's position against the data centre's own building: an airport can be tens of
     kilometres out (Narita is about 60 km from Tokyo), which a world map can't show.
-- Counted 2026-11-20: 345 data centres; 340 placed by the airport data, five by hand.
-
-## Everywhere, as every command is
-
-Written once (`src/commands/`), in the commands list, so `help`, the docs, the skill and the MCP
-tools follow.
-
-**`coverage`**: open, since it spends no tests.
-
-| Where                          | What                                                                                                                                             |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Page `/coverage`               | the world map: data centre dots, probe dots by city (sized by probes), reached and not yet in different colours                                  |
-| `GET /api/coverage`            | its data: each data centre (code, place, coordinates, reached by the newest map or not) and each probe city (country, city, coordinates, probes) |
-| CLI `cloudflare-ping coverage` | a summary (data centres reached and not yet, by region; probes by country); `--json` gives the whole data                                        |
-| MCP tool `coverage`            | the data, so an agent can answer "which data centres in Africa haven't we reached?"                                                              |
-
-**The probe map**, which needs a run or a map going:
-
-| Where                          | What                                                                                                                                                 |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A run's page, a map run's page | drawn live: a line from each probe's city to the data centre it landed in, as it lands; one that lands where the map didn't expect drawn differently |
-| CLI (`run`, `remap`)           | follows it, printing each probe's line as it lands, as `run` follows its fetches                                                                     |
-| API, MCP                       | a snapshot of where the probes landed so far, since a tool call is one request and one answer                                                        |
-
-It uses the live stream `/run` already publishes each fetch to (`void/live`), with the probe's
-place added. A map run publishes each sighting the same way.
-
-## The world itself
-
-A plain SVG with a public-domain world outline (Natural Earth's land, at a small scale), in the
-app's own look and in light and dark. No map service, no tiles, no API key, and no request from
-the visitor's browser to anyone but the app.
 
 ## Built on what the map already has
 
@@ -145,10 +125,11 @@ So the reading, the checking and the fixes live in one place.
 
 ## Build order, each proved before the next
 
-0. **The two lists lifted out of `src/map.ts`** (above). Proof: the map works as before (a
+0. **The two lists lifted out of `src/map.ts`, cached in KV** (above). Proof: the map works as before (a
    local map by country and by city), and its tests pass.
-1. **The coordinates file and its task.** Proof: about 345 codes placed, the five by hand, BKK
-   at Bangkok; a second run makes no diff.
+1. **Placing data centres at runtime.** OurAirports read and reduced, cached a week, plus the
+   five in code. Proof: 345 placed, BKK at Bangkok, TXL at Berlin; a second read comes from the
+   cache.
 2. **`coverage`, everywhere but the page.**
    - The command, `GET /api/coverage`, the CLI and the MCP tool.
    - Proof: its counts match the two live lists (345 data centres; probe cities as Globalping
