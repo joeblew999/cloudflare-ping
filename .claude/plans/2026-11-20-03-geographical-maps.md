@@ -78,7 +78,8 @@ caching layers:
   data.
 - **The client router (`cacheFor`)** reuses pages already loaded.
 - **The cold case:** the first read after a cache expires waits for its source; the airport
-  file is the slowest, about a second, once a week. A map's start warms all three. If a source
+  file is the slowest, about a second, read only when a new code needs it. A map's start warms
+  all three. If a source
   is down and its cache is empty, the page says what's missing rather than drawing it wrong.
 
 ### When each cache is refreshed
@@ -96,8 +97,15 @@ caching layers:
   with the data centre our Worker ran in (`/where`'s colo, or the end of its `cf-ray`). A code the
   cached list doesn't have means Cloudflare has opened a data centre, so the list is read again
   at once. Otherwise it expires in a day, since Cloudflare doesn't announce new ones.
-- **The airport places: by the data.** A code in Cloudflare's list that the cached airport
-  places don't cover is read again from the airport file at once. The week is only a backstop.
+- **The airport places: by the data, and only that.** A code in Cloudflare's list that the
+  cached airport places don't cover is read again from the airport file at once. No time limit:
+  airports don't move, and new codes only come through Cloudflare's list (the user,
+  2026-11-20, asked why time was needed).
+- **Why the other two keep a time limit:** tests only see places we test. They never show a
+  probe going offline, or a data centre closing, where no test goes. Nor do they show a new data
+  centre no probe lands in. Without time, the coverage page could show what no longer exists,
+  or miss what's new, for weeks: the wrong thing for a page that proves coverage. An hour for
+  Globalping and a day for Cloudflare cost one free call each.
 - **So one test can refresh all three, in a chain:** a probe lands in an unknown data centre;
   Cloudflare's list is re-read, and has it; the airport places don't cover it, so the airport
   file is re-read and places it; the coverage page is cleared, and shows it.
