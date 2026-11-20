@@ -92,11 +92,15 @@ caching layers:
   - Places no test touches give no signal, so the cached list also expires in an hour.
   - A probe landing in a different data centre than the map said is a change to our map, not
     to Globalping's list. Acting on that is "runs feed the map", held in the main plan.
-- **Cloudflare's data centre list: by time**, since it can't tell us.
-  - It expires in a day: Cloudflare doesn't announce new data centres on its status page.
+- **Cloudflare's data centre list: by what our tests see, then by time.** Every test answers
+  with the data centre our Worker ran in (`/where`'s colo, or the end of its `cf-ray`). A code the
+  cached list doesn't have means Cloudflare has opened a data centre, so the list is read again
+  at once. Otherwise it expires in a day, since Cloudflare doesn't announce new ones.
 - **The airport places: by the data.** A code in Cloudflare's list that the cached airport
-  places don't cover means a new data centre: the airport file is read again at once. The week
-  is only a backstop.
+  places don't cover is read again from the airport file at once. The week is only a backstop.
+- **So one test can refresh all three, in a chain:** a probe lands in an unknown data centre;
+  Cloudflare's list is re-read, and has it; the airport places don't cover it, so the airport
+  file is re-read and places it; the coverage page is cleared, and shows it.
 - **Our data: by our own event.** A map run that finishes clears `/coverage` and
   `/api/coverage` from ISR (`revalidate({ paths })`), so its reach shows at once. Deploys clear
   ISR too, and a TTL backs it up for the lists the page also shows.
