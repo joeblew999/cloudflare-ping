@@ -71,7 +71,8 @@ caching layers:
 
 - **KV, the data layer, serves everyone,** signed in or not, since Void's page cache skips any
   request with a cookie.
-- **ISR (`export const revalidate`) caches `/coverage` and `GET /api/coverage` whole** for
+- **ISR (`export const revalidate`) caches the `/coverage` page whole** (not `GET /api/coverage`:
+  Void never caches paths under `/api`, guide/edge/revalidation.md) for
   five minutes for visitors who aren't signed in, refreshing in the background. Nothing purges
   them: a change in a list shows within those five minutes.
 - **The world outline is a static asset** in `apps/web/public`: a picture, like the icon, not

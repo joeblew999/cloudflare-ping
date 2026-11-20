@@ -1,6 +1,7 @@
 // The geographical coverage map (plan 2026-11-20-03): src/commands/coverage.ts, as
-// `GET /api/coverage`. Cached whole for five minutes for visitors who aren't signed in (Void's
-// ISR); its lists are kept in KV (src/sources/lists.ts).
+// `GET /api/coverage`. The page is cached whole for five minutes for visitors who aren't signed in
+// (Void's ISR, one page per country); the API isn't (Void never caches /api); both are built from
+// the lists kept in KV (src/sources/lists.ts).
 import { defineHandler, defineHead, type InferProps } from "void";
 import { coverage, coverageFilter } from "../src/commands/coverage";
 
