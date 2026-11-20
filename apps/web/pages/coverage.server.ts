@@ -3,17 +3,17 @@
 // (Void's ISR, one page per country); the API isn't (Void never caches /api); both are built from
 // the lists kept in KV (src/sources/lists.ts).
 import { defineHandler, defineHead, type InferProps } from "void";
-import { coverage } from "../src/commands/coverage";
-import { coveragePageOptions } from "../src/commands/coverage-options";
+import { coverageHeadline } from "@cloudflare-ping/shared/coverage";
+import { coverage, coverageOptions } from "../src/commands/coverage";
 
 export type Props = InferProps<typeof loader>;
 
 export const revalidate = 300;
 
-// `/coverage?place=Europe`, `?place=TH`: one place, a link people can share (`?country=TH`, its
-// old name, still works). The page draws every probe city, so it asks for them, as any caller would.
-export const loader = defineHandler.withValidator({ query: coveragePageOptions })((_c, { query }) =>
-  coverage({ place: query.place ?? query.country, cities: true }),
+// `/coverage?place=Europe`, `?place=TH`: one place, a link people can share. The same options and
+// defaults as the API, the CLI and the MCP tool.
+export const loader = defineHandler.withValidator({ query: coverageOptions })((_c, { query }) =>
+  coverage(query),
 );
 
 export const head = defineHead<Props>((_c, props) => ({
@@ -21,9 +21,7 @@ export const head = defineHead<Props>((_c, props) => ({
   meta: [
     {
       name: "description",
-      content: props.place
-        ? `${props.place.name}: ${props.totals.datacentres} of Cloudflare's data centres, and ${props.totals.probes} probes in ${props.totals.cities} ${props.totals.cities === 1 ? "city" : "cities"}.`
-        : `All ${props.totals.datacentres} of Cloudflare's data centres, and ${props.totals.probes} probes in ${props.totals.countries} countries.`,
+      content: coverageHeadline(props),
     },
   ],
 }));

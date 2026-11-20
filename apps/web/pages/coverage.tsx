@@ -5,6 +5,12 @@
 // place, a continent or a country, with the place picker (`?place=Europe`, `?place=TH`), as the
 // API, CLI and MCP tool are.
 import { Link, useRouter } from "@void/react";
+import {
+  coverageGaps,
+  coverageHeadline,
+  coverageUnmatched,
+  count,
+} from "@cloudflare-ping/shared/coverage";
 import { asArgument } from "@cloudflare-ping/shared/places";
 import { useState } from "react";
 import { routeUrl } from "void/routes";
@@ -47,39 +53,21 @@ export default function CoveragePage({
   const router = useRouter();
   // A country gets its own view; a continent, the every-country table of just its countries.
   const country = place?.kind === "country" ? place : null;
-  // How the place is written in the box, an address and a command: a country by its code, a
-  // continent by its name (two-letter continent codes clash with countries': SA, AS).
-  const asked = place ? (place.kind === "country" ? place.code : place.name) : "";
-  const [wanted, setWanted] = useState(asked);
+  const [wanted, setWanted] = useState(place?.value ?? "");
   const shown = 8;
-  // Thousands with commas, the same on the server and in the browser.
-  const count = (n: number) => n.toLocaleString("en-US");
   return (
     <main className="content wide vp-doc">
       <h1>Coverage</h1>
-      {place ? (
-        <p className="lead">
-          {place.name}
-          {country ? ` (${country.code})` : ""}: <strong>{totals.datacentres}</strong> of
-          Cloudflare&apos;s data centres, and <strong>{count(totals.probes)}</strong> probes in{" "}
-          {count(totals.cities)} {totals.cities === 1 ? "city" : "cities"}
-          {country ? "" : ` in ${totals.countries} countries`}.{" "}
+      <p className="lead">
+        {coverageHeadline({ place, totals })}{" "}
+        {place ? (
           <Link href="/coverage">Everywhere</Link>
-        </p>
-      ) : (
-        <p className="lead">
-          All <strong>{totals.datacentres}</strong> of Cloudflare&apos;s data centres, and{" "}
-          <strong>{count(totals.probes)}</strong> probes in {count(totals.cities)} cities in{" "}
-          {totals.countries} countries: everywhere the app can run, and everywhere it can be reached
-          from.
-        </p>
-      )}
+        ) : (
+          "Everywhere the app can run, and everywhere it can be reached from."
+        )}
+      </p>
 
-      {unmatched ? (
-        <p className="different">
-          No continent or country with probes matches &ldquo;{unmatched}&rdquo;: here is everywhere.
-        </p>
-      ) : null}
+      {unmatched ? <p className="different">{coverageUnmatched(unmatched)}</p> : null}
 
       <form method="get" action="/coverage" className="form coverage-filter">
         <label>
@@ -114,7 +102,7 @@ export default function CoveragePage({
 
       <p>
         The same from a terminal:{" "}
-        <code>cloudflare-ping coverage{place ? ` --place ${asArgument(asked)}` : ""}</code>
+        <code>cloudflare-ping coverage{place ? ` --place ${asArgument(place.value)}` : ""}</code>
       </p>
 
       {country ? (
@@ -165,12 +153,7 @@ export default function CoveragePage({
       ) : (
         <section>
           <h2>{place ? `Every country in ${place.name}` : "Every country"}</h2>
-          <p>
-            {totals.bothCountries} countries have both data centres and probes.{" "}
-            {totals.noProbeCountries} have data centres but no probe, so they can only be tested
-            from a neighbour; {totals.noDatacentreCountries} have probes but no data centre, so
-            their visitors are served from another country&apos;s.
-          </p>
+          <p>{coverageGaps({ place, totals })}</p>
           <div className="table-scroll">
             <table className="countries">
               <thead>

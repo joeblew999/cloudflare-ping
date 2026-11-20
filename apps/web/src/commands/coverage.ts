@@ -20,7 +20,9 @@ import { coverageOptions } from "./coverage-options";
 
 export { coverageOptions };
 
-type Narrowed = { kind: "continent" | "country"; code: string; name: string };
+// The place it's narrowed to, and how it's written to ask for it again (`value`: a country by its
+// code, a continent by its name), for an address, a command or a box.
+type Narrowed = { kind: "continent" | "country"; code: string; name: string; value: string };
 
 export async function coverage(options: z.infer<typeof coverageOptions> = {}) {
   const [
@@ -52,7 +54,7 @@ export async function coverage(options: z.infer<typeof coverageOptions> = {}) {
   if (/^[A-Za-z]{2}$/.test(asked)) {
     const code = asked.toUpperCase();
     place = everyCode.includes(code)
-      ? { kind: "country", code, name: known[code]?.name ?? code }
+      ? { kind: "country", code, name: known[code]?.name ?? code, value: code }
       : null;
   } else if (asked !== "") {
     const [found] = searchPlaces(await allPlaces(), {
@@ -66,6 +68,8 @@ export async function coverage(options: z.infer<typeof coverageOptions> = {}) {
         kind: found.kind === "continent" ? "continent" : "country",
         code,
         name: found.name,
+        // What's written to ask for it again: a continent by its name, a country by its code.
+        value: found.kind === "continent" ? found.name : code,
       };
     }
   }
@@ -124,7 +128,7 @@ export async function coverage(options: z.infer<typeof coverageOptions> = {}) {
       }))
       .sort((a, b) => a.name.localeCompare(b.name, "en")),
     datacentres: all,
-    // The probe cities, the most probes first: the page's and the CLI's "Probes, by city" in order.
-    cities: options.cities === true ? [...cities].sort((a, b) => b.probes - a.probes) : [],
+    // The probe cities, the most probes first; left out only when asked (`cities: false`).
+    cities: options.cities === false ? [] : [...cities].sort((a, b) => b.probes - a.probes),
   };
 }

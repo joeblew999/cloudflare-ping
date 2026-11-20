@@ -79,24 +79,22 @@ export function mcpServer(context: CommandContext) {
   server.registerTool(
     "coverage",
     {
-      // Without its ~1,100 probe cities unless asked: the totals, regions and data centres answer
-      // most questions.
-      description: `${describe("coverage")} Pass place for one continent or country (a country by its code, TH; a continent by its name, Europe); cities: true for every probe city too.`,
+      description: `${describe("coverage")} Pass place for one continent or country (a country by its code, TH; a continent by its name, Europe). Every probe city comes with it; pass cities: false for just the totals and the table.`,
       inputSchema: coverageOptions,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
-    // Exactly what the agent asked: the same options and defaults as the API and the page.
+    // Exactly what the agent asked: the same options and defaults as the API, the page and the CLI.
     (query) => answer(() => coverage(query)),
   );
   server.registerTool(
     "places",
     {
-      // At most 50 unless asked: an agent wants the best few, not all ~3,000.
-      description: `${describe("places")} At most 50, best first, unless limit is given.`,
+      description: `${describe("places")} With something typed (q), the best 50, unless limit is given; with nothing, every place.`,
       inputSchema: placesQuery,
       annotations: reads,
     },
-    (query) => answer(() => places({ ...query, limit: query.limit ?? 50 })),
+    // Exactly what the agent asked: the same options and defaults as the API, the picker and the CLI.
+    (query) => answer(() => places(query)),
   );
   server.registerTool(
     "map",

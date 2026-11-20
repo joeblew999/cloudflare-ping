@@ -83,7 +83,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
   },
   {
     name: "coverage",
-    use: "coverage [--place Europe|TH] [--cities]",
+    use: "coverage [--place Europe|TH] [--no-cities]",
     about: "All of Cloudflare's data centres and every probe, on a world map",
     page: "/coverage",
     api: "GET /api/coverage",

@@ -12,16 +12,18 @@ export const placesQuery = z.object({
   q: z.string().max(100).optional(),
   // Only places of this kind.
   kind: z.enum(PLACE_KINDS).optional(),
-  // At most this many, best first.
+  // At most this many, best first. Not given: with something typed, the best 50; with nothing,
+  // every place (what the picker loads).
   limit: z.coerce.number().int().min(1).max(10_000).optional(),
 });
 
 export async function places(query: z.infer<typeof placesQuery> = {}) {
+  const typed = (query.q ?? "").trim() !== "";
   return {
     places: searchPlaces(await allPlaces(), {
       q: query.q,
       kinds: query.kind ? [query.kind] : undefined,
-      limit: query.limit,
+      limit: query.limit ?? (typed ? 50 : undefined),
     }),
   };
 }
