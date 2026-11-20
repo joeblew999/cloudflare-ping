@@ -1,7 +1,10 @@
 # 2026-11-20-03-geographical-maps.md: the geographical coverage map and the geographical probe map
 
-Status: 2026-11-20, written from the user's own words; not started (it was on the main plan's
-"later" list). Names are the user's:
+Status: 2026-11-20, written from the user's own words; **held** for usefulness. Its free layers
+repeat what Cloudflare (its network map) and Globalping (its probe map) already show. The only
+layer that is ours, the data centres reached, needs a real map run first, and a "by region"
+table on `/map` and in `cloudflare-ping map` gives most of that for little work. Build this only
+if that table turns out not to be enough. Names are the user's:
 
 - **The geographical coverage map**: where we can reach. Cloudflare's data centres and
   Globalping's probes on a world map, and which data centres our map runs have reached.
