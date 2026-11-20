@@ -20,11 +20,30 @@ function Quota({ limits }: Pick<Props, "limits">) {
 export default function RunsPage({ email, runs, limits }: Props) {
   const [host, setHost] = useState(DEFAULT.hostname);
   const [path, setPath] = useState(DEFAULT.pathname);
+  // From every data centre the map reached (plan step 8), or only some of them.
+  const [everywhere, setEverywhere] = useState(false);
+  const [at, setAt] = useState("");
   const form = useForm(
     "/runs",
     { target: DEFAULT_TARGET, from: "TH", probes: 2, repeat: 1, background: true },
     { throwOnError: false },
   );
+
+  const codes = (text: string) =>
+    text
+      .split(/[\s,]+/)
+      .map((each) => each.trim().toUpperCase())
+      .filter((each) => each !== "");
+
+  function pickEverywhere(on: boolean, text: string) {
+    setEverywhere(on);
+    setAt(text);
+    const only = codes(text);
+    form.setData("everywhere", on ? (only.length > 0 ? { at: only } : {}) : undefined);
+    if (on) {
+      form.setData("background", true);
+    }
+  }
 
   function setTarget(nextHost: string, nextPath: string) {
     setHost(nextHost);
@@ -39,6 +58,9 @@ export default function RunsPage({ email, runs, limits }: Props) {
     `--probes ${form.data.probes}`,
     `--repeat ${form.data.repeat}`,
     ...(form.data.background ? [] : ["--inline"]),
+    ...(everywhere
+      ? ["--everywhere", ...(codes(at).length > 0 ? [`--at ${codes(at).join(",")}`] : [])]
+      : []),
   ].join(" ");
 
   return (
@@ -125,10 +147,30 @@ export default function RunsPage({ email, runs, limits }: Props) {
             <input
               type="checkbox"
               checked={form.data.background}
+              disabled={everywhere}
               onChange={(event) => form.setData("background", event.target.checked)}
             />
             In the background
           </label>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={everywhere}
+              onChange={(event) => pickEverywhere(event.target.checked, at)}
+            />
+            From every data centre on the map: one probe each, in the background (instead of From
+            and Probes)
+          </label>
+          {everywhere ? (
+            <label>
+              Only these data centres (optional)
+              <input
+                value={at}
+                placeholder="BKK, SIN"
+                onChange={(event) => pickEverywhere(true, event.target.value)}
+              />
+            </label>
+          ) : null}
           <div className="form-actions">
             <button type="submit" className="button brand" disabled={form.pending || !email}>
               {form.pending ? "Starting…" : email ? "Start a run" : "Sign in to start a run"}

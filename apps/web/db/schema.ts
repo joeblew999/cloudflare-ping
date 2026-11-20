@@ -103,3 +103,30 @@ export const datacentres = sqliteTable("datacentres", {
     .notNull()
     .default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`),
 });
+
+// A run everywhere (plan step 8): the data centres it expects, each with the place whose probe
+// the map (`sightings`) saw reach it, and the Globalping test that sent that probe. What the run
+// reached is its fetches' data centres; what it expected and didn't is here.
+export const runPlaces = sqliteTable(
+  "run_places",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    // The data centre the map saw this place's probe reach.
+    colo: text("colo").notNull(),
+    country: text("country").notNull(),
+    city: text("city").notNull(),
+    // The network the map's probe was on: a city's probes on different networks can reach
+    // different data centres, so the run asks for the same one.
+    asn: integer("asn"),
+    measurement: text("measurement"),
+    // Why its probe didn't reach `/run`, if it didn't (Globalping's words).
+    error: text("error"),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`),
+  },
+  (table) => [index("run_places_run_id").on(table.runId)],
+);

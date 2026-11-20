@@ -129,6 +129,9 @@ In `apps/web`:
   place (country or city) to `/where`, waiting out Globalping's hourly limit when it must, and
   keeps each answer (`sightings`), beside Cloudflare's own list of data centres. `/map` and
   `cloudflare-ping map` show it.
+- A run everywhere (`src/everywhere.ts`, `queues/runs.ts`): one probe in each data centre the
+  map reached, from the city and network the map saw reach it, sent on a queue 50 to a test.
+  The run's page and `show` set the data centres expected against those its fetches ran in.
 - Live: a run's page follows its fetches as `/run` records them, on Void's live stream
   (`src/live.ts`, `routes/live.ts`; a Durable Object Void manages). The CLI's `run` follows
   through the API.

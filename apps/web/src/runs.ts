@@ -1,6 +1,6 @@
 // Runs (plan steps 5 and 8): start one, list them, read one with its fetches. Used by the
 // commands (src/commands), which the API, the pages and the MCP tools all run.
-import { fetches, runs } from "@schema";
+import { fetches, runPlaces, runs } from "@schema";
 import { count, db, desc, eq } from "void/db";
 import { logger } from "void/log";
 import { probeFrom } from "./globalping";
@@ -95,12 +95,24 @@ export async function listRuns(limit = 50) {
     .limit(limit);
 }
 
-// One run and its fetches, in the order they were made; null if there's no such run.
+// One run and its fetches, in the order they were made, and, for a run everywhere, the data
+// centres it expects (src/everywhere.ts); null if there's no such run.
 export async function getRun(id: string) {
   const [run] = await db.select().from(runs).where(eq(runs.id, id)).limit(1);
   if (!run) {
     return null;
   }
   const rows = await db.select().from(fetches).where(eq(fetches.runId, id)).orderBy(fetches.id);
-  return { run, fetches: rows };
+  const places = await db
+    .select({
+      colo: runPlaces.colo,
+      country: runPlaces.country,
+      city: runPlaces.city,
+      measurement: runPlaces.measurement,
+      error: runPlaces.error,
+    })
+    .from(runPlaces)
+    .where(eq(runPlaces.runId, id))
+    .orderBy(runPlaces.colo);
+  return { run, fetches: rows, places };
 }

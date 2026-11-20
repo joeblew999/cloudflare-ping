@@ -35,7 +35,7 @@ so starting a run or a test spends them; reading runs, limits and logs spends no
 | Command | MCP tool | What it does | On the web |
 | --- | --- | --- | --- |
 | `cloudflare-ping test [--from TH] [--path /where] [--probes 1] [--host <target>]` | `test` | One Globalping test, to our probe or straight to a target | `/` |
-| `cloudflare-ping run [--target <url>] [--from TH] [--probes 2] [--repeat 1] [--inline]` | `run` | Start a run and follow its fetches as they're recorded | `/runs` |
+| `cloudflare-ping run [--target <url>] [--from TH] [--probes 2] [--repeat 1] [--inline] [--everywhere [--at BKK,SIN]]` | `run` | Start a run and follow its fetches as they're recorded; --everywhere: from every data centre the map reached | `/runs` |
 | `cloudflare-ping runs` | `runs` | The newest runs | `/runs` |
 | `cloudflare-ping show <run id>` | `show` | One run and its fetches | `/runs/<id>` |
 | `cloudflare-ping limits` | `limits` | How many Globalping tests the app has left this hour | `/runs` |

@@ -16,11 +16,11 @@ export async function show(args: Array<string>) {
     return stop(new Error("Give a run's ID: cloudflare-ping show <run id> (runs lists them)"));
   }
 
-  const { run, fetches } = await asked(() =>
+  const { run, fetches, places } = await asked(() =>
     fetch("/api/runs/[id]", { params: { id }, baseURL: site, headers: headers() }),
   );
   if (values.json) {
-    console.log(JSON.stringify({ run, fetches }, null, 2));
+    console.log(JSON.stringify({ run, fetches, places }, null, 2));
     return;
   }
   const mode = run.background === null ? "?" : run.background ? "in the background" : "inline";
@@ -39,4 +39,22 @@ export async function show(args: Array<string>) {
     printRow(row);
   }
   console.log(`\n${fetches.length} fetches recorded.`);
+  if (places.length > 0) {
+    // A run everywhere: the data centres it expected, against those its fetches ran in.
+    const reached = new Set(fetches.map((row) => row.colo));
+    const expected = new Set(places.map((place) => place.colo));
+    const waiting = places.filter((place) => !reached.has(place.colo));
+    const elsewhere = [...reached].filter((colo) => colo && !expected.has(colo));
+    console.log(
+      `Everywhere: ${places.length - waiting.length} of ${places.length} data centres reached.`,
+    );
+    for (const place of waiting) {
+      console.log(
+        `  ${place.colo} (from ${place.city}, ${place.country}): ${place.error ?? (place.measurement ? "not yet" : "queued")}`,
+      );
+    }
+    if (elsewhere.length > 0) {
+      console.log(`  Probes landed elsewhere too: ${elsewhere.join(", ")}`);
+    }
+  }
 }

@@ -9,11 +9,60 @@ import type { Props } from "./[id].server";
 
 type Row = Props["fetches"][number];
 
+// A run everywhere (plan step 8): the data centres it expected, each against the fetches that
+// ran there, as they arrive.
+function Everywhere({ places, rows }: { places: Props["places"]; rows: Array<Row> }) {
+  const reached = new Set(rows.map((row) => row.colo));
+  const expected = new Set(places.map((place) => place.colo));
+  const elsewhere = [...reached].filter((colo) => colo && !expected.has(colo));
+  const done = places.filter((place) => reached.has(place.colo)).length;
+  return (
+    <>
+      <h2>
+        Everywhere: {done} of {places.length} data centres reached
+      </h2>
+      <div className="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Data centre</th>
+              <th>Its probe, from</th>
+              <th>So far</th>
+            </tr>
+          </thead>
+          <tbody>
+            {places.map((place) => (
+              <tr key={place.colo}>
+                <td>
+                  <code>{place.colo}</code>
+                </td>
+                <td>
+                  {place.city}, {place.country}
+                </td>
+                <td className={reached.has(place.colo) ? "same" : place.error ? "different" : ""}>
+                  {reached.has(place.colo)
+                    ? "Reached"
+                    : (place.error ?? (place.measurement ? "Not yet" : "Queued"))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {elsewhere.length > 0 ? (
+        <p>
+          Probes also landed in data centres the map didn&apos;t expect: {elsewhere.join(", ")}.
+        </p>
+      ) : null}
+    </>
+  );
+}
+
 // The rows from the loader and from the live stream together, each once, in recorded order.
 const merged = (a: Array<Row>, b: Array<Row>) =>
   [...new Map([...a, ...b].map((row) => [row.id, row])).values()].sort((x, y) => x.id - y.id);
 
-export default function RunPage({ run, fetches: first }: Props) {
+export default function RunPage({ run, fetches: first, places }: Props) {
   const router = useRouter();
   const [rows, setRows] = useState(first);
   const [error, setError] = useState(run.error);
@@ -83,6 +132,7 @@ export default function RunPage({ run, fetches: first }: Props) {
       <p>
         The same from a terminal: <code>cloudflare-ping show {run.id}</code>
       </p>
+      {places.length > 0 ? <Everywhere places={places} rows={rows} /> : null}
       <h2>{rows.length} fetches recorded</h2>
       <div className="table-scroll">
         <table>

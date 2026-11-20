@@ -26,8 +26,9 @@ export const COMMAND_LIST: Array<CommandInfo> = [
   },
   {
     name: "run",
-    use: "run [--target <url>] [--from TH] [--probes 2] [--repeat 1] [--inline]",
-    about: "Start a run and follow its fetches as they're recorded",
+    use: "run [--target <url>] [--from TH] [--probes 2] [--repeat 1] [--inline] [--everywhere [--at BKK,SIN]]",
+    about:
+      "Start a run and follow its fetches as they're recorded; --everywhere: from every data centre the map reached",
     page: "/runs",
     api: "POST /api/runs",
     task: "ping:run",

@@ -128,7 +128,7 @@ export type ProbeOptions = {
   token?: string;
   // Exact places instead of `from` (the map, src/map.ts): each a country, or a city in one, with
   // how many probes there.
-  places?: Array<{ country: string; city?: string; limit: number }>;
+  places?: Array<{ country: string; city?: string; asn?: number; limit: number }>;
 };
 
 // Makes the test and answers its measurement's ID, without waiting for it.

@@ -5,11 +5,15 @@ import { HTTPException } from "hono/http-exception";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { DEFAULT_TARGET } from "@cloudflare-ping/shared/targets";
 import { run } from "./run";
+import { startRunEverywhere } from "../everywhere";
 import { startRun } from "../runs";
 
 vi.mock("void/env", () => ({ env: { GLOBALPING_TOKEN: "test-token" } }));
 vi.mock("../runs", () => ({
   startRun: vi.fn(async () => ({ id: "a-run", expected: 2, test: { results: [] } })),
+}));
+vi.mock("../everywhere", () => ({
+  startRunEverywhere: vi.fn(async () => ({ id: "everywhere", expected: 3, test: null })),
 }));
 
 const body = { target: DEFAULT_TARGET, from: "TH", probes: 2, repeat: 1, background: true };
@@ -18,6 +22,7 @@ const context = { waitUntil: vi.fn(), colo: "BKK" };
 describe("run", () => {
   beforeEach(() => {
     vi.mocked(startRun).mockClear();
+    vi.mocked(startRunEverywhere).mockClear();
     context.waitUntil.mockClear();
   });
 
@@ -30,5 +35,18 @@ describe("run", () => {
     await expect(run(body, context)).resolves.toMatchObject({ id: "a-run" });
     expect(startRun).toHaveBeenCalledWith({ ...body, token: "test-token" });
     expect(context.waitUntil).toHaveBeenCalledOnce();
+  });
+
+  it("runs everywhere on the map's data centres, not from one place", async () => {
+    await expect(run({ ...body, everywhere: { at: ["BKK"] } }, context)).resolves.toMatchObject({
+      id: "everywhere",
+      test: null,
+    });
+    expect(startRunEverywhere).toHaveBeenCalledWith({
+      target: body.target,
+      repeat: body.repeat,
+      everywhere: { at: ["BKK"] },
+    });
+    expect(startRun).not.toHaveBeenCalled();
   });
 });

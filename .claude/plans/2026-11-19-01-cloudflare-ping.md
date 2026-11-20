@@ -368,6 +368,37 @@ again: nothing after it is built on a guess.
   both.
 - Proof: one data centre first, then every mapped one; the run's rows, and its total tests.
 
+- **Built 2026-11-20; the real run waits for a map on the deployed site (the token's run, step 7).**
+  - A run "everywhere":
+    - `POST /api/runs` with `everywhere` (optionally `at: [codes]`, to try one first); the CLI's
+      `run --everywhere [--at BKK]`; the Runs page's "From every data centre on the map"; the MCP
+      tool `run`.
+    - It takes one place per data centre from the newest map: the first sighting there, with
+      its country, city and network. Those are kept as the run's places (`run_places`) and sent
+      on the runs queue (`queues/runs.ts`, from `void gen queue`), 50 to a Globalping test,
+      waiting out the hourly limit as the map's queue does.
+    - Each probe calls `/run` for the run, as runs always have, and the fetches are recorded and
+      shown live.
+    - The run's page and `show` set the data centres expected against the fetches' data
+      centres: reached, not yet, why not (Globalping's words, or `/run`'s answer when it isn't
+      200), and any the probes landed in that the map didn't expect.
+  - Tried under `vp dev` with the local city map (KIX, NRT and SIN):
+    - `--at SIN` (1 test): the Singapore probe reached our Worker in SIN, as the map said.
+    - Then all three (one test, 3 probes). Locally the probes can only reach the deployed
+      `/run`, which answers 404 for a local run, and the run now keeps that answer with the data
+      centre it came from. A fetch made by hand showed as "landed elsewhere" (BKK).
+  - Found:
+    - A city's probes can be on different networks that reach different data centres, so a
+      run asks for the map's city and network (Globalping's `asn` filter).
+    - Even then, Fukuoka's probe, on the same network, reached NRT one time and KIX the other.
+      Routing within Japan changes between tests, so the map is a strong hint, not a guarantee.
+      The run shows where each probe really landed, and the day-later rerun (step 7's proof)
+      will say how often this happens.
+  - Deployed: the queue `cloudflare-ping-runs`, `run_places`; signed out, a run everywhere is
+    refused (401).
+  - Next, after the token and a map on the deployed site: one data centre (`--at BKK`), then
+    every mapped one; the proof is the run's rows and its total tests.
+
 ### 9. Then, and only then
 
 The pages for the map and the runs (reading the same API), `--json` for void-fbtee's deploy check,
