@@ -16,11 +16,11 @@ catalog:
   # Signing an MCP client in through Void's auth (plan 2026-11-20-01, step 3): Better Auth's own
   # MCP plugin, the OAuth provider it's built on, and Client ID Metadata Documents, at the Better
   # Auth release Void 1.10.0 uses.
-  "@better-auth/cimd": 1.7.25
-  "@better-auth/mcp": 1.7.25
-  "@better-auth/oauth-provider": 1.7.25
+  "@better-auth/cimd": 1.7.26
+  "@better-auth/mcp": 1.7.26
+  "@better-auth/oauth-provider": 1.7.26
   "@void/react": 1.11.0
-  better-auth: 1.7.25
+  better-auth: 1.7.26
   typescript: ^7.0.2
   # The pair Void 1.11.0 writes for a new project (it's built with them): Vite+ 1.7.0 and its core,
   # 8.3.8000. Held at 1.6.0 with Void 1.10.0, which wrote no pair (reported to Void 2026-11-18).
