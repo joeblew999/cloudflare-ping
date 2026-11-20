@@ -3,17 +3,15 @@
 // one place each. Each country is one queued message (queues/map.ts), which sends one test to
 // `/where` from one probe in each of its places, and keeps each answer as a sighting
 // (db/schema.ts). Cloudflare's own list of data centres is kept beside it as reference.
-import { datacentres, maps, sightings } from "@schema";
+import { datacentres as datacentresTable, maps, sightings } from "@schema";
 import { HTTPException } from "hono/http-exception";
 import { and, count, db, desc, eq, isNotNull, isNull, sql } from "void/db";
 import { env } from "void/env";
 import { logger } from "void/log";
 import { queues } from "void/queues";
-import { z } from "zod";
 import { globalpingLimits, makeTest, testResult } from "./globalping";
+import { datacentres, noticed, probes } from "./sources/lists";
 
-const PROBES = "https://api.globalping.io/v1/probes";
-const STATUS = "https://www.cloudflarestatus.com/api/v2/components.json";
 // Places per test: Globalping takes many locations in one test; kept small enough that one test
 // stays well inside a queue consumer's request.
 const PER_TEST = 50;
@@ -22,85 +20,38 @@ export type Level = "country" | "city";
 export type Place = { country: string; city?: string };
 export type MapMessage = { mapId: string; country: string; places: Array<Place> };
 
-const probeList = z.array(
-  z.object({ location: z.object({ country: z.string(), city: z.string() }) }),
-);
-
 // The places to ask about, by country: one per country, or one per city where Globalping has a
-// probe. `only`: these countries (ISO codes), to try a map small.
+// probe (src/sources/lists.ts: its probe list, cached). `only`: these countries (ISO codes), to
+// try a map small.
 export async function placesFor(level: Level, only?: Array<string>) {
-  const response = await fetch(PROBES);
-  const read = probeList.safeParse(await response.json().catch(() => null));
-  if (!response.ok || !read.success) {
-    throw new HTTPException(502, {
-      message: `Globalping's probe list couldn't be read (HTTP ${response.status})`,
-    });
-  }
+  const { data: cities } = await probes();
   const wanted = only && only.length > 0 ? new Set(only.map((each) => each.toUpperCase())) : null;
-  const byCountry = new Map<string, Set<string>>();
-  for (const { location } of read.data) {
-    if (wanted && !wanted.has(location.country)) {
+  const byCountry = new Map<string, Array<string>>();
+  for (const each of cities) {
+    if (wanted && !wanted.has(each.country)) {
       continue;
     }
-    const cities = byCountry.get(location.country) ?? new Set<string>();
-    cities.add(location.city);
-    byCountry.set(location.country, cities);
+    byCountry.set(each.country, [...(byCountry.get(each.country) ?? []), each.city]);
   }
   return [...byCountry]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([country, cities]) => ({
+    .map(([country, names]) => ({
       country,
-      places:
-        level === "country"
-          ? [{ country }]
-          : [...cities].sort().map((city): Place => ({ country, city })),
+      places: level === "country" ? [{ country }] : names.map((city): Place => ({ country, city })),
     }));
 }
 
-const components = z.object({
-  components: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      group: z.boolean().nullish(),
-      group_id: z.string().nullish(),
-    }),
-  ),
-});
-
-// Cloudflare's own list of its data centres, from its status page: "Bangkok, Thailand - (BKK)",
-// under a region such as Asia. Kept up to date at each map's start.
+// Cloudflare's own list of its data centres (src/sources/lists.ts, cached), kept beside the map
+// as reference: what a code such as BKK is.
 export async function refreshDatacentres() {
-  const response = await fetch(STATUS);
-  const read = components.safeParse(await response.json().catch(() => null));
-  if (!response.ok || !read.success) {
-    logger.warn("Cloudflare's list of data centres couldn't be read", { status: response.status });
-    return 0;
-  }
-  const regions = new Map(
-    read.data.components.filter((each) => each.group).map((each) => [each.id, each.name]),
-  );
-  const rows = read.data.components.flatMap((each) => {
-    // A data centre is named "Place - (CODE)" ("Bangkok, Thailand - (BKK)", "Hong Kong - (HKG)").
-    // Some services carry a code in brackets too ("Data Loss Prevention (DLP)"), without the " - ".
-    const code = /\s-\s\(([A-Z]{3})\)\s*$/.exec(each.name)?.[1];
-    return code
-      ? [
-          {
-            code,
-            name: each.name.replace(/\s*-\s*\([A-Z]{3}\)\s*$/, ""),
-            region: (each.group_id && regions.get(each.group_id)) || null,
-          },
-        ]
-      : [];
-  });
+  const { data: rows } = await datacentres();
   // D1 takes up to 100 bound values in one statement: 30 rows of three at a time.
   for (let at = 0; at < rows.length; at += 30) {
     await db
-      .insert(datacentres)
+      .insert(datacentresTable)
       .values(rows.slice(at, at + 30))
       .onConflictDoUpdate({
-        target: datacentres.code,
+        target: datacentresTable.code,
         set: {
           name: sql`excluded.name`,
           region: sql`excluded.region`,
@@ -181,6 +132,12 @@ export async function mapPlaces(
     `${message.country}: ${test.results.length} of ${message.places.length} places answered`,
     { measurement },
   );
+  // What the test saw, for the lists: a new place or data centre re-reads them.
+  await noticed({
+    places: test.results,
+    colos: test.results.map((each) => each.colo || each.rayColo),
+    unanswered: message.places.length - test.results.length,
+  });
   return { answered: test.results.length };
 }
 
@@ -207,17 +164,17 @@ export async function mapSummary(id?: string) {
   const reached = await db
     .select({
       colo: sightings.colo,
-      name: datacentres.name,
-      region: datacentres.region,
+      name: datacentresTable.name,
+      region: datacentresTable.region,
       places: count(),
       countries: sql<string>`group_concat(distinct ${sightings.country})`,
     })
     .from(sightings)
-    .leftJoin(datacentres, eq(datacentres.code, sightings.colo))
+    .leftJoin(datacentresTable, eq(datacentresTable.code, sightings.colo))
     .where(and(eq(sightings.mapId, map.id), isNotNull(sightings.colo)))
     .groupBy(sightings.colo)
     .orderBy(desc(count()));
-  const [known] = await db.select({ count: count() }).from(datacentres);
+  const [known] = await db.select({ count: count() }).from(datacentresTable);
   return {
     map,
     tests: totals?.tests ?? 0,

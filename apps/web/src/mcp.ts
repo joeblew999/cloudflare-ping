@@ -8,6 +8,7 @@ import { CfWorkerJsonSchemaValidator } from "@modelcontextprotocol/server/valida
 import { COMMAND_LIST } from "@cloudflare-ping/shared/commands";
 import { API_VERSION } from "@cloudflare-ping/shared/version";
 import type { CommandContext } from "./commands/context";
+import { coverage, coverageQuery } from "./commands/coverage";
 import { limits } from "./commands/limits";
 import { map, mapQuery, remap, remapInput } from "./commands/map";
 import { input as runInput, run } from "./commands/run";
@@ -73,6 +74,17 @@ export function mcpServer(context: CommandContext) {
     "limits",
     { description: describe("limits"), annotations: { readOnlyHint: true, openWorldHint: true } },
     () => answer(() => limits(context)),
+  );
+  server.registerTool(
+    "coverage",
+    {
+      // Without its ~1,100 probe cities unless asked: the totals, regions and data centres answer
+      // most questions.
+      description: `${describe("coverage")} Pass cities: true for every probe city too.`,
+      inputSchema: coverageQuery,
+      annotations: { readOnlyHint: true, openWorldHint: true },
+    },
+    (query) => answer(() => coverage({ cities: query.cities ?? false })),
   );
   server.registerTool(
     "map",

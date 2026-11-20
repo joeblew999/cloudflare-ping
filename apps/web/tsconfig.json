@@ -12,5 +12,5 @@
     "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true
   },
-  "include": ["src", "pages", "routes", "middleware", "crons", "queues", "db", "*.ts"]
+  "include": ["src", "pages", "routes", "middleware", "crons", "queues", "db", "scripts", "*.ts"]
 }

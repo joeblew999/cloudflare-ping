@@ -17,20 +17,21 @@ API route (`apps/web/routes/api/`), which the command calls with Void's typed fe
 (`void/client`); its web page, whose loader and action (Void's page actions) run the same code;
 and its MCP tool, which runs the same code too. So the web and the terminal do the same things, the same way.
 
-| What                       | Web page               | In the repo                      | Anywhere (the package)           | API                                   | MCP tool |
-| -------------------------- | ---------------------- | -------------------------------- | -------------------------------- | ------------------------------------- | -------- |
-| Sign in                    | `/login`               | `vp run ping:sign-in`            | `cloudflare-ping sign-in`        | Void's auth (`/api/auth/…`)           | -        |
-| Sign out                   | "Sign out"             | `vp run ping:sign-out`           | `cloudflare-ping sign-out`       | Void's auth                           | -        |
-| Who's signed in            | the top bar            | `vp run ping:whoami`             | `cloudflare-ping whoami`         | Void's auth                           | -        |
-| One Globalping test        | `/`, "Run a probe"     | `vp run probe:test -- --from TH` | `cloudflare-ping test --from TH` | `POST /api/probe` (signed in)         | `test`   |
-| Start a run and follow it  | `/runs`, "Start a run" | `vp run ping:run -- --from TH`   | `cloudflare-ping run --from TH`  | `POST /api/runs` (signed in)          | `run`    |
-| The newest runs            | `/runs`                | `vp run ping:runs`               | `cloudflare-ping runs`           | `GET /api/runs`                       | `runs`   |
-| One run and its fetches    | `/runs/<id>`           | `vp run ping:show -- <id>`       | `cloudflare-ping show <id>`      | `GET /api/runs/<id>`                  | `show`   |
-| Globalping tests left      | `/runs`                | `vp run ping:limits`             | `cloudflare-ping limits`         | `GET /api/limits`                     | `limits` |
-| The map                    | `/map`                 | `vp run ping:map`                | `cloudflare-ping map`            | `GET /api/map`                        | `map`    |
-| Start a new map            | `/map`, "Start a map"  | `vp run ping:remap`              | `cloudflare-ping remap`          | `POST /api/map` (signed in)           | `remap`  |
-| A request's Cloudflare log | `/trace/<ray id>`      | `vp run probe:trace -- <ray id>` | `cloudflare-ping trace <ray id>` | `GET /api/trace/<ray id>` (signed in) | `trace`  |
-| Set a project's agents up  | `/docs/agents`         | -                                | `cloudflare-ping init`           | none (files in that folder)           | -        |
+| What                       | Web page               | In the repo                      | Anywhere (the package)           | API                                   | MCP tool   |
+| -------------------------- | ---------------------- | -------------------------------- | -------------------------------- | ------------------------------------- | ---------- |
+| Sign in                    | `/login`               | `vp run ping:sign-in`            | `cloudflare-ping sign-in`        | Void's auth (`/api/auth/…`)           | -          |
+| Sign out                   | "Sign out"             | `vp run ping:sign-out`           | `cloudflare-ping sign-out`       | Void's auth                           | -          |
+| Who's signed in            | the top bar            | `vp run ping:whoami`             | `cloudflare-ping whoami`         | Void's auth                           | -          |
+| One Globalping test        | `/`, "Run a probe"     | `vp run probe:test -- --from TH` | `cloudflare-ping test --from TH` | `POST /api/probe` (signed in)         | `test`     |
+| Start a run and follow it  | `/runs`, "Start a run" | `vp run ping:run -- --from TH`   | `cloudflare-ping run --from TH`  | `POST /api/runs` (signed in)          | `run`      |
+| The newest runs            | `/runs`                | `vp run ping:runs`               | `cloudflare-ping runs`           | `GET /api/runs`                       | `runs`     |
+| One run and its fetches    | `/runs/<id>`           | `vp run ping:show -- <id>`       | `cloudflare-ping show <id>`      | `GET /api/runs/<id>`                  | `show`     |
+| Globalping tests left      | `/runs`                | `vp run ping:limits`             | `cloudflare-ping limits`         | `GET /api/limits`                     | `limits`   |
+| Coverage, on a world map   | `/coverage`            | `vp run ping:coverage`           | `cloudflare-ping coverage`       | `GET /api/coverage`                   | `coverage` |
+| The map                    | `/map`                 | `vp run ping:map`                | `cloudflare-ping map`            | `GET /api/map`                        | `map`      |
+| Start a new map            | `/map`, "Start a map"  | `vp run ping:remap`              | `cloudflare-ping remap`          | `POST /api/map` (signed in)           | `remap`    |
+| A request's Cloudflare log | `/trace/<ray id>`      | `vp run probe:trace -- <ray id>` | `cloudflare-ping trace <ray id>` | `GET /api/trace/<ray id>` (signed in) | `trace`    |
+| Set a project's agents up  | `/docs/agents`         | -                                | `cloudflare-ping init`           | none (files in that folder)           | -          |
 
 `cloudflare-ping help` lists every option. Every command also takes `--json` (the API's answer as
 it is) and `--site <url>` (another copy of the app, such as `vp dev`'s); `vp run cli -- <command>`
@@ -124,6 +125,13 @@ In `apps/web`:
   data (a probe's answer, Globalping's limit) is a deferred prop; links are `Link` with
   `routeUrl()`, and the bar's current page is the one Void marks (`data-void-active`). Missing
   and failed pages are `pages/_not-found.tsx` and `pages/_error.tsx`.
+- Coverage (`src/commands/coverage.ts`, `src/sources/`): the geographical coverage map. All of
+  Cloudflare's data centres and all of Globalping's probes, by city, on a plain world
+  (`public/world.svg`, from Natural Earth, made by `vp run web#world`, drawn by
+  `src/WorldMap.tsx`). None of our own test results: those are for the probe map. Its three
+  lists (Globalping's probes, Cloudflare's data centres, OurAirports' coordinates for their codes)
+  are read at runtime and kept in Void's KV, re-checked by asking "changed?" with each source's
+  ETag, and at once when a test sees a place or data centre they don't have.
 - The map (`src/map.ts`, `queues/map.ts`): which Cloudflare data centres Globalping's probes
   reach. `remap` queues one message per country; the queue sends one test from one probe in each
   place (country or city) to `/where`, waiting out Globalping's hourly limit when it must, and

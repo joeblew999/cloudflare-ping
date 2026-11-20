@@ -11,6 +11,7 @@ import { env } from "void/env";
 import { logger } from "void/log";
 import { queues } from "void/queues";
 import { globalpingLimits, makeTest, testResult } from "./globalping";
+import { noticed } from "./sources/lists";
 
 const PER_TEST = 50;
 
@@ -205,6 +206,12 @@ export async function sendPlaces(
   }
   log.info(`Run ${message.runId}: ${test.results.length} of ${message.places.length} probes sent`, {
     measurement,
+  }); // What the test saw, for the lists: a new place or data centre re-reads them.
+  await noticed({
+    places: test.results,
+    colos: test.results.map((each) => each.rayColo),
+    unanswered: open.length,
   });
+
   return { sent: test.results.length };
 }

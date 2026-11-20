@@ -63,6 +63,11 @@ export default defineConfig({
       "ping:show": { command: "vpx packages/cli/main.ts show", cache: false },
       // Globalping tests left this hour, as the Worker sees it (`GET /api/limits`): the Runs page.
       "ping:limits": { command: "vpx packages/cli/main.ts limits", cache: false },
+      // The coverage map's real-system check: the three real sources, through the app's own
+      // reducing code; `-- --site <url>` checks that site's /api/coverage too.
+      "coverage:check": { command: "vpx apps/web/scripts/coverage-check.ts", cache: false },
+      // The geographical coverage map's data (`GET /api/coverage`): the Coverage page.
+      "ping:coverage": { command: "vpx packages/cli/main.ts coverage", cache: false },
       // The map (`GET /api/map`), and a new one (`POST /api/map`): the Map page.
       "ping:map": { command: "vpx packages/cli/main.ts map", cache: false },
       "ping:remap": { command: "vpx packages/cli/main.ts remap", cache: false },

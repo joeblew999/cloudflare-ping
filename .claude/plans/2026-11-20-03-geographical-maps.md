@@ -1,27 +1,29 @@
 # 2026-11-20-03-geographical-maps.md: the geographical coverage map and the geographical probe map
 
-Status: 2026-11-20, written from the user's own words. Briefly held for usefulness, then taken
+Status: 2026-11-20, written from the user's own words. Steps 0 to 3 built; the coverage map
+is complete reference data, and reach moved to the probe map (step 4). Briefly held for usefulness, then taken
 back up (the user: "if people go to the website … if they don't know the coverage, they have no
 idea if this thing really works. The whole point is showing them … we've got the whole of
 Cloudflare covered"). The coverage map is the app's proof to visitors that it works.
 
-- **The proof is the reached layer.** The headline is "N of 345 Cloudflare data centres
-  reached, from M places", with those lit and the rest grey. The free layers (all data
-  centres, Globalping's probes) are only the background; on their own they show what exists,
-  not what we reach.
-- **It's honest.** Where no probe reaches a data centre (China's JXG is a likely one), the map
-  says so.
-- **Where visitors land:** the home page carries the coverage map, or one click to it, beside
-  `/coverage`.
-- **It needs a real map run on the deployed site to light up**, which needs the Globalping
-  token. It can be built and checked locally before that, against a local map.
+- **The proof is completeness.** The headline is "All 345 of Cloudflare's data centres, and
+  Globalping's 5,600 probes in 124 countries": every one of each, on one world map. That's
+  everywhere the app can run, and everywhere it can be reached from.
+- **None of our own test results on it** (the user, 2026-11-20: "this was meant to show all of
+  the Cloudflare data centers and the global pings completely … two different things probably
+  using some of the same code"). Which data centres our probes reached, and where they ran,
+  belong to the geographical probe map. Both maps draw with the same component
+  (`src/WorldMap.tsx`).
+- **It needs no tests and no token,** so it's right on the deployed site from the first visit.
+- **Where visitors land:** `/coverage`, in the bar beside the map.
 
 Names are the user's:
 
-- **The geographical coverage map**: where we can reach. Cloudflare's data centres and
-  Globalping's probes on a world map, and which data centres our map runs have reached.
-- **The geographical probe map**: the app at work, in real time. While a run or a map goes,
-  each probe's request is drawn from its city to the data centre it landed in.
+- **The geographical coverage map**: everything there is. All of Cloudflare's data centres and
+  all of Globalping's probes on a world map, from their own lists.
+- **The geographical probe map**: what our tests found, and the app at work in real time.
+  Which data centres our map runs reached, and, while a run or a map goes, each probe's request
+  drawn from its city to the data centre it landed in.
 
 "The map" on its own stays the main plan's step 7: the table of which data centre each place
 reaches, found by tests.
@@ -43,7 +45,7 @@ How they relate:
 - **The only link between probes and data centres is what our tests find out:** the map's
   sightings (main plan, step 7) and runs. Its data centre code joins back to 2.
 
-So the coverage map needs no tests; only its "reached" colouring comes from our map runs.
+So the coverage map needs no tests. What our tests find is the probe map's.
 
 Things to know about source 2 (found 2026-11-20):
 
@@ -63,17 +65,15 @@ caching layers:
 
 | Source                                               | Reduced to                                                     | Kept in                                             |
 | ---------------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------- |
-| Globalping's probe list (2.3 MB, 267 KB compressed)  | ~1,100 cities: country, city, coordinates, probes              | KV (`void/kv`), an hour                             |
-| Cloudflare's data centre list (177 KB)               | ~345 data centres: code, place, region ("Place - (CODE)" only) | KV, a day                                           |
+| Globalping's probe list (2.3 MB, 267 KB compressed)  | ~1,100 cities: country, city, coordinates, probes              | KV (`void/kv`), re-checked every 5 minutes          |
+| Cloudflare's data centre list (177 KB)               | ~345 data centres: code, place, region ("Place - (CODE)" only) | KV, re-checked every hour                           |
 | OurAirports' `airports.csv` (12.7 MB, public domain) | the ~345 codes' coordinates and two-letter country             | KV, until a new code needs it (airports don't move) |
-| Our map runs                                         | the data centres reached                                       | D1 (`sightings`), as now                            |
 
 - **KV, the data layer, serves everyone,** signed in or not, since Void's page cache skips any
   request with a cookie.
 - **ISR (`export const revalidate`) caches `/coverage` and `GET /api/coverage` whole** for
-  visitors who aren't signed in, refreshing in the background. When a map run finishes,
-  `revalidate({ paths })` from `void/isr` purges them, so newly reached data centres show at
-  once.
+  five minutes for visitors who aren't signed in, refreshing in the background. Nothing purges
+  them: a change in a list shows within those five minutes.
 - **The world outline is a static asset** in `apps/web/public`: a picture, like the icon, not
   data.
 - **The client router (`cacheFor`)** reuses pages already loaded.
@@ -90,13 +90,13 @@ caching layers:
   - Every test answers with each probe's place. A probe in a place the cached list doesn't
     have, or "no probe there" for a place it does, means the list has changed, so it's read
     again at once. Map runs and runs everywhere correct it where the app is used, for free.
-  - Places no test touches give no signal, so the cached list also expires in an hour.
+  - Places no test touches give no signal, so the cached list is also re-checked every 5 minutes.
   - A probe landing in a different data centre than the map said is a change to our map, not
     to Globalping's list. Acting on that is "runs feed the map", held in the main plan.
 - **Cloudflare's data centre list: by what our tests see, then by time.** Every test answers
   with the data centre our Worker ran in (`/where`'s colo, or the end of its `cf-ray`). A code the
   cached list doesn't have means Cloudflare has opened a data centre, so the list is read again
-  at once. Otherwise it expires in a day, since Cloudflare doesn't announce new ones.
+  at once. Otherwise it is re-checked every hour, since Cloudflare doesn't announce new ones.
 - **The airport places: by the data, and only that.** A code in Cloudflare's list that the
   cached airport places don't cover is read again from the airport file at once. No time limit:
   airports don't move, and new codes only come through Cloudflare's list (the user,
@@ -104,14 +104,11 @@ caching layers:
 - **Why the other two keep a time limit:** tests only see places we test. They never show a
   probe going offline, or a data centre closing, where no test goes. Nor do they show a new data
   centre no probe lands in. Without time, the coverage page could show what no longer exists,
-  or miss what's new, for weeks: the wrong thing for a page that proves coverage. An hour for
-  Globalping and a day for Cloudflare cost one free call each.
+  or miss what's new, for weeks: the wrong thing for a page that proves coverage. A re-check every 5 minutes
+  for Globalping and every hour for Cloudflare costs a 304 each, almost nothing.
 - **So one test can refresh all three, in a chain:** a probe lands in an unknown data centre;
   Cloudflare's list is re-read, and has it; the airport places don't cover it, so the airport
-  file is re-read and places it; the coverage page is cleared, and shows it.
-- **Our data: by our own event.** A map run that finishes clears `/coverage` and
-  `/api/coverage` from ISR (`revalidate({ paths })`), so its reach shows at once. Deploys clear
-  ISR too, and a TTL backs it up for the lists the page also shows.
+  file is re-read and places it; the coverage page shows it within its five minutes.
 - **Our code: by version.** KV outlives deploys, so each key carries a version
   (`coverage:v1:probe-cities`), bumped when what's kept changes shape. What's read back is
   checked against its schema (zod), and anything that doesn't fit is fetched again.
@@ -126,8 +123,7 @@ run".) Each re-read is compared with what's cached, and the sources do the compa
   Cloudflare's 304 is checked at the build.
 - The tag is kept beside each cached list.
   - **304:** the cache is still right. Nothing is downloaded, parsed or cleared.
-  - **200:** it changed. The new list replaces the cache, and only then is the coverage page
-    cleared.
+  - **200:** it changed. The new list replaces the cache.
 - A re-check costs almost nothing, so "by time" becomes asking every few minutes, not reading
   every hour.
 - It's only about caching: what changed isn't logged or kept (the user, 2026-11-20).
@@ -139,14 +135,13 @@ Each rule is a test (`vp test`). Void's KV is swapped for an in-memory map, as V
 
 - **Cached:** two reads, one fetch.
 - **Re-checks:** past the interval, the next read asks with the cached tag. A 304 keeps the
-  cache and clears nothing; a 200 replaces it and clears the page.
+  cache; a 200 replaces it.
 - **A test sees a new place:** a test result with a city the cache doesn't have re-reads the
   probe list.
 - **The chain:** a result in an unknown data centre code re-reads Cloudflare's list, then the
   airport file, in that order.
 - **Airports have no time limit:** a year later, no new code, no re-read.
 - **Our code changed:** an old-shaped value under an old key is ignored and fetched fresh.
-- **A map run finishes:** `revalidate` is called for `/coverage` and `/api/coverage`.
 
 Then under `vp dev`: the logs show one fetch, then cache hits, then a re-read after an unknown
 code.
@@ -188,7 +183,7 @@ Two pieces of `apps/web/src/map.ts` (main plan, step 7) read the same two live l
 Each is lifted into its own module, used by both the map and the coverage map:
 
 - Globalping's probe list: read, checked, grouped by city with coordinates and probe count, and
-  cached an hour.
+  re-checked every 5 minutes.
 - Cloudflare's data centre list: read, checked, the real ones only.
 
 So the reading, the checking and the fixes live in one place.
@@ -208,9 +203,9 @@ So the reading, the checking and the fixes live in one place.
 3. **The page `/coverage`.** Proof: in the browser, every data centre and probe city is a dot
    in the right place (BKK on Bangkok, the probes in Japan on Japan), in light and dark, and at
    phone width.
-4. **Reached.** The newest map run's data centres are coloured. Proof: after a map run, its
-   reached data centres are the coloured ones, and the CLI and API agree.
-5. **The probe map.**
+4. **The probe map**, on the same drawing (`src/WorldMap.tsx`).
+   - The data centres the newest map run reached, coloured; the rest grey. Proof: after a map
+     run, its reached data centres are the coloured ones, and the CLI and API agree.
    - Each fetch and each sighting on the live stream carries the probe's place.
    - A run's page and a map run's page draw the lines as they arrive, and the CLI follows them.
    - Proof: a background run's lines appear as its fetches do, one landing elsewhere drawn
@@ -220,6 +215,4 @@ So the reading, the checking and the fixes live in one place.
 
 - Which Natural Earth file, and how small it can be while countries stay recognisable.
 - The projection: equirectangular is simplest; a rounder one looks better but costs code.
-- Whether the coverage map should also count where runs' probes landed (the main plan held that
-  for the map itself on 2026-11-20; it would follow the same decision).
 - How the page draws about 1,100 probe cities without being slow, especially at phone width.

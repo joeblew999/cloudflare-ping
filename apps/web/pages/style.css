@@ -506,3 +506,47 @@ a.card:hover {
 .vp-doc .table-scroll {
   overflow-x: auto;
 }
+
+/* The geographical coverage map (pages/coverage.tsx): the world in the theme's own colours. */
+.coverage {
+  margin: 24px 0;
+}
+.world {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  background: var(--vp-c-bg-soft);
+}
+.world .land {
+  color: var(--vp-c-default-1);
+}
+.world .probe {
+  fill: var(--vp-c-text-2);
+  opacity: 0.7;
+}
+.world .dc {
+  fill: var(--vp-c-brand-1);
+  stroke: var(--vp-c-bg);
+  stroke-width: 0.3;
+}
+.coverage figcaption {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--vp-c-text-2);
+}
+.coverage .key {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+.coverage .key.dc {
+  background: var(--vp-c-brand-1);
+}
+.coverage .key.probe {
+  width: 6px;
+  height: 6px;
+  background: var(--vp-c-text-2);
+}

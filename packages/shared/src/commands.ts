@@ -62,6 +62,16 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     tool: "limits",
   },
   {
+    name: "coverage",
+    use: "coverage",
+    about:
+      "Which of Cloudflare's data centres the app reaches, on a world map, with Globalping's probes",
+    page: "/coverage",
+    api: "GET /api/coverage",
+    task: "ping:coverage",
+    tool: "coverage",
+  },
+  {
     name: "map",
     use: "map [--id <map id>]",
     about: "Which Cloudflare data centres Globalping's probes reach, and what it cost to find out",

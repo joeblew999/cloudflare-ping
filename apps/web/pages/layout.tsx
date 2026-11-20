@@ -66,6 +66,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <Link href="/runs" className="nav-link" activeMatch="prefix">
               Runs
             </Link>
+            <Link href="/coverage" className="nav-link">
+              Coverage
+            </Link>
             <Link href="/map" className="nav-link">
               Map
             </Link>

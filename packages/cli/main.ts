@@ -7,6 +7,7 @@
 import manifest from "./package.json" with { type: "json" };
 import { signIn, signOut, whoami } from "./commands/account";
 import { COMMAND_LIST, COMMON_OPTIONS } from "@cloudflare-ping/shared/commands";
+import { coverage } from "./commands/coverage";
 import { init } from "./commands/init";
 import { limits } from "./commands/limits";
 import { map, remap } from "./commands/map";
@@ -22,6 +23,7 @@ const RUNS: Record<string, (args: Array<string>) => Promise<void>> = {
   runs,
   show,
   limits,
+  coverage,
   map,
   remap,
   trace,
