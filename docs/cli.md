@@ -19,6 +19,7 @@ same list: both read it from `packages/shared/src/commands.ts`.
 <section v-for="command in data.commands" :key="command.name" class="command">
   <h3 :id="command.name">{{ command.name }}</h3>
   <p>{{ command.about }}.</p>
+  <p v-if="command.spends"><strong>Spends tests</strong>: check <a href="#limits">limits</a> first.</p>
   <p v-if="command.signedIn"><strong>Needs this machine signed in</strong> (<a href="#signing-in">Signing in</a>).</p>
   <div class="language-sh"><pre><code>cloudflare-ping {{ command.use }}</code></pre></div>
   <ul>

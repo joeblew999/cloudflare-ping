@@ -6,9 +6,10 @@
 //
 // Then it checks the tools against the commands list (packages/shared/src/commands.ts), and asks
 // each tool that only reads the same question as the API and the CLI (`--json`: the API's
-// answer), comparing the three answers. It never calls the tools that spend tests (test, run,
-// remap). On demand, not in `vp test`: it needs the deployed app and, the first time, you.
-// `vp run mcp:check` (`-- --site <url>` for another copy of the app).
+// answer), comparing the three answers. Each question is written once, as the command's options;
+// `questionFor` makes it each surface's. Every command that only reads must be asked, and the
+// commands that spend tests (their `spends`) are never called. `vp run deploy` runs it after each
+// deploy; `vp run mcp:check` on its own (`-- --site <url>` for another copy of the app).
 import { execFile } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -27,7 +28,7 @@ import {
   type StoredOAuthTokens,
 } from "@modelcontextprotocol/client";
 import { z } from "zod";
-import { COMMAND_LIST } from "@cloudflare-ping/shared/commands";
+import { COMMAND_LIST, questionFor, type CommandInfo } from "@cloudflare-ping/shared/commands";
 import { SITE } from "@cloudflare-ping/shared/site";
 
 const { values } = parseArgs({
@@ -42,9 +43,13 @@ const check = (ok: boolean, what: string) => {
   console.log(`${ok ? "ok  " : "FAIL"}  ${what}`);
 };
 
-// The tools that spend tests: the check never calls them, and the server must say they aren't
-// read-only.
-const SPENDS = ["test", "run", "remap"];
+const commandNamed = (name: string) => {
+  const found = COMMAND_LIST.find((each) => each.name === name);
+  if (!found?.tool) {
+    throw new Error(`No command ${name} with an MCP tool (packages/shared/src/commands.ts)`);
+  }
+  return found;
+};
 
 // What the check keeps between runs, per site: its registration and its tokens, with the SDK's
 // own fields (StoredOAuthClientInformation, StoredOAuthTokens).
@@ -253,11 +258,11 @@ async function cli(args: Array<string>): Promise<unknown> {
 }
 
 // The tool's answer: its data, or its error in the words the page and the CLI show.
-async function tool(client: Client, name: string, args: Record<string, unknown>) {
-  if (SPENDS.includes(name)) {
-    throw new Error(`${name} spends tests: the check never calls it`);
+async function tool(client: Client, command: CommandInfo, options: Options) {
+  if (command.spends || !command.tool) {
+    throw new Error(`${command.name} spends tests: the check never calls it`);
   }
-  const result = await client.callTool({ name, arguments: args });
+  const result = await client.callTool({ name: command.tool, arguments: options });
   if (result.isError) {
     const first = Array.isArray(result.content) ? result.content[0] : undefined;
     const text =
@@ -285,61 +290,91 @@ function differences(mcp: unknown, other: unknown, path = ""): Array<string> {
   return [`${path || "the answer"}: ${shown(mcp)} from MCP, ${shown(other)}`];
 }
 
-// Which Cloudflare data centre gave the answer, when it says.
-function coloOf(answer: unknown) {
-  const parsed = z.object({ colo: z.string().nullable() }).safeParse(answer);
-  return parsed.success ? parsed.data.colo : null;
+// What's about the request, not the app, so it differs from one request to the next whatever the
+// code: which data centre ran it, which address it went out from, and that address's tests left
+// right now (`limits`). Even in one data centre, a Worker's requests can go out from different
+// addresses, each counted on its own without a token (found 2026-11-20: 236 left for one, 250
+// for another, the same address reported). Shown side by side, never compared.
+const OF_THE_REQUEST = [".colo", ".address", ".globalping.remaining", ".globalping.resetSeconds"];
+
+function remove(value: unknown, keys: Array<string>) {
+  const [first, ...rest] = keys;
+  if (first === undefined || typeof value !== "object" || value === null) {
+    return;
+  }
+  if (rest.length === 0) {
+    Reflect.deleteProperty(value, first);
+  } else {
+    remove(Reflect.get(value, first), rest);
+  }
 }
 
-// One question, asked of the MCP tool, the API (unless it needs signing in) and the CLI.
-async function ask(
-  client: Client,
-  question: {
-    tool: string;
-    args: Record<string, unknown>;
-    api: string | null;
-    cli: Array<string>;
-    // The answer depends on which Cloudflare data centre ran it (`limits`: each one's outgoing
-    // address has its own allowance), so only answers from the same one are compared.
-    perDatacentre?: boolean;
-  },
-) {
-  const [fromMcp, fromApi, fromCli] = await Promise.all([
-    tool(client, question.tool, question.args),
-    question.api ? api(question.api) : null,
-    cli(question.cli),
-  ]);
-  const mcp = JSON.stringify(fromMcp);
-  const asked = `${question.tool} ${JSON.stringify(question.args)}`;
-  let others: Array<[string, unknown]> = [["the CLI", fromCli]];
-  if (question.api) {
-    others.unshift(["the API", fromApi]);
+// The answer without what's about the request, as compared.
+function comparable(answer: unknown) {
+  const copy: unknown = JSON.parse(JSON.stringify(answer ?? null));
+  for (const path of OF_THE_REQUEST) {
+    remove(copy, path.split(".").slice(1));
   }
-  if (question.perDatacentre) {
-    const here = coloOf(fromMcp);
-    const elsewhere = others.filter(([, answer]) => coloOf(answer) !== here);
-    if (elsewhere.length > 0) {
-      const where = elsewhere.map(([who, answer]) => `${who.slice(4)} ${coloOf(answer) ?? "?"}`);
-      console.log(
-        `info  ${asked}: answered in different data centres (MCP ${here ?? "?"}, ${where.join(", ")}), each with its own address's allowance, so compared only within one`,
-      );
-    }
-    others = others.filter(([, answer]) => coloOf(answer) === here);
-    if (others.length === 0) {
-      return fromMcp;
+  return JSON.stringify(copy);
+}
+
+type Options = Record<string, string | number | boolean>;
+// The commands asked so far: each one that only reads must be.
+const asked = new Set<string>();
+
+// One question, written once as the command's options, asked of the MCP tool, the API (unless
+// the command needs signing in: the API would want the CLI's token) and the CLI.
+async function ask(client: Client, name: string, options: Options) {
+  const command = commandNamed(name);
+  const question = questionFor(command, options);
+  asked.add(command.name);
+  const what = `${command.name} ${JSON.stringify(options)}`;
+  const answers = async () => {
+    const [mcp, api_, cli_] = await Promise.all([
+      tool(client, command, options),
+      command.signedIn ? null : api(question.path),
+      cli(question.cli),
+    ]);
+    const rest: Array<[string, unknown]> = command.signedIn
+      ? [["CLI", cli_]]
+      : [
+          ["API", api_],
+          ["CLI", cli_],
+        ];
+    return { mcp, rest };
+  };
+  const differing = (got: Awaited<ReturnType<typeof answers>>) =>
+    got.rest.filter(([, answer]) => comparable(answer) !== comparable(got.mcp)).map(([who]) => who);
+  let got = await answers();
+  if (differing(got).length > 0) {
+    // Asked once more: a difference in the code shows both times; a source answering differently
+    // once (Cloudflare's log search, 2026-11-20: one entry instead of four) doesn't, and is shown.
+    const first = got;
+    got = await answers();
+    if (differing(got).length === 0) {
+      console.log(`info  ${what}: differed the first time, identical when asked again:`);
+      for (const [who, answer] of first.rest) {
+        for (const line of differences(first.mcp, answer).slice(0, 3)) {
+          console.log(`info      ${line} from the ${who}`);
+        }
+      }
     }
   }
-  const differ = others.filter(([, answer]) => JSON.stringify(answer) !== mcp).map(([who]) => who);
-  const surfaces = ["MCP", ...others.map(([who]) => who.replace("the ", ""))].join(", ");
+  const fromMcp = got.mcp;
+  const others = got.rest;
+  const mcp = comparable(fromMcp);
+  const differ = differing(got);
+  const exact = others.every(([, answer]) => JSON.stringify(answer) === JSON.stringify(fromMcp));
   check(
     differ.length === 0,
-    differ.length === 0
-      ? `${asked}: ${surfaces} give identical answers (${mcp.length} characters)`
-      : `${asked}: MCP differs from ${differ.join(" and ")}`,
+    differ.length > 0
+      ? `${what}: MCP differs from the ${differ.join(" and the ")}`
+      : `${what}: MCP, ${others.map(([who]) => who).join(", ")} give identical answers (${mcp.length} characters)${exact ? "" : ", apart from each request's own data centre, address and tests left"}`,
   );
   for (const [who, answer] of others) {
-    for (const line of differences(fromMcp, answer).slice(0, 5)) {
-      console.log(`        ${line} from ${who.replace("the ", "")}`);
+    for (const line of differences(fromMcp, answer).slice(0, 8)) {
+      const own = OF_THE_REQUEST.some((path) => line.startsWith(`${path}:`));
+      console.log(`${own ? "info  " : "      "}  ${line} from the ${who}`);
     }
   }
   return fromMcp;
@@ -374,80 +409,47 @@ for (const command of commands) {
   const found = tools.find((each) => each.name === command.tool);
   const readOnly = found?.annotations?.readOnlyHint === true;
   check(
-    (found?.description ?? "").startsWith(`${command.about}.`) &&
-      readOnly === !SPENDS.includes(command.tool ?? ""),
+    (found?.description ?? "").startsWith(`${command.about}.`) && readOnly === !command.spends,
     `${command.tool}: described as \`cloudflare-ping help\` describes it, ${readOnly ? "read-only" : "spends tests"}`,
   );
 }
 
-// Each tool that only reads, asked as the API and the CLI are.
-const questions = [
-  { tool: "coverage", args: {}, api: "/api/coverage", cli: ["coverage"] },
-  {
-    tool: "coverage",
-    args: { place: "TH" },
-    api: "/api/coverage?place=TH",
-    cli: ["coverage", "--place", "TH"],
-  },
-  {
-    tool: "coverage",
-    args: { place: "Europe", cities: false },
-    api: "/api/coverage?place=Europe&cities=false",
-    cli: ["coverage", "--place", "Europe", "--no-cities"],
-  },
-  {
-    tool: "coverage",
-    args: { place: "zz" },
-    api: "/api/coverage?place=zz",
-    cli: ["coverage", "--place", "zz"],
-  },
-  { tool: "places", args: { q: "bang" }, api: "/api/places?q=bang", cli: ["places", "bang"] },
-  {
-    tool: "places",
-    args: { q: "united", kind: "country" },
-    api: "/api/places?q=united&kind=country",
-    cli: ["places", "united", "--kind", "country"],
-  },
-  {
-    tool: "places",
-    args: { q: "th", limit: 5 },
-    api: "/api/places?q=th&limit=5",
-    cli: ["places", "th", "--limit", "5"],
-  },
-  { tool: "limits", args: {}, api: "/api/limits", cli: ["limits"], perDatacentre: true },
-  { tool: "map", args: {}, api: "/api/map", cli: ["map"] },
+// The questions, each once: a command and its options.
+const questions: Array<[string, Options]> = [
+  ["coverage", {}],
+  ["coverage", { place: "TH" }],
+  ["coverage", { place: "Europe", cities: false }],
+  ["coverage", { place: "zz" }],
+  ["places", { q: "bang" }],
+  ["places", { q: "united", kind: "country" }],
+  ["places", { q: "th", limit: 5 }],
+  ["limits", {}],
+  ["map", {}],
 ];
-for (const question of questions) {
-  await ask(client, question);
+for (const [name, options] of questions) {
+  await ask(client, name, options);
 }
 
-// The newest run, then one of its fetches' Cloudflare log (signed in on the API: MCP and CLI).
+// The newest run, then one of its fetches' Cloudflare log: their IDs come from the answers.
 const newest = z
   .object({ runs: z.array(z.object({ id: z.string() })) })
-  .safeParse(await ask(client, { tool: "runs", args: {}, api: "/api/runs", cli: ["runs"] }));
+  .safeParse(await ask(client, "runs", {}));
 const id = newest.success ? newest.data.runs[0]?.id : undefined;
 if (id) {
   const shown = z
     .object({ fetches: z.array(z.object({ ray: z.string().nullable(), createdAt: z.string() })) })
-    .safeParse(
-      await ask(client, { tool: "show", args: { id }, api: `/api/runs/${id}`, cli: ["show", id] }),
-    );
+    .safeParse(await ask(client, "show", { id }));
   const fetched = shown.success ? shown.data.fetches.find((each) => each.ray) : undefined;
   if (fetched?.ray) {
     // Back as far as that fetch, so its log is in the answer: trace looks back up to a week.
     const ago = Math.ceil((Date.now() - Date.parse(fetched.createdAt)) / 60_000) + 5;
-    const minutes = Math.min(10_080, Math.max(60, ago));
-    await ask(client, {
-      tool: "trace",
-      args: { ray: fetched.ray, minutes },
-      api: null,
-      cli: ["trace", fetched.ray, "--minutes", String(minutes)],
-    });
-  } else {
-    console.log("info  the newest run has no fetch with a ray ID: trace not asked");
+    await ask(client, "trace", { ray: fetched.ray, minutes: Math.min(10_080, Math.max(60, ago)) });
   }
-} else {
-  console.log("info  no runs: show and trace not asked");
+}
+
+// Every command that only reads was asked: a new one fails here until it has a question.
+for (const command of commands.filter((each) => !each.spends)) {
+  check(asked.has(command.name), `${command.name}: asked of MCP, the API and the CLI`);
 }
 
 await client.close();

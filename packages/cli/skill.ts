@@ -10,10 +10,13 @@ export const SKILL_PATH = "skills/cloudflare-ping/SKILL.md";
 
 export function skillText() {
   const site = `https://${SITE}`;
-  const rows = COMMAND_LIST.map(
-    (each) =>
-      `| \`cloudflare-ping ${each.use}\` | ${each.tool ? `\`${each.tool}\`` : "-"} | ${each.about}${each.signedIn ? " (needs sign-in)" : ""} | \`${each.page}\` |`,
-  );
+  const rows = COMMAND_LIST.map((each) => {
+    const marks = [each.spends ? "spends tests" : "", each.signedIn ? "needs sign-in" : ""].filter(
+      (mark) => mark !== "",
+    );
+    const marked = marks.length > 0 ? ` (${marks.join(", ")})` : "";
+    return `| \`cloudflare-ping ${each.use}\` | ${each.tool ? `\`${each.tool}\`` : "-"} | ${each.about}${marked} | \`${each.page}\` |`;
+  });
   return `---
 name: cloudflare-ping
 description: Use cloudflare-ping, probes from around the world run from Cloudflare's data centres, to fetch a site from the Cloudflare data centres the probes reach, start and read runs, and see how many tests are left. Use when asked to probe, warm or check a site from Cloudflare's data centres, or about cloudflare-ping's runs.

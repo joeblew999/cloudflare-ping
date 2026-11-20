@@ -16,6 +16,13 @@ export type CommandInfo = {
   // page enforce what this says (src/commands/context.ts, `signedInFor`), and the docs
   // and `cloudflare-ping help` show it from here.
   signedIn: boolean;
+  // Whether it spends tests: only an explicit test, run or new map does, never coverage, places or
+  // a picker. Its MCP tool is marked by it (src/mcp.ts), the docs, `cloudflare-ping help` and the
+  // skill show it, and `vp run mcp:check` never calls it.
+  spends: boolean;
+  // Which of its options the CLI's bare argument fills (`places bang`: q), if it takes one. With
+  // it, one question becomes each surface's (`questionFor`).
+  argument: string | null;
 };
 
 export const COMMAND_LIST: Array<CommandInfo> = [
@@ -28,6 +35,8 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     task: "probe:test",
     tool: "test",
     signedIn: true,
+    spends: true,
+    argument: null,
   },
   {
     name: "run",
@@ -39,6 +48,8 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     task: "ping:run",
     tool: "run",
     signedIn: true,
+    spends: true,
+    argument: null,
   },
   {
     name: "runs",
@@ -49,6 +60,8 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     task: "ping:runs",
     tool: "runs",
     signedIn: false,
+    spends: false,
+    argument: null,
   },
   {
     name: "show",
@@ -59,6 +72,8 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     task: "ping:show",
     tool: "show",
     signedIn: false,
+    spends: false,
+    argument: "id",
   },
   {
     name: "limits",
@@ -69,6 +84,8 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     task: "ping:limits",
     tool: "limits",
     signedIn: false,
+    spends: false,
+    argument: null,
   },
   {
     name: "places",
@@ -80,6 +97,8 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     task: "ping:places",
     tool: "places",
     signedIn: false,
+    spends: false,
+    argument: "q",
   },
   {
     name: "coverage",
@@ -90,6 +109,8 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     task: "ping:coverage",
     tool: "coverage",
     signedIn: false,
+    spends: false,
+    argument: null,
   },
   {
     name: "map",
@@ -100,6 +121,8 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     task: "ping:map",
     tool: "map",
     signedIn: false,
+    spends: false,
+    argument: null,
   },
   {
     name: "remap",
@@ -110,6 +133,8 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     task: "ping:remap",
     tool: "remap",
     signedIn: true,
+    spends: true,
+    argument: null,
   },
   {
     name: "trace",
@@ -120,6 +145,8 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     task: "probe:trace",
     tool: "trace",
     signedIn: true,
+    spends: false,
+    argument: "ray",
   },
   {
     name: "init",
@@ -130,6 +157,8 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     task: null,
     tool: null,
     signedIn: false,
+    spends: false,
+    argument: null,
   },
   {
     name: "sign-in",
@@ -140,6 +169,8 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     task: "ping:sign-in",
     tool: null,
     signedIn: false,
+    spends: false,
+    argument: null,
   },
   {
     name: "sign-out",
@@ -150,6 +181,8 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     task: "ping:sign-out",
     tool: null,
     signedIn: false,
+    spends: false,
+    argument: null,
   },
   {
     name: "whoami",
@@ -160,6 +193,8 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     task: "ping:whoami",
     tool: null,
     signedIn: false,
+    spends: false,
+    argument: null,
   },
 ];
 
@@ -172,6 +207,42 @@ export const COMMON_OPTIONS = [
 export const SIGNED_IN_COMMANDS = COMMAND_LIST.filter((each) => each.signedIn).map(
   (each) => each.name,
 );
+
+// One question to a command, as each surface takes it, written once as the command's options. The
+// MCP tool takes the options as they are. The API takes them in its route (`<id>` from id) and the
+// rest as its query. The CLI takes the bare argument (`argument`), then `--option value`, with
+// `--option` for true and `--no-option` for false. How `vp run mcp:check` asks the three the same.
+export function questionFor(
+  command: CommandInfo,
+  options: Record<string, string | number | boolean>,
+) {
+  const [method = "GET", route = ""] = command.api.split(" ");
+  const query = new URLSearchParams();
+  let path = route;
+  const bare: Array<string> = [];
+  const flags: Array<string> = [];
+  for (const [key, value] of Object.entries(options)) {
+    const text = String(value);
+    if (path.includes(`<${key}>`)) {
+      path = path.replace(`<${key}>`, encodeURIComponent(text));
+    } else {
+      query.set(key, text);
+    }
+    if (key === command.argument) {
+      bare.push(text);
+    } else if (typeof value === "boolean") {
+      flags.push(value ? `--${key}` : `--no-${key}`);
+    } else {
+      flags.push(`--${key}`, text);
+    }
+  }
+  const search = query.toString();
+  return {
+    method,
+    path: search ? `${path}?${search}` : path,
+    cli: [command.name, ...bare, ...flags],
+  };
+}
 
 // How signing in works: in the help, the skill, and the docs under "Signing in".
 export const SIGNING_IN = `These need this machine signed in: ${SIGNED_IN_COMMANDS.join(", ")}. The first time, the command prints a link and a code: open the link, approve the code, and it carries on. If the sign-in has expired, it asks again. cloudflare-ping whoami shows whether you're signed in. In CI, set CLOUDFLARE_PING_TOKEN instead.`;

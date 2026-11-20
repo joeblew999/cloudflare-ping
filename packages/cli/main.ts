@@ -43,7 +43,7 @@ Usage: cloudflare-ping <command> [options]
 Commands (each does what its web page does, through the same API):`);
   for (const each of COMMAND_LIST) {
     console.log(
-      `  ${each.use}\n      ${each.about}${each.signedIn ? ". Needs sign-in" : ""}  (on the web: ${each.page})`,
+      `  ${each.use}\n      ${each.about}${each.spends ? ". Spends tests" : ""}${each.signedIn ? ". Needs sign-in" : ""}  (on the web: ${each.page})`,
     );
   }
   console.log(

@@ -102,8 +102,13 @@ export default defineConfig({
         dependsOn: [{ task: "build", from: ["dependencies", "devDependencies"] }],
         cache: false,
       },
-      // Deploy the app and its docs (`void deploy`, which runs build first).
-      deploy: { command: "void deploy --platform cloudflare", cache: false },
+      // Deploy the app and its docs (`void deploy`, which runs build first), then prove what's
+      // live: the lists and their sources (coverage:check), and /mcp beside the API and the CLI
+      // (mcp:check). A deploy isn't done until both pass; when one fails, it says what.
+      deploy: {
+        command: "void deploy --platform cloudflare && vp run coverage:check && vp run mcp:check",
+        cache: false,
+      },
       // The deployed Worker's logs as they happen (Void's `void project logs`: a live tail on
       // Cloudflare). For history, Workers Logs (`pnpm exec cf o11y telemetry query`).
       logs: { command: "void project logs", cache: false },

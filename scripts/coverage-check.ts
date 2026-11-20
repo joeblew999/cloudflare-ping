@@ -1,9 +1,10 @@
 // The lists' real-system check (plans 2026-11-20-03 and -04): the real sources, through the same
 // reducing code the app runs (src/sources/reduce.ts), and whether the answers make sense and
-// line up: every code in Globalping's list named by the name lists. With a site
-// (`-- --site <url>`), that site's `/api/coverage` and `/api/places` too. On demand, not in
+// line up: every code in Globalping's list named by the name lists. Then the deployed site's
+// `/api/coverage` and `/api/places` (`-- --site <url>` for another copy, as the CLI takes). Not in
 // `vp test`: it depends on others' servers being up. `vp run coverage:check`.
 import { parseArgs } from "node:util";
+import { SITE } from "@cloudflare-ping/shared/site";
 import {
   AIRPORTS_URL,
   CONTINENTS_URL,
@@ -111,8 +112,8 @@ named(
   usStateNames(await (await fetch(REGIONS_URL)).text()),
 );
 
-if (values.site) {
-  const site = values.site.replace(/\/+$/, "");
+{
+  const site = (values.site ?? `https://${SITE}`).replace(/\/+$/, "");
   const response = await fetch(`${site}/api/coverage`);
   const body: unknown = await response.json().catch(() => null);
   const totals = typeof body === "object" && body !== null && "totals" in body ? body.totals : null;
