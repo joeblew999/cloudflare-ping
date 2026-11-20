@@ -85,6 +85,16 @@ was drawn with. Nothing else is held.
   | JXG  | Jiaxing, China      |
 
 - The task names any new code it can't place, so it can go in the hand-placed list.
+- Each entry keeps the airport's two-letter country code beside its coordinates (the five get
+  theirs by hand). Globalping names a probe's country the same way ("TH"), while Cloudflare
+  writes it out ("Thailand", or not at all: "Hong Kong"). So probes and data centres line up by
+  country with no name-matching, which the by-country and by-region summaries need.
+- Not solved, on purpose:
+  - City names: Globalping's and Cloudflare's don't always match, and the map works from
+    coordinates.
+  - The airport's position against the data centre's own building: an airport can be tens of
+    kilometres out (Narita is about 60 km from Tokyo), which a world map can't show.
+- Counted 2026-11-20: 345 data centres; 340 placed by the airport data, five by hand.
 
 ## Everywhere, as every command is
 
