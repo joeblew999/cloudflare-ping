@@ -334,3 +334,10 @@ again: nothing after it is built on a guess.
 
 The pages for the map and the runs (reading the same API), `--json` for void-fbtee's deploy check,
 and a cron that re-maps. Each gets its own step, written here once 8 has passed.
+
+Later, after 8 (the user, 2026-11-20: "something we should do later"): other users. Each user's
+own allowed targets; their own read-only Cloudflare token (one per user, "Workers Observability
+Read" on their accounts, which covers every Worker on them), kept encrypted per user; and which
+of their accounts runs a given target. Without a token, a run already shows everything that comes
+back with the fetch (status, time, cache, the data centre from `cf-ray`); the token only adds the
+target's own Workers log.
