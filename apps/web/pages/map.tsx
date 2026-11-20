@@ -32,8 +32,8 @@ export default function MapPage({
     <main className="content wide vp-doc">
       <h1>The map</h1>
       <p className="lead">
-        Which of Cloudflare&apos;s data centres Globalping&apos;s probes reach, and what it costs to
-        find out: one probe in each place asks our <code>/where</code> which data centre it reached.
+        Which of Cloudflare&apos;s data centres the probes reach, and what it costs to find out: one
+        probe in each place asks our <code>/where</code> which data centre it reached.
       </p>
 
       {map ? (
@@ -82,9 +82,9 @@ export default function MapPage({
       <h2>Make a new map</h2>
       <div className="custom-block warning">
         <p>
-          It spends one Globalping test per place: about 120 by country, about 1,100 by city.
-          Without the app&apos;s Globalping token, that comes out of a shared allowance, and a long
-          map waits whenever it runs out.
+          It spends one test per place: about 120 by country, about 1,100 by city. Without the
+          app&apos;s own token, that comes out of a shared allowance, and a long map waits whenever
+          it runs out.
         </p>
       </div>
       <Form

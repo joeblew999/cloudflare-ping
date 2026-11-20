@@ -61,12 +61,12 @@ export default function RunsPage({ email, runs, limits }: Props) {
       <section aria-labelledby="start-title">
         <h1 id="start-title">Runs</h1>
         <p className="lead">
-          A run sends one Globalping test from probes in a place to our <code>/run</code>, which
-          fetches the target from each data centre the probes reach and records every fetch. In the
-          background, the test only has to reach the data centre; the fetches come after.
+          A run sends one test from probes in a place to our <code>/run</code>, which fetches the
+          target from each data centre the probes reach and records every fetch. In the background,
+          the test only has to reach the data centre; the fetches come after.
         </p>
         <p>
-          <Suspense fallback="Asking Globalping how many tests are left…">
+          <Suspense fallback="Asking how many tests are left…">
             <Quota limits={limits} />
           </Suspense>{" "}
           The same from a terminal: <code>cloudflare-ping limits</code>

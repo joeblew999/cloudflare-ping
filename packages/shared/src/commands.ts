@@ -22,7 +22,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
   {
     name: "test",
     use: "test [--from TH] [--path /where] [--probes 1] [--host <target>]",
-    about: "One Globalping test, to our probe or straight to a target",
+    about: "One test, to our probe or straight to a target",
     page: "/",
     api: "POST /api/probe",
     task: "probe:test",
@@ -63,7 +63,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
   {
     name: "limits",
     use: "limits",
-    about: "How many Globalping tests the app has left this hour",
+    about: "How many tests the app has left this hour",
     page: "/runs",
     api: "GET /api/limits",
     task: "ping:limits",
@@ -74,7 +74,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     name: "places",
     use: "places [<what>] [--kind <kind>] [--limit <n>]",
     about:
-      "Find a place to test from: continents, regions, countries, US states, cities and networks with Globalping's probes, and Cloudflare's data centres",
+      "Find a place to test from: continents, regions, countries, US states, cities and networks with probes, and Cloudflare's data centres",
     page: "/",
     api: "GET /api/places",
     task: "ping:places",
@@ -84,7 +84,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
   {
     name: "coverage",
     use: "coverage [--country TH]",
-    about: "All of Cloudflare's data centres and Globalping's probes, on a world map",
+    about: "All of Cloudflare's data centres and every probe, on a world map",
     page: "/coverage",
     api: "GET /api/coverage",
     task: "ping:coverage",
@@ -94,7 +94,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
   {
     name: "map",
     use: "map [--id <map id>]",
-    about: "Which Cloudflare data centres Globalping's probes reach, and what it cost to find out",
+    about: "Which Cloudflare data centres the probes reach, and what it cost to find out",
     page: "/map",
     api: "GET /api/map",
     task: "ping:map",
@@ -104,7 +104,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
   {
     name: "remap",
     use: "remap [--level country|city] [--countries TH,SG]",
-    about: "Start a new map: one Globalping test per place, worked through on a queue",
+    about: "Start a new map: one test per place, worked through on a queue",
     page: "/map",
     api: "POST /api/map",
     task: "ping:remap",

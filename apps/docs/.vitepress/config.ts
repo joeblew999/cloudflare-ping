@@ -8,7 +8,7 @@ const APP = `https://${SITE}`;
 
 export default defineConfig({
   title: "cloudflare-ping",
-  description: "Our own Globalping, run from Cloudflare's data centres",
+  description: "Probes from around the world, run from Cloudflare's data centres",
   base: "/docs/",
   outDir: "../web/public/docs",
   cleanUrls: true,

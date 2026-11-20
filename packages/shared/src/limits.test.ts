@@ -13,7 +13,7 @@ describe("limitsLine", () => {
         globalping: { ...globalping, token: false },
       }),
     ).toBe(
-      "Globalping: 248 of 250 tests left this hour for the Worker's address 203.0.113.7 in BKK, shared with other Cloudflare customers (no Globalping token set).",
+      "Tests: 248 of 250 left this hour for the Worker's address 203.0.113.7 in BKK, shared with other Cloudflare customers (no token of its own set).",
     );
   });
 
@@ -25,7 +25,7 @@ describe("limitsLine", () => {
         globalping: { ...globalping, token: true, limit: 500, resetSeconds: 1500, credits: 40 },
       }),
     ).toBe(
-      "Globalping: 248 of 500 tests left this hour for the app's Globalping account, more in 25 min, and 40 credits.",
+      "Tests: 248 of 500 left this hour for the app's own account, more in 25 min, and 40 credits.",
     );
   });
 });

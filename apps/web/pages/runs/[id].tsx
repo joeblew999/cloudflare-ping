@@ -113,8 +113,8 @@ export default function RunPage({ run, fetches: first, places }: Props) {
         {run.measurement ? (
           <>
             {" "}
-            Globalping measurement{" "}
-            <a href={`https://api.globalping.io/v1/measurements/${run.measurement}`}>
+            Test{" "}
+            <a href={routeUrl("/", { query: { measurement: run.measurement }, hash: "probe" })}>
               {run.measurement}
             </a>
             .

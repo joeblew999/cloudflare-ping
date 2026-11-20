@@ -26,7 +26,7 @@ export default function CoveragePage({
       lon: each.lon,
       className: "probe",
       r: 0.6,
-      title: `${each.city}, ${each.state ? `${each.state}, ` : ""}${each.country}: ${each.probes} Globalping ${each.probes === 1 ? "probe" : "probes"}`,
+      title: `${each.city}, ${each.state ? `${each.state}, ` : ""}${each.country}: ${each.probes} ${each.probes === 1 ? "probe" : "probes"}`,
     })),
     ...datacentres.flatMap((each) =>
       each.lat === null || each.lon === null
@@ -56,16 +56,16 @@ export default function CoveragePage({
       {country ? (
         <p className="lead">
           {country.name} ({country.code}): <strong>{totals.datacentres}</strong> of
-          Cloudflare&apos;s data centres, and Globalping&apos;s{" "}
-          <strong>{count(totals.probes)}</strong> probes in {count(totals.cities)}{" "}
-          {totals.cities === 1 ? "city" : "cities"}. <Link href="/coverage">Every country</Link>
+          Cloudflare&apos;s data centres, and <strong>{count(totals.probes)}</strong> probes in{" "}
+          {count(totals.cities)} {totals.cities === 1 ? "city" : "cities"}.{" "}
+          <Link href="/coverage">Every country</Link>
         </p>
       ) : (
         <p className="lead">
           All <strong>{totals.datacentres}</strong> of Cloudflare&apos;s data centres, and
-          Globalping&apos;s <strong>{count(totals.probes)}</strong> probes in {count(totals.cities)}{" "}
-          cities in {totals.countries} countries: everywhere the app can run, and everywhere it can
-          be reached from.
+          <strong>{count(totals.probes)}</strong> probes in {count(totals.cities)} cities in{" "}
+          {totals.countries} countries: everywhere the app can run, and everywhere it can be reached
+          from.
         </p>
       )}
 
@@ -98,11 +98,11 @@ export default function CoveragePage({
         <WorldMap
           points={points}
           zoom={country !== null}
-          label={`A world map of Cloudflare's ${totals.datacentres} data centres and Globalping's ${count(totals.probes)} probes`}
+          label={`A world map of Cloudflare's ${totals.datacentres} data centres and ${count(totals.probes)} probes`}
         />
         <figcaption>
           <span className="key dc" /> Cloudflare data centres · <span className="key probe" />{" "}
-          Globalping probes
+          Probes
         </figcaption>
       </figure>
 

@@ -36,7 +36,7 @@ const RUNS: Record<string, (args: Array<string>) => Promise<void>> = {
 };
 
 function help() {
-  console.log(`cloudflare-ping ${manifest.version}: our own Globalping, run from Cloudflare's data centres.
+  console.log(`cloudflare-ping ${manifest.version}: probes from around the world, run from Cloudflare's data centres.
 
 Usage: cloudflare-ping <command> [options]
 

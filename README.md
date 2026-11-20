@@ -1,6 +1,6 @@
 # cloudflare-ping
 
-Our own Globalping, run from Cloudflare's own data centres: a Globalping test is only the way into
+Probes from around the world, run from Cloudflare's own data centres: a test is only the way into
 a data centre, and our Worker there does the fetching. Built with [Void](https://void.cloud). How
 and why, step by step: `.claude/plans/2026-11-19-01-cloudflare-ping.md`.
 
@@ -22,11 +22,11 @@ and its MCP tool, which runs the same code too. So the web and the terminal do t
 | Sign in                    | `/login`               | `vp run ping:sign-in`            | `cloudflare-ping sign-in`        | Void's auth (`/api/auth/…`)           | -          |
 | Sign out                   | "Sign out"             | `vp run ping:sign-out`           | `cloudflare-ping sign-out`       | Void's auth                           | -          |
 | Who's signed in            | the top bar            | `vp run ping:whoami`             | `cloudflare-ping whoami`         | Void's auth                           | -          |
-| One Globalping test        | `/`, "Run a probe"     | `vp run probe:test -- --from TH` | `cloudflare-ping test --from TH` | `POST /api/probe` (signed in)         | `test`     |
+| One test                   | `/`, "Run a probe"     | `vp run probe:test -- --from TH` | `cloudflare-ping test --from TH` | `POST /api/probe` (signed in)         | `test`     |
 | Start a run and follow it  | `/runs`, "Start a run" | `vp run ping:run -- --from TH`   | `cloudflare-ping run --from TH`  | `POST /api/runs` (signed in)          | `run`      |
 | The newest runs            | `/runs`                | `vp run ping:runs`               | `cloudflare-ping runs`           | `GET /api/runs`                       | `runs`     |
 | One run and its fetches    | `/runs/<id>`           | `vp run ping:show -- <id>`       | `cloudflare-ping show <id>`      | `GET /api/runs/<id>`                  | `show`     |
-| Globalping tests left      | `/runs`                | `vp run ping:limits`             | `cloudflare-ping limits`         | `GET /api/limits`                     | `limits`   |
+| Tests left                 | `/runs`                | `vp run ping:limits`             | `cloudflare-ping limits`         | `GET /api/limits`                     | `limits`   |
 | Find a place to test from  | every form's place box | `vp run ping:places -- bang`     | `cloudflare-ping places bang`    | `GET /api/places?q=bang`              | `places`   |
 | Coverage, on a world map   | `/coverage?country=TH` | `vp run ping:coverage`           | `cloudflare-ping coverage`       | `GET /api/coverage?country=TH`        | `coverage` |
 | The map                    | `/map`                 | `vp run ping:map`                | `cloudflare-ping map`            | `GET /api/map`                        | `map`      |
@@ -41,10 +41,10 @@ tools at `/mcp`, signing itself in through your browser (the docs: "From an AI a
 `claude mcp add --transport http cloudflare-ping https://cloudflare-ping.gedw99.workers.dev/mcp`. Signing in is also automatic: the first
 command that needs it shows a link and a code to approve at `/device`.
 
-A run sends one Globalping test, from probes in a place, to `/run` for that run; `/run` fetches
+A run sends one test, from probes in a place, to `/run` for that run; `/run` fetches
 the target from each data centre the probes reach and records every fetch. Reading runs is open;
 starting one, or reading Cloudflare's logs, needs you signed in. When a run goes wrong, its page
-and `show` say why; Globalping counts tests by the Worker's address unless the app has a token,
+and `show` say why; tests are counted by the Worker's address unless the app has its own token,
 so `limits` shows what's left.
 
 <!-- #endregion use -->
@@ -96,21 +96,21 @@ A Vite+ monorepo, as Vite+'s `vite:monorepo` template and its monorepo guide lay
 - The CLI and the docs call the app's API with Void's typed fetch, so their tsconfigs extend the
   app's generated `apps/web/.void/tsconfig.json` (the app's route types).
 - At the root too: `.claude/plans/` (the plan), `evidence/` (each step's raw results, copied from
-  Globalping before its measurements expire), `lint/void-rules.ts` (Void's own lint rules; the
+  the probes' results before they expire), `lint/void-rules.ts` (Void's own lint rules; the
   root config adds ours: no casts, no `any`, no `!`).
 
 ## How the app is built
 
 In `apps/web`:
 
-- `routes/where.ts`: answers which Cloudflare data centre it ran in (`/where`). What Globalping's
+- `routes/where.ts`: answers which Cloudflare data centre it ran in (`/where`). What the
   probes fetch. `?wait=<ms>` answers after that long and `?size=<bytes>` pads the answer, which
-  found Globalping's limits: 15 seconds and 10,000 bytes per test (plan step 2).
+  found the probes' limits: 15 seconds and 10,000 bytes per test (plan step 2).
 - `routes/run.ts`: `/run?url=<address>` fetches an address from the data centre it ran in and
   answers what the target said (status, `cf-ray`, cache, time); `&repeat=<n>` fetches it n times
   in a row. Only the addresses in `packages/shared/src/targets.ts`. `&run=<id>` records each fetch
   in the database (`db/schema.ts`: `runs`, `fetches`), only for a run that exists;
-  `&background=1` answers at once and fetches afterwards. Public, since Globalping's probes can't
+  `&background=1` answers at once and fetches afterwards. Public, since the probes can't
   sign in. Needs `global_fetch_strictly_public` (`void.config.ts`) to reach other Workers on
   `gedw99.workers.dev`.
 - `src/commands/`: each thing the app does, written once: what it takes (one zod schema, which
@@ -123,19 +123,19 @@ In `apps/web`:
   say they're not set up.
 - The pages, the Void way: forms are Void's `Form` and `useForm`, sent to the page's own action,
   which redirects to the result (a probe's answer at `/?measurement=<id>`, a run's page); slow
-  data (a probe's answer, Globalping's limit) is a deferred prop; links are `Link` with
+  data (a probe's answer, the test allowance) is a deferred prop; links are `Link` with
   `routeUrl()`, and the bar's current page is the one Void marks (`data-void-active`). Missing
   and failed pages are `pages/_not-found.tsx` and `pages/_error.tsx`.
 - Coverage (`src/commands/coverage.ts`, `src/sources/`): the geographical coverage map. All of
-  Cloudflare's data centres and all of Globalping's probes, by city, on a plain world
+  Cloudflare's data centres and every probe, by city, on a plain world
   (`public/world.svg`, from Natural Earth, made by `vp run web#world`, drawn by
   `src/WorldMap.tsx`). None of our own test results: those are for the probe map. Its three
-  lists (Globalping's probes, Cloudflare's data centres, OurAirports' coordinates for their codes)
+  lists (the probes, Cloudflare's data centres, OurAirports' coordinates for their codes)
   are read at runtime and kept in Void's KV, re-checked by asking "changed?" with each source's
   ETag, and at once when a test sees a place or data centre they don't have.
-- The map (`src/map.ts`, `queues/map.ts`): which Cloudflare data centres Globalping's probes
+- The map (`src/map.ts`, `queues/map.ts`): which Cloudflare data centres the probes
   reach. `remap` queues one message per country; the queue sends one test from one probe in each
-  place (country or city) to `/where`, waiting out Globalping's hourly limit when it must, and
+  place (country or city) to `/where`, waiting out the hourly test allowance when it must, and
   keeps each answer (`sightings`), beside Cloudflare's own list of data centres. `/map` and
   `cloudflare-ping map` show it.
 - A run everywhere (`src/everywhere.ts`, `queues/runs.ts`): one probe in each data centre the
@@ -145,7 +145,7 @@ In `apps/web`:
   (`src/live.ts`, `routes/live.ts`; a Durable Object Void manages). The CLI's `run` follows
   through the API.
 - Logs and traces: on for every request (`void.config.ts`, `cloudflare.observability`). Each step
-  of a run logs a line under the run's ID with Void's logger (`void/log`): started, Globalping's
+  of a run logs a line under the run's ID with Void's logger (`void/log`): started, the
   test made (with its tests left this hour), what each probe did, each fetch `/run` made, and
   anything that went wrong, which is also kept on the run. Watch them live with `vp run logs`
   (`void project logs`); for history, the dashboard (the Worker's Observability tab) or

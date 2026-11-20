@@ -36,16 +36,14 @@ export async function test(args: Array<string>) {
   if (printedJson(values.json, answer)) {
     return;
   }
-  console.log(
-    `Globalping measurement ${answer.measurement}, from ${answer.from}, ${answer.site}${answer.path}\n`,
-  );
+  console.log(`Test ${answer.measurement}, from ${answer.from}, ${answer.site}${answer.path}\n`);
   for (const each of answer.results) {
     console.log(`${each.city}, ${each.country} (${each.network}, AS${each.asn})`);
     if (each.error) {
       console.log(`  ${each.status}: ${each.error}`);
     }
     console.log(`  HTTP ${each.httpStatus ?? "-"}, cf-ray ${each.ray}, ${each.totalMs ?? "-"} ms`);
-    console.log(`  ${each.bodyBytes} bytes back${each.truncated ? ", cut off by Globalping" : ""}`);
+    console.log(`  ${each.bodyBytes} bytes back${each.truncated ? ", cut off by the probe" : ""}`);
     if (each.isr) {
       console.log(`  x-isr-cache: ${each.isr}`);
     }

@@ -45,5 +45,5 @@ export const action = defineHandler.withValidator({ body: input })(async (c, { b
 });
 
 export const head = defineHead(() => ({
-  title: "Our own Globalping, from Cloudflare's data centres",
+  title: "Probes from around the world, run from Cloudflare's data centres",
 }));

@@ -201,7 +201,7 @@ export async function sendPlaces(
   for (const place of open) {
     await db
       .update(runPlaces)
-      .set({ error: "Globalping had no probe there this time" })
+      .set({ error: "No probe there this time" })
       .where(eq(runPlaces.id, place.id));
   }
   log.info(`Run ${message.runId}: ${test.results.length} of ${message.places.length} probes sent`, {

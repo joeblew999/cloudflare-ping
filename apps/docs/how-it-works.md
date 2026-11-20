@@ -1,7 +1,7 @@
 # How it works
 
-[Globalping](https://globalping.io) runs tests from thousands of probes around the world, and
-counts them: 250 an hour without an account. A test normally fetches one page from one place.
+Thousands of probes around the world run tests on request, and the tests are counted: 250 an
+hour without an account. A test normally fetches one page from one place.
 
 cloudflare-ping uses a test only to get into a Cloudflare data centre. The probe requests our
 Worker; Cloudflare runs it in the data centre that probe reaches; and from there our Worker
@@ -11,7 +11,7 @@ data centre.
 ## What each step proved
 
 Each step proves one thing before the next is built on it. Every answer rests on raw evidence,
-copied from Globalping before its measurements expire, and on Cloudflare's own logs, kept with
+copied from the probes' results before they expire, and on Cloudflare's own logs, kept with
 the code.
 
 | Step | The question                                                         | The answer                                                                                                                                                                                                           |
@@ -25,7 +25,7 @@ the code.
 
 ## What's next
 
-- **The map:** walk Globalping's probes, country by country, and keep which probe reaches which of
+- **The map:** walk the probes, country by country, and keep which probe reaches which of
   Cloudflare's data centres, and how often.
 - **Runs everywhere:** one run that reaches every mapped data centre, each through the steadiest
   probe the map has for it.

@@ -50,7 +50,7 @@ export async function run(args: Array<string>) {
   if (!values.json) {
     if (started.test) {
       console.log(`Run ${started.id}: ${values.target}, from ${values.from}`);
-      console.log(`  Globalping measurement ${started.test.measurement}`);
+      console.log(`  Test ${started.test.measurement}`);
       for (const each of started.test.results) {
         console.log(
           `  ${each.city}, ${each.country} (${each.network}): reached ${each.rayColo || "-"}${each.error ? `, ${each.error}` : ""}`,

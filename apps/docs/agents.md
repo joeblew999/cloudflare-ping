@@ -69,7 +69,7 @@ If one doesn't connect, tell us which agent and what it said.
    again isn't asked twice.
 
 The agent can't make an account, and can't use anything but the tools below. Starting a run or
-a test spends Globalping tests, as it does from the web and the CLI.
+a test spends tests, as it does from the web and the CLI.
 
 ## The tools
 

@@ -178,7 +178,7 @@ export function PlacePicker({
   kinds = FROM_KINDS,
   required,
   onPick,
-  unknown = "Sent to Globalping as typed",
+  unknown = "Sent as typed",
 }: {
   name: string;
   value: string;

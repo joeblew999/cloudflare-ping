@@ -81,8 +81,8 @@ function agentsSection(root: string, site: string) {
   const section = `${START}
 ## cloudflare-ping
 
-- This project uses [cloudflare-ping](${site}): our own Globalping, run from Cloudflare's data
-  centres. Starting a run or a test spends Globalping tests; check \`limits\` first.
+- This project uses [cloudflare-ping](${site}): probes from around the world, run
+  from Cloudflare's data centres. Starting a run or a test spends tests; check \`limits\` first.
 - Its MCP server is \`${site}/mcp\` (it signs in through the browser); its CLI is
   \`cloudflare-ping\` (\`cloudflare-ping help\`). The \`${SKILL}\` skill says when to use which.
 ${END}`;

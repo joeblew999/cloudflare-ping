@@ -73,7 +73,7 @@ export async function remap(args: Array<string>) {
     return;
   }
   console.log(
-    `Map ${started.id} started, by ${started.level}: ${started.places} places in ${started.countries} countries, ${started.tests} Globalping tests.`,
+    `Map ${started.id} started, by ${started.level}: ${started.places} places in ${started.countries} countries, ${started.tests} tests.`,
   );
   console.log(`It fills in as its queue works through them. Follow it with: cloudflare-ping map`);
 }

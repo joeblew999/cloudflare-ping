@@ -15,7 +15,7 @@ export async function limits(context: CommandContext) {
     outboundAddress(),
   ]);
   logger.info(
-    `Globalping: ${globalping.remaining} of ${globalping.limit} left for ${address ?? "?"} in ${context.colo ?? "?"}`,
+    `Tests: ${globalping.remaining} of ${globalping.limit} left for ${address ?? "?"} in ${context.colo ?? "?"}`,
     { address, colo: context.colo, remaining: globalping.remaining, by: globalping.by },
   );
   return { colo: context.colo, address, globalping };

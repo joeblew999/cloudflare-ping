@@ -32,9 +32,9 @@ export default function ConsentPage({ email, agent, scopes }: Props) {
       <h1>Allow {agent.name}?</h1>
       <p className="lead">
         {agent.uri ? <a href={agent.uri}>{agent.name}</a> : agent.name} is asking to use
-        cloudflare-ping as <strong>{email}</strong>: to see runs and your Globalping tests left, and
-        to start runs and tests, which spend them. It can do what the CLI can, through the
-        app&apos;s MCP tools (<code>/mcp</code>), and nothing else.
+        cloudflare-ping as <strong>{email}</strong>: to see runs and your tests left, and to start
+        runs and tests, which spend them. It can do what the CLI can, through the app&apos;s MCP
+        tools (<code>/mcp</code>), and nothing else.
       </p>
       {scopes.length > 0 ? (
         <ul>

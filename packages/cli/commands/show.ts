@@ -29,7 +29,7 @@ export async function show(args: Array<string>) {
     `  from ${run.fromPlace ?? "?"}, ${run.probes ?? "?"} probes × ${run.repeat ?? 1}, ${mode}, started ${run.createdAt}`,
   );
   if (run.measurement) {
-    console.log(`  Globalping measurement ${run.measurement}`);
+    console.log(`  Test ${run.measurement}`);
   }
   if (run.error) {
     console.log(`  ${run.measurement ? "Went wrong" : "Didn't start"}: ${run.error}`);

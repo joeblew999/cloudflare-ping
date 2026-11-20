@@ -16,10 +16,10 @@ export type Limits = {
 
 export function limitsLine({ colo, address, globalping }: Limits) {
   const whose = globalping.token
-    ? "the app's Globalping account"
-    : `the Worker's address${address ? ` ${address}` : ""} in ${colo ?? "?"}, shared with other Cloudflare customers (no Globalping token set)`;
+    ? "the app's own account"
+    : `the Worker's address${address ? ` ${address}` : ""} in ${colo ?? "?"}, shared with other Cloudflare customers (no token of its own set)`;
   const reset =
     globalping.resetSeconds > 0 ? `, more in ${Math.ceil(globalping.resetSeconds / 60)} min` : "";
   const credits = globalping.credits === null ? "" : `, and ${globalping.credits} credits`;
-  return `Globalping: ${globalping.remaining} of ${globalping.limit} tests left this hour for ${whose}${reset}${credits}.`;
+  return `Tests: ${globalping.remaining} of ${globalping.limit} left this hour for ${whose}${reset}${credits}.`;
 }

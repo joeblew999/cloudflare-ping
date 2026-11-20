@@ -121,8 +121,8 @@ export async function globalpingLimits(token: string | undefined) {
   const read = limits.safeParse(body);
   if (!response.ok || !read.success) {
     const words = wordsOf(body, response.status);
-    logger.error(`Globalping's limits couldn't be read: ${words}`);
-    throw new HTTPException(502, { message: `Globalping's limits couldn't be read: ${words}` });
+    logger.error(`The test allowance couldn't be read: ${words}`);
+    throw new HTTPException(502, { message: `The test allowance couldn't be read: ${words}` });
   }
   const create = read.data.rateLimit.measurements.create;
   return {
@@ -179,7 +179,7 @@ export async function makeTest(options: ProbeOptions) {
     const words = refusal.safeParse(body).success
       ? wordsOf(body, started.status)
       : JSON.stringify(body);
-    logger.error(`Globalping refused a test (${started.status}): ${words}`, {
+    logger.error(`A test was refused (${started.status}): ${words}`, {
       quota: quotaOf(started),
       from: options.from,
       path: options.path,
@@ -187,11 +187,11 @@ export async function makeTest(options: ProbeOptions) {
     const suggested =
       !options.places && noProbes.safeParse(body).success ? await didYouMean(options.from) : "";
     throw new HTTPException(502, {
-      message: `Globalping refused the test (${started.status}): ${words}${suggested}`,
+      message: `The test was refused (${started.status}): ${words}${suggested}`,
     });
   }
   const id = made.data.id;
-  logger.info(`Globalping test ${id} made, from ${options.from} to ${host}${options.path}`, {
+  logger.info(`Test ${id} made, from ${options.from} to ${host}${options.path}`, {
     measurement: id,
     quota: quotaOf(started),
   });
@@ -214,16 +214,16 @@ export async function testResult(id: string, token: string | undefined) {
     const read = measurement.safeParse(polled);
     if (!response.ok || !read.success) {
       const words = wordsOf(polled, response.status);
-      logger.error(`Globalping's measurement ${id} couldn't be read: ${words}`, {
+      logger.error(`Test ${id} couldn't be read: ${words}`, {
         measurement: id,
       });
       throw new HTTPException(response.status === 404 ? 404 : 502, {
-        message: `Globalping's measurement ${id} couldn't be read: ${words}`,
+        message: `Test ${id} couldn't be read: ${words}`,
       });
     }
     done = read.data;
   }
-  logger.info(`Globalping test ${id}: ${done.status}`, {
+  logger.info(`Test ${id}: ${done.status}`, {
     measurement: id,
     probes: done.results.map(
       ({ probe, result }) =>

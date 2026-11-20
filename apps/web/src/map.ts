@@ -72,7 +72,7 @@ export async function startMap(level: Level, only?: Array<string>) {
   const groups = await placesFor(level, only);
   if (groups.length === 0) {
     throw new HTTPException(400, {
-      message: `Globalping has no probes in ${only?.join(", ") ?? "any country"}`,
+      message: `No probes in ${only?.join(", ") ?? "any country"}`,
     });
   }
   const id = crypto.randomUUID();
