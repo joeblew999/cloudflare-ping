@@ -17,8 +17,10 @@ export async function coverage(args: Array<string>) {
     return;
   }
   const { totals, regions, probeCountries } = found;
+  // Thousands with commas, as the page shows them.
+  const count = (n: number) => n.toLocaleString("en-US");
   console.log(
-    `All ${totals.datacentres} of Cloudflare's data centres, and Globalping's ${totals.probes} probes in ${totals.cities} cities in ${totals.countries} countries.\n`,
+    `All ${totals.datacentres} of Cloudflare's data centres, and Globalping's ${count(totals.probes)} probes in ${count(totals.cities)} cities in ${totals.countries} countries.\n`,
   );
   console.log("Data centres, by region:");
   for (const each of regions) {
@@ -28,7 +30,7 @@ export async function coverage(args: Array<string>) {
   console.log(
     `  ${probeCountries
       .slice(0, 12)
-      .map((each) => `${each.country} ${each.probes}`)
+      .map((each) => `${each.country} ${count(each.probes)}`)
       .join(", ")}, and ${Math.max(probeCountries.length - 12, 0)} more countries`,
   );
   if (totals.unplaced.length > 0) {
