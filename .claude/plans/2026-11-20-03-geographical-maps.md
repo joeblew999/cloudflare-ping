@@ -116,13 +116,31 @@ caching layers:
   (`coverage:v1:probe-cities`), bumped when what's kept changes shape. What's read back is
   checked against its schema (zod), and anything that doesn't fit is fetched again.
 
+### Re-checking is asking "changed?", and comparing
+
+(The user, 2026-11-20: "validation would just be that if it was different, from a previous
+run".) Each re-read is compared with what's cached, and the sources do the comparing for us:
+
+- Both lists come with a version tag (`ETag`; checked 2026-11-20). Asked again with
+  `If-None-Match`, Globalping answered **304 Not Modified**: a few bytes, not 2.3 MB.
+  Cloudflare's 304 is checked at the build.
+- The tag is kept beside each cached list.
+  - **304:** the cache is still right. Nothing is downloaded, parsed or cleared.
+  - **200:** it changed. The new list replaces the cache, what changed is logged (probes added
+    or gone, by country; data centres added, renamed or gone), and only then is the coverage
+    page cleared.
+- A re-check costs almost nothing, so "by time" becomes asking every few minutes, not reading
+  every hour.
+- The log of changes says, over time, how often each list changes, without a single test.
+
 ### Testing the refresh rules
 
 Each rule is a test (`vp test`). Void's KV is swapped for an in-memory map, as Void's own
 `guide/testing.md` does, and `fetch` and the clock are replaced:
 
 - **Cached:** two reads, one fetch.
-- **Expires:** past the hour (Globalping) or the day (Cloudflare), the next read fetches.
+- **Re-checks:** past the interval, the next read asks with the cached tag. A 304 keeps the
+  cache and clears nothing; a 200 replaces it, logs what changed, and clears the page.
 - **A test sees a new place:** a test result with a city the cache doesn't have re-reads the
   probe list.
 - **The chain:** a result in an unknown data centre code re-reads Cloudflare's list, then the
