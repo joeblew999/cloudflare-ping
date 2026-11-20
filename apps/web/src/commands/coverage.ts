@@ -7,7 +7,6 @@
 // Narrowed to one country (plan 2026-11-20-04, "One filter, everywhere"): its data centres (by the
 // country their airport is in) and its probe cities. Nothing given: everything.
 import { z } from "zod";
-import { HTTPException } from "hono/http-exception";
 import { searchPlaces } from "@cloudflare-ping/shared/places";
 import { allPlaces, countries as countryNames, placedDatacentres, probes } from "../sources/lists";
 import { coverageFilter } from "./coverage-filter";
@@ -20,20 +19,18 @@ export const coverageQuery = coverageFilter.extend({
 });
 
 // The country asked for: its code as given, or the country the one place search finds for a name
-// ("japan", "thialand").
-async function countryCode(asked: string): Promise<string> {
+// ("japan", "thialand"); none: null.
+async function countryCode(asked: string): Promise<string | null> {
   if (/^[A-Za-z]{2}$/.test(asked)) {
     return asked.toUpperCase();
   }
   const [found] = searchPlaces(await allPlaces(), { q: asked, kinds: ["country"], limit: 1 });
-  if (!found) {
-    throw new HTTPException(404, { message: `No country with probes matches "${asked}"` });
-  }
-  return found.magic;
+  return found?.magic ?? null;
 }
 
 export async function coverage(options: z.infer<typeof coverageQuery> = {}) {
-  const code = options.country ? await countryCode(options.country) : undefined;
+  const asked = options.country?.trim() ?? "";
+  const code = asked === "" ? undefined : ((await countryCode(asked)) ?? undefined);
   const [
     {
       data: { cities: everyCity },
@@ -55,6 +52,8 @@ export async function coverage(options: z.infer<typeof coverageQuery> = {}) {
   return {
     // The country it's narrowed to, named from the same list the places are: null for everything.
     country: code ? { code, name: named[code] ?? code } : null,
+    // What was asked for when no country matched it: every country is shown instead.
+    unmatched: asked !== "" && !code ? asked : null,
     totals: {
       datacentres: all.length,
       // Data centres the airport data couldn't place (a new code): not on the map yet.

@@ -12,6 +12,7 @@ import type { Props } from "./coverage.server";
 
 export default function CoveragePage({
   country,
+  unmatched,
   totals,
   regions,
   probeCountries,
@@ -67,6 +68,12 @@ export default function CoveragePage({
           be reached from.
         </p>
       )}
+
+      {unmatched ? (
+        <p className="different">
+          No country with probes matches &ldquo;{unmatched}&rdquo;: here is every country.
+        </p>
+      ) : null}
 
       <form method="get" action="/coverage" className="form coverage-filter">
         <label>

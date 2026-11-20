@@ -22,7 +22,10 @@ export async function coverage(args: Array<string>) {
   if (printedJson(values.json, found)) {
     return;
   }
-  const { country, totals, regions, probeCountries, datacentres, cities } = found;
+  const { country, unmatched, totals, regions, probeCountries, datacentres, cities } = found;
+  if (unmatched) {
+    console.log(`No country with probes matches "${unmatched}": here is every country.\n`);
+  }
   // Thousands with commas, as the page shows them.
   const count = (n: number) => n.toLocaleString("en-US");
   if (country) {
