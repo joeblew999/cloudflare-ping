@@ -72,10 +72,8 @@ export async function coverage(options: z.infer<typeof coverageQuery> = {}) {
         cities: here.length,
       };
     })
-    .sort(
-      (a, b) =>
-        b.datacentres - a.datacentres || b.probes - a.probes || a.name.localeCompare(b.name),
-    );
+    // A to Z, so a visitor finds their country.
+    .sort((a, b) => a.name.localeCompare(b.name, "en"));
   const byContinent = new Map<string, Array<(typeof countries)[number]>>();
   for (const each of countries) {
     byContinent.set(each.continent, [...(byContinent.get(each.continent) ?? []), each]);
@@ -98,8 +96,7 @@ export async function coverage(options: z.infer<typeof coverageQuery> = {}) {
       noProbeCountries: countries.filter((each) => each.probes === 0).length,
       noDatacentreCountries: countries.filter((each) => each.datacentres === 0).length,
     },
-    // Every country, its data centres and probes, grouped by continent, the most data centres
-    // first.
+    // Every country, its data centres and probes, grouped by continent; both A to Z.
     continents: [...byContinent]
       .map(([continent, members]) => ({
         code: continent,
@@ -108,7 +105,7 @@ export async function coverage(options: z.infer<typeof coverageQuery> = {}) {
         probes: members.reduce((sum, each) => sum + each.probes, 0),
         countries: members,
       }))
-      .sort((a, b) => b.datacentres - a.datacentres || b.probes - a.probes),
+      .sort((a, b) => a.name.localeCompare(b.name, "en")),
     datacentres: all,
     cities: options.cities === false ? [] : cities,
   };
