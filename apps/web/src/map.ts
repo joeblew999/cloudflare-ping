@@ -26,18 +26,21 @@ export type MapMessage = { mapId: string; country: string; places: Array<Place> 
 export async function placesFor(level: Level, only?: Array<string>) {
   const { data: cities } = await probes();
   const wanted = only && only.length > 0 ? new Set(only.map((each) => each.toUpperCase())) : null;
-  const byCountry = new Map<string, Array<string>>();
+  // A city's name in its country: the map asks Globalping by name, so Springfield, Missouri, and
+  // Springfield, Virginia, are one place to ask about.
+  const byCountry = new Map<string, Set<string>>();
   for (const each of cities) {
     if (wanted && !wanted.has(each.country)) {
       continue;
     }
-    byCountry.set(each.country, [...(byCountry.get(each.country) ?? []), each.city]);
+    byCountry.set(each.country, (byCountry.get(each.country) ?? new Set()).add(each.city));
   }
   return [...byCountry]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([country, names]) => ({
       country,
-      places: level === "country" ? [{ country }] : names.map((city): Place => ({ country, city })),
+      places:
+        level === "country" ? [{ country }] : [...names].map((city): Place => ({ country, city })),
     }));
 }
 

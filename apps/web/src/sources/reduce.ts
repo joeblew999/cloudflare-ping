@@ -13,6 +13,9 @@ export const AIRPORTS_URL = "https://davidmegginson.github.io/ourairports-data/a
 
 export const probeCity = z.object({
   country: z.string(),
+  // The US state (Globalping gives one only there): Springfield, Missouri, and Springfield,
+  // Virginia, are two places.
+  state: z.string().nullable(),
   city: z.string(),
   lat: z.number(),
   lon: z.number(),
@@ -24,6 +27,7 @@ const probeList = z.array(
   z.object({
     location: z.object({
       country: z.string(),
+      state: z.string().nullish(),
       city: z.string(),
       latitude: z.number(),
       longitude: z.number(),
@@ -31,17 +35,21 @@ const probeList = z.array(
   }),
 );
 
-// Globalping's probes, one entry per city, with how many probes it has.
+// Globalping's probes, one entry per city, with how many probes it has. A city is its name in its
+// country (and state), so same-named cities elsewhere stay apart. Globalping's own page counts
+// names alone, so it shows a few cities fewer.
 export function probeCities(body: unknown): Array<ProbeCity> {
   const byCity = new Map<string, ProbeCity>();
   for (const { location } of probeList.parse(body)) {
-    const key = `${location.country}|${location.city}`;
+    const state = location.state ?? null;
+    const key = `${location.country}|${state ?? ""}|${location.city}`;
     const found = byCity.get(key);
     if (found) {
       found.probes += 1;
     } else {
       byCity.set(key, {
         country: location.country,
+        state,
         city: location.city,
         lat: location.latitude,
         lon: location.longitude,
@@ -50,7 +58,10 @@ export function probeCities(body: unknown): Array<ProbeCity> {
     }
   }
   return [...byCity.values()].sort(
-    (a, b) => a.country.localeCompare(b.country) || a.city.localeCompare(b.city),
+    (a, b) =>
+      a.country.localeCompare(b.country) ||
+      a.city.localeCompare(b.city) ||
+      (a.state ?? "").localeCompare(b.state ?? ""),
   );
 }
 

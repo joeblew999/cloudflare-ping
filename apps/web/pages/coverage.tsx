@@ -14,12 +14,12 @@ export default function CoveragePage({
 }: Props) {
   const points: Array<WorldPoint> = [
     ...cities.map((each) => ({
-      key: `${each.country}|${each.city}`,
+      key: `${each.country}|${each.state ?? ""}|${each.city}`,
       lat: each.lat,
       lon: each.lon,
       className: "probe",
       r: 0.6,
-      title: `${each.city}, ${each.country}: ${each.probes} Globalping ${each.probes === 1 ? "probe" : "probes"}`,
+      title: `${each.city}, ${each.state ? `${each.state}, ` : ""}${each.country}: ${each.probes} Globalping ${each.probes === 1 ? "probe" : "probes"}`,
     })),
     ...datacentres.flatMap((each) =>
       each.lat === null || each.lon === null

@@ -28,8 +28,26 @@ describe("probeCities", () => {
       location: { country: "JP", city, latitude: 35, longitude: 139 },
     });
     expect(probeCities([at("Tokyo"), at("Tokyo"), at("Osaka")])).toEqual([
-      { country: "JP", city: "Osaka", lat: 35, lon: 139, probes: 1 },
-      { country: "JP", city: "Tokyo", lat: 35, lon: 139, probes: 2 },
+      { country: "JP", state: null, city: "Osaka", lat: 35, lon: 139, probes: 1 },
+      { country: "JP", state: null, city: "Tokyo", lat: 35, lon: 139, probes: 2 },
+    ]);
+  });
+
+  it("keeps same-named cities apart: in other countries, and in other US states", () => {
+    const at = (country: string, state: string | null, latitude: number) => ({
+      location: { country, state, city: "Manchester", latitude, longitude: 0 },
+    });
+    expect(
+      probeCities([
+        at("GB", null, 53.5),
+        at("US", "NH", 43),
+        at("US", "CT", 41.8),
+        at("US", "NH", 43),
+      ]),
+    ).toEqual([
+      { country: "GB", state: null, city: "Manchester", lat: 53.5, lon: 0, probes: 1 },
+      { country: "US", state: "CT", city: "Manchester", lat: 41.8, lon: 0, probes: 1 },
+      { country: "US", state: "NH", city: "Manchester", lat: 43, lon: 0, probes: 2 },
     ]);
   });
 });

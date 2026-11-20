@@ -29,7 +29,7 @@ type Options = { force?: boolean; now?: number };
 export const probes = (options?: Options): Promise<Read<Array<ProbeCity>>> =>
   cachedSource(
     {
-      key: "coverage:v1:probe-cities",
+      key: "coverage:v2:probe-cities",
       url: PROBES_URL,
       recheckSeconds: 300,
       schema: z.array(probeCity),

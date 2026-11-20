@@ -110,7 +110,7 @@ caching layers:
   Cloudflare's list is re-read, and has it; the airport places don't cover it, so the airport
   file is re-read and places it; the coverage page shows it within its five minutes.
 - **Our code: by version.** KV outlives deploys, so each key carries a version
-  (`coverage:v1:probe-cities`), bumped when what's kept changes shape. What's read back is
+  (`coverage:v2:probe-cities`, since cities carry a US state), bumped when what's kept changes shape. What's read back is
   checked against its schema (zod), and anything that doesn't fit is fetched again.
 
 ### Re-checking is asking "changed?", and comparing
