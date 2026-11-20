@@ -5,6 +5,10 @@ export default defineConfig({
   routing: {
     typedRoutes: true,
   },
+  // No D1 read replicas (Void 1.11.0's upgrade guide; guide/database/d1.md): the app reads what it
+  // just wrote (a run, then its page), which a lagging replica could miss. Databases deployed
+  // with Void before 1.11.0 may have replicas on; only this setting turns them off.
+  database: { readReplication: false },
   // Every page's head (Void's site defaults: guide/pages-routing/head.md). Each page names itself
   // with `defineHead` in its `.server.ts`; the light-or-dark script, which must run before the page
   // paints, is middleware/00.head.ts.

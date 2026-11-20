@@ -10,6 +10,10 @@ same list: both read it from `packages/shared/src/commands.ts`.
 
 <p v-for="line in data.common" :key="line">{{ line }}</p>
 
+## Signing in
+
+<p>{{ data.signingIn }}</p>
+
 ## Every command
 
 <section v-for="command in data.commands" :key="command.name" class="command">

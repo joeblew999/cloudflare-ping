@@ -3,7 +3,7 @@
 // reads. Its list of commands and tools is written from packages/shared/src/commands.ts, the list
 // `cloudflare-ping help`, the docs and the MCP tools come from, so the four can't differ.
 // write-skill.ts writes it (the package's build); skill.test.ts fails when it's out of date.
-import { COMMAND_LIST, COMMON_OPTIONS } from "@cloudflare-ping/shared/commands";
+import { COMMAND_LIST, COMMON_OPTIONS, SIGNING_IN } from "@cloudflare-ping/shared/commands";
 import { SITE } from "@cloudflare-ping/shared/site";
 
 export const SKILL_PATH = "skills/cloudflare-ping/SKILL.md";
@@ -53,6 +53,8 @@ so starting a run or a test spends them; reading runs, limits and logs spends no
 ${rows.join("\n")}
 
 ${COMMON_OPTIONS.join("\n\n")}
+
+Signing in: ${SIGNING_IN}
 
 The docs: ${site}/docs/ ("From an AI agent": ${site}/docs/agents).
 `;

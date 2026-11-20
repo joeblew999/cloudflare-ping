@@ -51,6 +51,6 @@ so starting a run or a test spends them; reading runs, limits and logs spends no
 
 Every command takes --site <url> (another copy of the app; the deployed one unless given), and those that print results take --json.
 
-Signing in: the first command that needs it shows a link and a code to approve in the browser. In CI, set CLOUDFLARE_PING_TOKEN.
+Signing in: Commands that spend Globalping tests or read Cloudflare's logs need this machine signed in. The first time, the command prints a link and a code: open the link, approve the code, and it carries on. If the sign-in has expired, it asks again. cloudflare-ping whoami shows whether you're signed in. In CI, set CLOUDFLARE_PING_TOKEN instead.
 
 The docs: https://cloudflare-ping.gedw99.workers.dev/docs/ ("From an AI agent": https://cloudflare-ping.gedw99.workers.dev/docs/agents).

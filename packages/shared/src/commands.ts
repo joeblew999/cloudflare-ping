@@ -145,8 +145,12 @@ export const COMMAND_LIST: Array<CommandInfo> = [
   },
 ];
 
-// What every command takes, and how signing in works: the help's and the docs' last words.
+// What every command takes: the help's and the docs' last words.
 export const COMMON_OPTIONS = [
   "Every command takes --site <url> (another copy of the app; the deployed one unless given), and those that print results take --json.",
-  "Signing in: the first command that needs it shows a link and a code to approve in the browser. In CI, set CLOUDFLARE_PING_TOKEN.",
 ];
+
+// How signing in works: in the help, the skill, and the docs under "Signing in". Which commands
+// need it isn't listed here: the API routes decide (`requireAuth`), and the CLI asks when one does.
+export const SIGNING_IN =
+  "Commands that spend Globalping tests or read Cloudflare's logs need this machine signed in. The first time, the command prints a link and a code: open the link, approve the code, and it carries on. If the sign-in has expired, it asks again. cloudflare-ping whoami shows whether you're signed in. In CI, set CLOUDFLARE_PING_TOKEN instead.";

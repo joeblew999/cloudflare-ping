@@ -19,15 +19,16 @@ catalog:
   "@better-auth/cimd": 1.7.25
   "@better-auth/mcp": 1.7.25
   "@better-auth/oauth-provider": 1.7.25
-  "@void/react": 1.10.0
+  "@void/react": 1.11.0
   better-auth: 1.7.25
   typescript: ^7.0.2
   # Void 1.10.0 writes Vite+ ^1.6.0, which takes Vite+ 1.7.0, whose core must be 8.3.8000 (reported
-  # to Void 2026-11-18): both held at 1.6.0 until a Void release writes a pair.
+  # to Void 2026-11-18): both held at 1.6.0 until a Void release writes a pair (still held with
+  # Void 1.11.0, 2026-11-20).
   vite: npm:@voidzero-dev/vite-plus-core@1.6.0
   vite-plus: 1.6.0
   vitepress: 2.0.0-alpha.21
-  void: 1.10.0
+  void: 1.11.0
   vue: 3.5.45
   zod: ^4.6.7
 

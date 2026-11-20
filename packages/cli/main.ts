@@ -6,7 +6,7 @@
 // docs' command reference reads too.
 import manifest from "./package.json" with { type: "json" };
 import { signIn, signOut, whoami } from "./commands/account";
-import { COMMAND_LIST, COMMON_OPTIONS } from "@cloudflare-ping/shared/commands";
+import { COMMAND_LIST, COMMON_OPTIONS, SIGNING_IN } from "@cloudflare-ping/shared/commands";
 import { coverage } from "./commands/coverage";
 import { init } from "./commands/init";
 import { limits } from "./commands/limits";
@@ -45,7 +45,7 @@ Commands (each does what its web page does, through the same API):`);
     console.log(`  ${each.use}\n      ${each.about}  (on the web: ${each.page})`);
   }
   console.log(
-    `\n${COMMON_OPTIONS.join("\n")}\nDocs: https://cloudflare-ping.gedw99.workers.dev/docs/`,
+    `\n${COMMON_OPTIONS.join("\n")}\nSigning in: ${SIGNING_IN}\nDocs: https://cloudflare-ping.gedw99.workers.dev/docs/`,
   );
 }
 
