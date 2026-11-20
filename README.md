@@ -12,10 +12,10 @@ with its docs at https://cloudflare-ping.gedw99.workers.dev/docs/ (`apps/docs`, 
 <!-- The docs show this section as it is (apps/docs/guide.md); write it here only. -->
 <!-- #region use -->
 
-One way in: the app's own API (`apps/web/routes/api/`). Each thing the app does is one API route;
-its web page and its command both call that route with Void's typed fetch (`void/client`), and
-page loaders and API routes share the same server code (`apps/web/src/`). So the web and the
-terminal do the same things, the same way.
+Each thing the app does is written once (`apps/web/src/commands/`) and reached three ways: its
+API route (`apps/web/routes/api/`), which the command calls with Void's typed fetch
+(`void/client`); its web page, whose loader and action (Void's page actions) run the same code;
+and, next, its MCP tool. So the web and the terminal do the same things, the same way.
 
 | What                       | Web page               | In the repo                      | Anywhere (the package)           | API                                   |
 | -------------------------- | ---------------------- | -------------------------------- | -------------------------------- | ------------------------------------- |
@@ -106,19 +106,33 @@ In `apps/web`:
   `&background=1` answers at once and fetches afterwards. Public, since Globalping's probes can't
   sign in. Needs `global_fetch_strictly_public` (`void.config.ts`) to reach other Workers on
   `gedw99.workers.dev`.
-- `src/globalping.ts`, `src/runs.ts`, `src/trace.ts`: what the API routes and the pages' loaders
-  both use. `src/trace.ts` reads the account's Workers logs with the app's own Cloudflare API
-  token (`CLOUDFLARE_OBSERVABILITY_TOKEN`, "Workers Observability Read"); without it, the log
-  lookups say they're not set up.
+- `src/commands/`: each thing the app does, written once: what it takes (one zod schema, which
+  the route's and the page action's `withValidator` both use) and what it does. The API routes,
+  the pages' loaders and actions, and (next) the MCP tools run these; tests beside them
+  (`vp test`).
+- `src/globalping.ts`, `src/runs.ts`, `src/trace.ts`: what the commands use. `src/trace.ts`
+  reads the account's Workers logs with the app's own Cloudflare API token
+  (`CLOUDFLARE_OBSERVABILITY_TOKEN`, "Workers Observability Read"); without it, the log lookups
+  say they're not set up.
+- The pages, the Void way: forms are Void's `Form` and `useForm`, sent to the page's own action,
+  which redirects to the result (a probe's answer at `/?measurement=<id>`, a run's page); slow
+  data (a probe's answer, Globalping's limit) is a deferred prop; links are `Link` with
+  `routeUrl()`, and the bar's current page is the one Void marks (`data-void-active`). Missing
+  and failed pages are `pages/_not-found.tsx` and `pages/_error.tsx`.
+- Live: a run's page follows its fetches as `/run` records them, on Void's live stream
+  (`src/live.ts`, `routes/live.ts`; a Durable Object Void manages). The CLI's `run` follows
+  through the API.
 - Logs and traces: on for every request (`void.config.ts`, `cloudflare.observability`). Each step
-  of a run logs a line under the run's ID: started, Globalping's test made (with its tests left
-  this hour), what each probe did, each fetch `/run` made, and anything that went wrong, which is
-  also kept on the run. Read them in the dashboard (the Worker's Observability tab) or with
+  of a run logs a line under the run's ID with Void's logger (`void/log`): started, Globalping's
+  test made (with its tests left this hour), what each probe did, each fetch `/run` made, and
+  anything that went wrong, which is also kept on the run. Watch them live with `vp run logs`
+  (`void project logs`); for history, the dashboard (the Worker's Observability tab) or
   `pnpm exec cf o11y telemetry query`.
+- The head: site defaults in `void.config.ts` (`head`), each page's title from its `defineHead`;
+  `middleware/00.head.ts` sets light or dark before the page paints, as VitePress does and under
+  its key (`src/appearance.ts`), so a choice in the docs holds in the app.
 - `pages/layout.tsx`: every page's frame and links, as the docs' bar, with light or dark;
-  `middleware/01.auth.ts` shares who's signed in and where the page is; `middleware/00.head.ts`
-  sets light or dark before the page paints, as VitePress does and under its key
-  (`src/appearance.ts`), so a choice in the docs holds in the app.
+  `middleware/01.auth.ts` shares who's signed in.
 - The look: the docs'. `pages/style.css` starts from VitePress's own theme CSS (`packages/theme`:
   its fonts, variables, base and `.vp-doc` styles, in Void's colours, which the docs use too) and
   styles the app's bar, buttons, hero and cards as VitePress styles its own (VPNavBar, VPButton,

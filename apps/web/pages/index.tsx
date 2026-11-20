@@ -1,10 +1,11 @@
 // The app's home page, in the docs' look (VitePress's home: a hero, three feature cards): what it
-// is, where this page was served from, and one Globalping test from the browser, through the same
-// API as the CLI's `test` (`POST /api/probe`): to our probe, or to an allowed target directly
-// (`--host`).
-import { useState } from "react";
-import { fetch } from "void/client";
-import { failure } from "@cloudflare-ping/shared/failure";
+// is, where this page was served from, and one Globalping test, the CLI's `test` (Void's page
+// action, pages/index.server.ts, running src/commands/test.ts as `POST /api/probe` does): to our
+// probe, or to an allowed target directly (`--host`). The answer is a deferred prop: the page
+// shows at once and the answer arrives when Globalping has it.
+import { Form, Link, useForm } from "@void/react";
+import { Suspense, use } from "react";
+import { routeUrl } from "void/routes";
 import { SITE } from "@cloudflare-ping/shared/site";
 import { ALLOWED_HOSTS } from "@cloudflare-ping/shared/targets";
 import type { Props } from "./index.server";
@@ -35,42 +36,80 @@ const FEATURES = [
   },
 ];
 
-const runProbe = (body: { from: string; path: string; probes: number; host?: string }) =>
-  fetch("/api/probe", { method: "POST", body });
-type Answer = Awaited<ReturnType<typeof runProbe>>;
+function Answer({ answer }: { answer: NonNullable<Props["answer"]> }) {
+  const found = use(answer);
+  if (!found.ok) {
+    return (
+      <div className="custom-block danger" role="alert">
+        <p>{found.error}</p>
+      </div>
+    );
+  }
+  const { test } = found;
+  const ours = test.site === SITE;
+  return (
+    <>
+      <p>
+        Globalping measurement{" "}
+        <a href={`https://api.globalping.io/v1/measurements/${test.measurement}`}>
+          {test.measurement}
+        </a>
+        , from {test.from}, <code>{`${test.site}${test.path}`}</code>
+      </p>
+      <ul className="results">
+        {test.results.map((each) => (
+          <li key={`${each.city}-${each.network}-${each.ray}`} className="card">
+            <p className="card-title">
+              {each.city}, {each.country}
+            </p>
+            <p className="card-details">
+              {each.network} (AS{each.asn})
+            </p>
+            {each.error ? <p className="card-details different">{each.error}</p> : null}
+            <p className="card-details">
+              {ours ? (
+                <span className={each.same ? "same" : "different"}>
+                  {each.same ? "Same" : "Different"}: answered {each.colo || "-"}.{" "}
+                </span>
+              ) : null}
+              cf-ray{" "}
+              {each.ray ? (
+                <Link href={routeUrl("/trace/[ray]", { params: { ray: each.ray } })}>
+                  {each.ray}
+                </Link>
+              ) : (
+                "-"
+              )}{" "}
+              · HTTP {each.httpStatus ?? "-"} · {each.totalMs ?? "-"} ms
+              {each.isr ? ` · ${each.isr}` : ""}
+              {each.truncated ? " · cut off" : ""}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
 
-export default function HomePage({ email, here }: Props) {
-  const [host, setHost] = useState(SITE);
-  const [from, setFrom] = useState("TH");
-  const [path, setPath] = useState("/where");
-  const [probes, setProbes] = useState("2");
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState("");
-  const [answer, setAnswer] = useState<Answer | null>(null);
+export default function HomePage({ email, here, measurement, answer }: Props) {
+  const form = useForm(
+    "/",
+    { from: "TH", path: "/where", probes: 2, host: "" },
+    { throwOnError: false },
+  );
+  const host = form.data.host || SITE;
   const ours = host === SITE;
 
-  async function run() {
-    setPending(true);
-    setError("");
-    try {
-      setAnswer(await runProbe({ from, path, probes: Number(probes), ...(ours ? {} : { host }) }));
-    } catch (caught) {
-      setError(failure(caught));
-    } finally {
-      setPending(false);
-    }
-  }
-
   function pickHost(next: string) {
-    setHost(next);
-    setPath(next === SITE ? "/where" : "/en-US/events");
+    form.setData("host", next === SITE ? "" : next);
+    form.setData("path", next === SITE ? "/where" : "/en-US/events");
   }
 
   const command = [
     "cloudflare-ping test",
-    `--from ${from}`,
-    `--path ${path}`,
-    `--probes ${probes}`,
+    `--from ${form.data.from}`,
+    `--path ${form.data.path}`,
+    `--probes ${form.data.probes}`,
     ...(ours ? [] : [`--host ${host}`]),
   ].join(" ");
 
@@ -92,9 +131,10 @@ export default function HomePage({ email, here }: Props) {
             <a className="button brand big" href="#probe">
               Run a probe
             </a>
-            <a className="button alt big" href="/runs">
+            <Link className="button alt big" href="/runs">
               Runs
-            </a>
+            </Link>
+            {/* The docs are their own site (VitePress, apps/docs), so a plain link. */}
             <a className="button alt big" href="/docs/">
               Docs
             </a>
@@ -127,12 +167,14 @@ export default function HomePage({ email, here }: Props) {
             <code>/run?url=…</code> fetches a target from there), or straight to a target, as a
             visitor would. It spends Globalping tests, so it needs you signed in.
           </p>
-          <form
+          <Form
+            form={form}
             className="form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void run();
-            }}
+            renderError={(error) => (
+              <div className="custom-block danger">
+                <p>{error.message}</p>
+              </div>
+            )}
           >
             <label>
               To
@@ -147,11 +189,21 @@ export default function HomePage({ email, here }: Props) {
             <div className="form-row">
               <label>
                 From
-                <input value={from} onChange={(event) => setFrom(event.target.value)} required />
+                <input
+                  value={form.data.from}
+                  onChange={(event) => form.setData("from", event.target.value)}
+                  required
+                />
+                {form.errors.from ? <span className="different">{form.errors.from}</span> : null}
               </label>
               <label>
                 Path
-                <input value={path} onChange={(event) => setPath(event.target.value)} required />
+                <input
+                  value={form.data.path}
+                  onChange={(event) => form.setData("path", event.target.value)}
+                  required
+                />
+                {form.errors.path ? <span className="different">{form.errors.path}</span> : null}
               </label>
               <label>
                 Probes
@@ -159,60 +211,28 @@ export default function HomePage({ email, here }: Props) {
                   type="number"
                   min={1}
                   max={10}
-                  value={probes}
-                  onChange={(event) => setProbes(event.target.value)}
+                  value={form.data.probes}
+                  onChange={(event) => form.setData("probes", Number(event.target.value))}
                   required
                 />
+                {form.errors.probes ? (
+                  <span className="different">{form.errors.probes}</span>
+                ) : null}
               </label>
             </div>
             <div className="form-actions">
-              <button type="submit" className="button brand" disabled={pending || !email}>
-                {pending ? "Waiting for Globalping…" : email ? "Run" : "Sign in to run"}
+              <button type="submit" className="button brand" disabled={form.pending || !email}>
+                {form.pending ? "Asking Globalping…" : email ? "Run" : "Sign in to run"}
               </button>
             </div>
-          </form>
-          {error ? (
-            <div className="custom-block danger" role="alert">
-              <p>{error}</p>
-            </div>
-          ) : null}
+          </Form>
           <p>
             The same from a terminal: <code>{command}</code>
           </p>
           {answer ? (
-            <>
-              <p>
-                Globalping measurement{" "}
-                <a href={`https://api.globalping.io/v1/measurements/${answer.measurement}`}>
-                  {answer.measurement}
-                </a>
-                , from {answer.from}, <code>{`${answer.site}${answer.path}`}</code>
-              </p>
-              <ul className="results">
-                {answer.results.map((each) => (
-                  <li key={`${each.city}-${each.network}-${each.ray}`} className="card">
-                    <p className="card-title">
-                      {each.city}, {each.country}
-                    </p>
-                    <p className="card-details">
-                      {each.network} (AS{each.asn})
-                    </p>
-                    {each.error ? <p className="card-details different">{each.error}</p> : null}
-                    <p className="card-details">
-                      {ours ? (
-                        <span className={each.same ? "same" : "different"}>
-                          {each.same ? "Same" : "Different"}: answered {each.colo || "-"}.{" "}
-                        </span>
-                      ) : null}
-                      cf-ray {each.ray ? <a href={`/trace/${each.ray}`}>{each.ray}</a> : "-"} · HTTP{" "}
-                      {each.httpStatus ?? "-"} · {each.totalMs ?? "-"} ms
-                      {each.isr ? ` · ${each.isr}` : ""}
-                      {each.truncated ? " · cut off" : ""}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </>
+            <Suspense fallback={<p>Waiting for Globalping&apos;s answer to {measurement}…</p>}>
+              <Answer answer={answer} />
+            </Suspense>
           ) : null}
         </section>
       </div>

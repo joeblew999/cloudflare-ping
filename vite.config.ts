@@ -76,6 +76,9 @@ export default defineConfig({
       "docs:preview": { command: "vp run docs#preview", cache: false },
       // Deploy the app and its docs (apps/web: `void deploy`, which builds both first).
       deploy: { command: "vp run web#deploy", cache: false },
+      // The deployed Worker's logs as they happen (Void's `void project logs`: a live tail on
+      // Cloudflare). For history, Workers Logs (`pnpm exec cf o11y telemetry query`).
+      logs: { command: "vp run web#logs", cache: false },
     },
   },
 });

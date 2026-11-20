@@ -1,16 +1,13 @@
-import { defineHandler, type InferProps } from "void";
-import { z } from "zod";
-import { getRun } from "../../src/runs";
+import { defineHandler, defineHead, type InferProps } from "void";
+import { show, showParams } from "../../src/commands/runs";
 
 export type Props = InferProps<typeof loader>;
 
-// The same as `GET /api/runs/<id>` (src/runs.ts).
-export const loader = defineHandler.withValidator({
-  params: z.object({ id: z.string().min(1).max(64) }),
-})(async (c, { params }) => {
-  const found = await getRun(params.id);
-  if (!found) {
-    return c.notFound();
-  }
-  return found;
-});
+// The same as `GET /api/runs/<id>` (src/commands/runs.ts); no such run is Void's 404 page.
+export const loader = defineHandler.withValidator({ params: showParams })((_c, { params }) =>
+  show(params),
+);
+
+export const head = defineHead<Props>((_c, props) => ({
+  title: `A run of ${new URL(props.run.target).pathname}`,
+}));

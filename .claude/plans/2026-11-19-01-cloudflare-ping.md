@@ -14,7 +14,8 @@ one place. Instead, a Globalping test is only the way into a Cloudflare data cen
 our Worker there, and our Worker fetches every page we ask for, from there, in that one request.
 What we remember is which Globalping probe lands in which data centre (the map). Our Worker keeps
 nothing: a plain Worker lives only as long as its request (Cloudflare's Workers limits, checked
-2026-11-19), and no Durable Objects are used.
+2026-11-19), and no Durable Objects are used. (Since 2026-11-20, a run's page follows it live on Void's `void/live`,
+a Durable Object Void manages; the probe's own work still keeps nothing: plan 2026-11-20-02.)
 
 The first user is void-fbtee's example app: after each deploy, warm every data centre and check,
 region by region, that it behaves as designed (`void-fbtee/plans/read-latency.md`).
@@ -26,6 +27,9 @@ pages are both thin callers of it, so everything the app does lives in one place
 **Each thing the app does is one API route, one page and one command, doing the same** (the
 user's call, 2026-11-19; the README's table): page loaders and API routes share the same server
 code (`src/`); each page shows its command; every command takes `--json` and `--site`.
+Changed 2026-11-20 (the user's call: "the proper Void approach"; plan 2026-11-20-02): each thing
+is written once (`src/commands/`). The CLI calls its API route; its page runs it through Void's
+page actions and loaders, not the API; its MCP tool will run it too.
 
 - **Built so far (2026-11-19):** one Globalping test (`/`, `probe:test`, `POST /api/probe`);
   start a run and follow it (`/runs`, `ping:run`, `POST /api/runs`), the newest runs (`/runs`,

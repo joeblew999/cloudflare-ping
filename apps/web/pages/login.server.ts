@@ -1,4 +1,4 @@
-import { defineHandler, type InferProps } from "void";
+import { defineHandler, defineHead, type InferProps } from "void";
 
 export type Props = InferProps<typeof loader>;
 
@@ -8,3 +8,5 @@ export const loader = defineHandler((c) => {
   const local = next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\");
   return { next: local ? next : "/" };
 });
+
+export const head = defineHead(() => ({ title: "Sign in" }));

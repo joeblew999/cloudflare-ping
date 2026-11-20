@@ -1,4 +1,4 @@
-import { defineHandler, type InferProps } from "void";
+import { defineHandler, defineHead, type InferProps } from "void";
 import { requireAuth } from "void/auth";
 
 export type Props = InferProps<typeof loader>;
@@ -10,3 +10,5 @@ export const loader = defineHandler((c) => {
   });
   return { email: user.email, userCode: url.searchParams.get("user_code") ?? "" };
 });
+
+export const head = defineHead(() => ({ title: "Approve a sign-in" }));

@@ -1,7 +1,8 @@
-// Runs (plan steps 5 and 8): start one, list them, read one with its fetches. Used by the API
-// (routes/api/runs) and by the pages' loaders (pages/runs), so both do the same thing.
+// Runs (plan steps 5 and 8): start one, list them, read one with its fetches. Used by the
+// commands (src/commands), which the API, the pages and the MCP tools all run.
 import { fetches, runs } from "@schema";
 import { count, db, desc, eq } from "void/db";
+import { logger } from "void/log";
 import { probeFrom } from "./globalping";
 
 export type StartRun = {
@@ -15,9 +16,10 @@ export type StartRun = {
 
 // A new run, and the Globalping test that carries it: probes in `from` call `/run` for it, and
 // `/run` records each fetch under it (in the background, if asked: step 5). Each step goes in the
-// Worker's logs (Workers Logs: `cf o11y telemetry query`, or the dashboard), under the run's ID.
+// Worker's logs (Void's logger: `void project logs`; Workers Logs for history), under the run's ID.
 export async function startRun(options: StartRun) {
   const id = crypto.randomUUID();
+  const log = logger.child({ run: id });
   await db.insert(runs).values({
     id,
     target: options.target,
@@ -33,10 +35,9 @@ export async function startRun(options: StartRun) {
   if (options.background) {
     query.set("background", "1");
   }
-  console.log({
-    message: `Run ${id} starting: ${options.target} from ${options.from}, ${options.probes} probes × ${options.repeat}, ${options.background ? "in the background" : "inline"}`,
-    run: id,
-  });
+  log.info(
+    `Run ${id} starting: ${options.target} from ${options.from}, ${options.probes} probes × ${options.repeat}, ${options.background ? "in the background" : "inline"}`,
+  );
   let test;
   try {
     test = await probeFrom({
@@ -52,7 +53,7 @@ export async function startRun(options: StartRun) {
   } catch (caught) {
     // The run stays, saying why it never started (its page, `show`), and the caller is told too.
     const error = caught instanceof Error ? caught.message : String(caught);
-    console.error({ message: `Run ${id} didn't start: ${error}`, run: id });
+    log.error(`Run ${id} didn't start: ${error}`);
     await db.update(runs).set({ error }).where(eq(runs.id, id));
     throw caught;
   }
@@ -63,12 +64,10 @@ export async function startRun(options: StartRun) {
     const error = `${missed.length} of ${test.results.length} probes didn't reach us: ${missed
       .map((each) => `${each.city}, ${each.country}: ${each.status} ${each.error.slice(0, 120)}`)
       .join("; ")}`;
-    console.error({ message: `Run ${id}: ${error}`, run: id });
+    log.error(`Run ${id}: ${error}`);
     await db.update(runs).set({ error }).where(eq(runs.id, id));
   }
-  console.log({
-    message: `Run ${id} started: ${reached} of ${test.results.length} probes reached us`,
-    run: id,
+  log.info(`Run ${id} started: ${reached} of ${test.results.length} probes reached us`, {
     measurement: test.measurement,
   });
   return { id, expected: reached * options.repeat, test };

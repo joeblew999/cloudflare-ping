@@ -4,7 +4,10 @@
 // are the same. Run by the app (`POST /api/probe`, plan step 6), not by the machine asking.
 // Without a token, Globalping allows 250 tests an hour per IP address; with an account's token,
 // 500 (globalping.io/credits, checked 2026-11-19).
+// Made in two parts, so a page can make the test, redirect, and wait for it in its loader
+// (`makeTest`, then `testResult`); `probeFrom` does both, for the API.
 import { HTTPException } from "hono/http-exception";
+import { logger } from "void/log";
 import { z } from "zod";
 import { SITE } from "@cloudflare-ping/shared/site";
 import { ALLOWED_HOSTS } from "@cloudflare-ping/shared/targets";
@@ -28,6 +31,14 @@ const limits = z.object({
 });
 const measurement = z.object({
   status: z.string(),
+  // What was asked: kept by Globalping with the measurement, so its page can be shown from its ID.
+  target: z.string().nullish(),
+  locations: z.array(z.object({ magic: z.string().nullish() })).nullish(),
+  measurementOptions: z
+    .object({
+      request: z.object({ path: z.string().nullish(), query: z.string().nullish() }).nullish(),
+    })
+    .nullish(),
   results: z.array(
     z.object({
       probe: z.object({
@@ -52,7 +63,7 @@ const answer = z.object({ colo: z.string() });
 const refusal = z.object({ error: z.object({ message: z.string() }) });
 
 // The data centre an answer names; from the text itself when the answer was cut off (step 2).
-function coloOf(raw: string): string {
+export function coloOf(raw: string): string {
   try {
     const parsed = answer.safeParse(JSON.parse(raw));
     if (parsed.success) {
@@ -63,18 +74,6 @@ function coloOf(raw: string): string {
   }
   return /"colo":"([A-Z]{3})"/.exec(raw)?.[1] ?? "";
 }
-
-// `host`: our own probe (SITE) unless given; another only if `/run` may fetch it too
-// (packages/shared/src/targets.ts), to fetch a target directly, as any visitor would (plan step 4).
-// `onCreated`: told the measurement's ID as soon as Globalping makes it, before its results.
-export type ProbeOptions = {
-  from: string;
-  path: string;
-  probes: number;
-  host?: string;
-  token?: string;
-  onCreated?: (measurement: string) => Promise<void>;
-};
 
 function headersFor(token: string | undefined) {
   const headers = new Headers({ "content-type": "application/json" });
@@ -90,6 +89,12 @@ function quotaOf(response: Response) {
   return `${read("remaining")} of ${read("limit")} tests left, resets in ${read("reset")} s`;
 }
 
+// Globalping's own words for a refusal (`{ error: { type, message } }`), or its status.
+function wordsOf(body: unknown, status: number) {
+  const refused = refusal.safeParse(body);
+  return refused.success ? refused.data.error.message : `HTTP ${status}`;
+}
+
 // Globalping's limit for whoever asks: tests left this hour, by IP address (the Worker's, for
 // whichever of Cloudflare's addresses it went out from) or, with a token, by account. Spends no
 // test. `GET /api/limits`, the CLI's `limits`, the Runs page.
@@ -98,9 +103,8 @@ export async function globalpingLimits(token: string | undefined) {
   const body: unknown = await response.json().catch(() => null);
   const read = limits.safeParse(body);
   if (!response.ok || !read.success) {
-    const refused = refusal.safeParse(body);
-    const words = refused.success ? refused.data.error.message : `HTTP ${response.status}`;
-    console.error({ message: `Globalping's limits couldn't be read: ${words}` });
+    const words = wordsOf(body, response.status);
+    logger.error(`Globalping's limits couldn't be read: ${words}`);
     throw new HTTPException(502, { message: `Globalping's limits couldn't be read: ${words}` });
   }
   const create = read.data.rateLimit.measurements.create;
@@ -114,19 +118,29 @@ export async function globalpingLimits(token: string | undefined) {
   };
 }
 
-export async function probeFrom(options: ProbeOptions) {
-  const headers = headersFor(options.token);
+// `host`: our own probe (SITE) unless given; another only if `/run` may fetch it too
+// (packages/shared/src/targets.ts), to fetch a target directly, as any visitor would (plan step 4).
+export type ProbeOptions = {
+  from: string;
+  path: string;
+  probes: number;
+  host?: string;
+  token?: string;
+};
+
+// Makes the test and answers its measurement's ID, without waiting for it.
+export async function makeTest(options: ProbeOptions) {
   // Globalping takes the query string apart from the path.
   const mark = options.path.indexOf("?");
   const path = mark === -1 ? options.path : options.path.slice(0, mark);
   const query = mark === -1 ? "" : options.path.slice(mark + 1);
   const host = options.host ?? SITE;
   if (host !== SITE && !ALLOWED_HOSTS.has(host)) {
-    throw new Error(`Not on the allowed list: ${host}`);
+    throw new HTTPException(403, { message: `Not on the allowed list: ${host}` });
   }
   const started = await fetch(API, {
     method: "POST",
-    headers,
+    headers: headersFor(options.token),
     body: JSON.stringify({
       type: "http",
       target: host,
@@ -140,12 +154,12 @@ export async function probeFrom(options: ProbeOptions) {
   const body: unknown = await started.json().catch(() => null);
   const made = created.safeParse(body);
   if (!started.ok || !made.success) {
-    // Globalping's own words for it (`{ error: { type, message } }`), to the page or the CLI as
-    // they are: a refusal (its hourly limit, a place it has no probes in) isn't our failure.
-    const refused = refusal.safeParse(body);
-    const words = refused.success ? refused.data.error.message : JSON.stringify(body);
-    console.error({
-      message: `Globalping refused a test (${started.status}): ${words}`,
+    // A refusal (its hourly limit, a place it has no probes in) isn't our failure: its words go
+    // to the page or the CLI as they are.
+    const words = refusal.safeParse(body).success
+      ? wordsOf(body, started.status)
+      : JSON.stringify(body);
+    logger.error(`Globalping refused a test (${started.status}): ${words}`, {
       quota: quotaOf(started),
       from: options.from,
       path: options.path,
@@ -155,36 +169,38 @@ export async function probeFrom(options: ProbeOptions) {
     });
   }
   const id = made.data.id;
-  console.log({
-    message: `Globalping test ${id} made, from ${options.from} to ${host}${options.path}`,
+  logger.info(`Globalping test ${id} made, from ${options.from} to ${host}${options.path}`, {
     measurement: id,
     quota: quotaOf(started),
   });
-  await options.onCreated?.(id);
+  return id;
+}
 
-  // Each second for the first ten, then each three, for at most about 90 seconds: under the 50
-  // requests a Worker on the Free plan may make for one request.
+// A test's result, waiting while it's in progress: each second for the first ten, then each
+// three, for at most about 90 seconds (under the 50 requests a Worker on the Free plan may make
+// for one request). Reading a measurement spends no test.
+export async function testResult(id: string, token: string | undefined) {
+  const headers = headersFor(token);
   let done = measurement.parse({ status: "in-progress", results: [] });
   for (let tries = 0; tries < 37 && done.status === "in-progress"; tries += 1) {
-    await new Promise((wait) => setTimeout(wait, tries < 10 ? 1000 : 3000));
+    if (tries > 0) {
+      await new Promise((wait) => setTimeout(wait, tries < 10 ? 1000 : 3000));
+    }
     const response = await fetch(`${API}/${id}`, { headers });
     const polled: unknown = await response.json().catch(() => null);
     const read = measurement.safeParse(polled);
     if (!response.ok || !read.success) {
-      const refused = refusal.safeParse(polled);
-      const words = refused.success ? refused.data.error.message : `HTTP ${response.status}`;
-      console.error({
-        message: `Globalping's measurement ${id} couldn't be read: ${words}`,
+      const words = wordsOf(polled, response.status);
+      logger.error(`Globalping's measurement ${id} couldn't be read: ${words}`, {
         measurement: id,
       });
-      throw new HTTPException(502, {
+      throw new HTTPException(response.status === 404 ? 404 : 502, {
         message: `Globalping's measurement ${id} couldn't be read: ${words}`,
       });
     }
     done = read.data;
   }
-  console.log({
-    message: `Globalping test ${id}: ${done.status}`,
+  logger.info(`Globalping test ${id}: ${done.status}`, {
     measurement: id,
     probes: done.results.map(
       ({ probe, result }) =>
@@ -194,11 +210,13 @@ export async function probeFrom(options: ProbeOptions) {
     ),
   });
 
+  const request = done.measurementOptions?.request;
+  const path = `${request?.path ?? ""}${request?.query ? `?${request.query}` : ""}`;
   return {
     measurement: id,
-    site: host,
-    from: options.from,
-    path: options.path,
+    site: done.target ?? "",
+    from: done.locations?.[0]?.magic ?? "",
+    path,
     status: done.status,
     results: done.results.map(({ probe, result }) => {
       const headerOf = (name: string) => {
@@ -230,4 +248,14 @@ export async function probeFrom(options: ProbeOptions) {
       };
     }),
   };
+}
+
+// Both: make the test, wait for it, and answer what came back. `onCreated` is told the
+// measurement's ID as soon as Globalping makes it, before its results.
+export async function probeFrom(
+  options: ProbeOptions & { onCreated?: (measurement: string) => Promise<void> },
+) {
+  const id = await makeTest(options);
+  await options.onCreated?.(id);
+  return testResult(id, options.token);
 }

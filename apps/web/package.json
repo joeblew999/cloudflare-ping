@@ -6,7 +6,8 @@
     "dev": "vp dev",
     "preview": "vp preview",
     "deploy": "void deploy --platform cloudflare",
-    "postinstall": "void prepare"
+    "postinstall": "void prepare",
+    "logs": "void project logs"
   },
   "dependencies": {
     "@cloudflare-ping/shared": "workspace:*",

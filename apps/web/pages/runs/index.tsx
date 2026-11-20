@@ -1,9 +1,9 @@
-// Runs: start one (`POST /api/runs`, the CLI's `run`) and the newest ones (`GET /api/runs`, the
-// CLI's `runs`). A run sends one Globalping test to `/run`, and each fetch it makes is recorded
-// (plan step 5).
-import { useEffect, useState } from "react";
-import { fetch } from "void/client";
-import { failure } from "@cloudflare-ping/shared/failure";
+// Runs: start one (Void's page action, pages/runs/index.server.ts, running src/commands/run.ts as
+// `POST /api/runs` does; the CLI's `run`) and the newest ones (the CLI's `runs`). A run sends one
+// Globalping test to `/run`, and each fetch it makes is recorded (plan step 5).
+import { Form, Link, useForm } from "@void/react";
+import { Suspense, use, useState } from "react";
+import { routeUrl } from "void/routes";
 import { limitsLine } from "@cloudflare-ping/shared/limits";
 import { ALLOWED_HOSTS, DEFAULT_TARGET } from "@cloudflare-ping/shared/targets";
 import type { Props } from "./index.server";
@@ -11,54 +11,34 @@ import type { Props } from "./index.server";
 const HOSTS = [...ALLOWED_HOSTS];
 const DEFAULT = new URL(DEFAULT_TARGET);
 
-export default function RunsPage({ email, runs }: Props) {
+// Globalping's limit (the CLI's `limits`), when the loader has it.
+function Quota({ limits }: Pick<Props, "limits">) {
+  const found = use(limits);
+  return <>{found.ok ? limitsLine(found.found) : found.error}</>;
+}
+
+export default function RunsPage({ email, runs, limits }: Props) {
   const [host, setHost] = useState(DEFAULT.hostname);
   const [path, setPath] = useState(DEFAULT.pathname);
-  const [from, setFrom] = useState("TH");
-  const [probes, setProbes] = useState("2");
-  const [repeat, setRepeat] = useState("1");
-  const [background, setBackground] = useState(true);
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState("");
-  // Globalping's limit, asked after the page shows (`GET /api/limits`, the CLI's `limits`).
-  const [quota, setQuota] = useState("");
-  const target = `https://${host}${path}`;
+  const form = useForm(
+    "/runs",
+    { target: DEFAULT_TARGET, from: "TH", probes: 2, repeat: 1, background: true },
+    { throwOnError: false },
+  );
 
-  useEffect(() => {
-    void fetch("/api/limits").then(
-      (found) => setQuota(limitsLine(found)),
-      (caught: unknown) => setQuota(failure(caught)),
-    );
-  }, []);
-
-  async function start() {
-    setPending(true);
-    setError("");
-    try {
-      const started = await fetch("/api/runs", {
-        method: "POST",
-        body: {
-          target,
-          from,
-          probes: Number(probes),
-          repeat: Number(repeat),
-          background,
-        },
-      });
-      window.location.assign(`/runs/${started.id}`);
-    } catch (caught) {
-      setError(failure(caught));
-      setPending(false);
-    }
+  function setTarget(nextHost: string, nextPath: string) {
+    setHost(nextHost);
+    setPath(nextPath);
+    form.setData("target", `https://${nextHost}${nextPath}`);
   }
 
   const command = [
     "cloudflare-ping run",
-    `--target ${target}`,
-    `--from ${from}`,
-    `--probes ${probes}`,
-    `--repeat ${repeat}`,
-    ...(background ? [] : ["--inline"]),
+    `--target ${form.data.target}`,
+    `--from ${form.data.from}`,
+    `--probes ${form.data.probes}`,
+    `--repeat ${form.data.repeat}`,
+    ...(form.data.background ? [] : ["--inline"]),
   ].join(" ");
 
   return (
@@ -71,20 +51,24 @@ export default function RunsPage({ email, runs }: Props) {
           background, the test only has to reach the data centre; the fetches come after.
         </p>
         <p>
-          {quota || "Asking Globalping how many tests are left…"} The same from a terminal:{" "}
-          <code>cloudflare-ping limits</code>
+          <Suspense fallback="Asking Globalping how many tests are left…">
+            <Quota limits={limits} />
+          </Suspense>{" "}
+          The same from a terminal: <code>cloudflare-ping limits</code>
         </p>
-        <form
+        <Form
+          form={form}
           className="form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void start();
-          }}
+          renderError={(error) => (
+            <div className="custom-block danger">
+              <p>{error.message}</p>
+            </div>
+          )}
         >
           <div className="form-row">
             <label>
               Target
-              <select value={host} onChange={(event) => setHost(event.target.value)}>
+              <select value={host} onChange={(event) => setTarget(event.target.value, path)}>
                 {HOSTS.map((each) => (
                   <option key={each} value={each}>
                     {each}
@@ -94,13 +78,23 @@ export default function RunsPage({ email, runs }: Props) {
             </label>
             <label>
               Path
-              <input value={path} onChange={(event) => setPath(event.target.value)} required />
+              <input
+                value={path}
+                onChange={(event) => setTarget(host, event.target.value)}
+                required
+              />
+              {form.errors.target ? <span className="different">{form.errors.target}</span> : null}
             </label>
           </div>
           <div className="form-row">
             <label>
               From
-              <input value={from} onChange={(event) => setFrom(event.target.value)} required />
+              <input
+                value={form.data.from}
+                onChange={(event) => form.setData("from", event.target.value)}
+                required
+              />
+              {form.errors.from ? <span className="different">{form.errors.from}</span> : null}
             </label>
             <label>
               Probes
@@ -108,10 +102,11 @@ export default function RunsPage({ email, runs }: Props) {
                 type="number"
                 min={1}
                 max={10}
-                value={probes}
-                onChange={(event) => setProbes(event.target.value)}
+                value={form.data.probes}
+                onChange={(event) => form.setData("probes", Number(event.target.value))}
                 required
               />
+              {form.errors.probes ? <span className="different">{form.errors.probes}</span> : null}
             </label>
             <label>
               Fetches each
@@ -119,31 +114,27 @@ export default function RunsPage({ email, runs }: Props) {
                 type="number"
                 min={1}
                 max={5}
-                value={repeat}
-                onChange={(event) => setRepeat(event.target.value)}
+                value={form.data.repeat}
+                onChange={(event) => form.setData("repeat", Number(event.target.value))}
                 required
               />
+              {form.errors.repeat ? <span className="different">{form.errors.repeat}</span> : null}
             </label>
           </div>
           <label className="check">
             <input
               type="checkbox"
-              checked={background}
-              onChange={(event) => setBackground(event.target.checked)}
+              checked={form.data.background}
+              onChange={(event) => form.setData("background", event.target.checked)}
             />
             In the background
           </label>
           <div className="form-actions">
-            <button type="submit" className="button brand" disabled={pending || !email}>
-              {pending ? "Starting…" : email ? "Start a run" : "Sign in to start a run"}
+            <button type="submit" className="button brand" disabled={form.pending || !email}>
+              {form.pending ? "Starting…" : email ? "Start a run" : "Sign in to start a run"}
             </button>
           </div>
-        </form>
-        {error ? (
-          <div className="custom-block danger" role="alert">
-            <p>{error}</p>
-          </div>
-        ) : null}
+        </Form>
         <p>
           The same from a terminal: <code>{command}</code>
         </p>
@@ -160,7 +151,7 @@ export default function RunsPage({ email, runs }: Props) {
           <ul className="results">
             {runs.map((run) => (
               <li key={run.id}>
-                <a className="card" href={`/runs/${run.id}`}>
+                <Link className="card" href={routeUrl("/runs/[id]", { params: { id: run.id } })}>
                   <p className="card-title">{new URL(run.target).pathname}</p>
                   <p className="card-details">
                     From {run.fromPlace ?? "?"} · {run.probes ?? "?"} probes × {run.repeat ?? 1} ·{" "}
@@ -174,7 +165,7 @@ export default function RunsPage({ email, runs }: Props) {
                   <p className="card-details">
                     {run.createdAt.slice(0, 16).replace("T", " ")} · {run.id}
                   </p>
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

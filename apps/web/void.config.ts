@@ -5,6 +5,16 @@ export default defineConfig({
   routing: {
     typedRoutes: true,
   },
+  // Every page's head (Void's site defaults: guide/pages-routing/head.md). Each page names itself
+  // with `defineHead` in its `.server.ts`; the light-or-dark script, which must run before the page
+  // paints, is middleware/00.head.ts.
+  head: {
+    titleTemplate: "%s | cloudflare-ping",
+    htmlAttrs: { lang: "en" },
+    meta: [{ name: "viewport", content: "width=device-width, initial-scale=1" }],
+    // The app's icon (public/favicon.svg), the docs' too.
+    link: [{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }],
+  },
   // A Void app with a static docs site beside it (Void's guide/app-types.md, "Adding a backend to
   // a static site"): `void deploy` builds the docs (apps/docs, VitePress) into public/docs first,
   // then the app, which ships them with its other public files, at /docs/.

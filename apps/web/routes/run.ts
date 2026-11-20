@@ -9,12 +9,28 @@
 // Step 5: `&run=<id>` records each fetch in the database, under a run that exists (db/schema.ts);
 // with `&background=1` it answers at once and fetches in the 30 seconds Cloudflare allows after
 // the answer (`waitUntil`), so a run isn't held to what one Globalping test carries (step 2).
+// Each recorded fetch is published to the run's live topic (src/live.ts), for its page.
 import { HTTPException } from "hono/http-exception";
 import { defineHandler } from "void";
 import { db, eq } from "void/db";
+import { logger } from "void/log";
 import { fetches, runs } from "@schema";
 import { z } from "zod";
 import { ALLOWED_HOSTS } from "@cloudflare-ping/shared/targets";
+import { live, runTopic } from "../src/live";
+
+// Live updates are a convenience: a page that misses one still has the run's record, so a failed
+// publish is logged, never the fetch's failure.
+async function publish(runId: string, data: unknown, type: "fetch" | "error") {
+  try {
+    await live.publish(runTopic(runId), data, { type });
+  } catch (caught) {
+    logger.warn(`Live update for run ${runId} not sent`, {
+      run: runId,
+      error: caught instanceof Error ? caught.message : String(caught),
+    });
+  }
+}
 
 async function fetchOnce(target: URL) {
   const started = Date.now();
@@ -64,37 +80,40 @@ export const GET = defineHandler.withValidator({
   const ray = c.req.header("cf-ray") ?? "";
   const times = query.repeat ?? 1;
   const where = typeof colo === "string" ? colo : "?";
-  console.log({
-    message: `/run in ${where}: ${times} × ${target.toString()}${query.background ? ", in the background" : ""}`,
-    run: runId ?? null,
-    colo: where,
-  });
+  const log = logger.child({ run: runId ?? null, colo: where });
+  log.info(
+    `/run in ${where}: ${times} × ${target.toString()}${query.background ? ", in the background" : ""}`,
+  );
 
   const fetchAll = async () => {
     const done = [];
     for (let attempt = 1; attempt <= times; attempt += 1) {
       const one = await fetchOnce(target);
       done.push(one);
-      console.log({
-        message: `/run in ${where}, fetch ${attempt}: HTTP ${one.status} in ${one.ms} ms, the target ran in ${one.rayColo || "?"} (${one.isr ?? "no page cache"})`,
-        run: runId ?? null,
-        colo: where,
-        targetRay: one.ray,
-      });
+      log.info(
+        `/run in ${where}, fetch ${attempt}: HTTP ${one.status} in ${one.ms} ms, the target ran in ${one.rayColo || "?"} (${one.isr ?? "no page cache"})`,
+        { targetRay: one.ray },
+      );
       if (runId) {
-        await db.insert(fetches).values({
-          runId,
-          ray,
-          colo: typeof colo === "string" ? colo : null,
-          attempt,
-          target: target.toString(),
-          status: one.status,
-          targetRay: one.ray,
-          targetColo: one.rayColo,
-          isr: one.isr,
-          ms: one.ms,
-          bytes: one.bytes,
-        });
+        const [row] = await db
+          .insert(fetches)
+          .values({
+            runId,
+            ray,
+            colo: typeof colo === "string" ? colo : null,
+            attempt,
+            target: target.toString(),
+            status: one.status,
+            targetRay: one.ray,
+            targetColo: one.rayColo,
+            isr: one.isr,
+            ms: one.ms,
+            bytes: one.bytes,
+          })
+          .returning();
+        if (row) {
+          await publish(runId, row, "fetch");
+        }
       }
     }
     return done;
@@ -104,9 +123,10 @@ export const GET = defineHandler.withValidator({
     // No one is waiting for these: a failure is logged and kept on the run (its page, `show`).
     const failed = async (caught: unknown) => {
       const error = `Fetching from ${where} failed: ${caught instanceof Error ? caught.message : String(caught)}`;
-      console.error({ message: error, run: runId ?? null, colo: where });
+      log.error(error);
       if (runId) {
         await db.update(runs).set({ error }).where(eq(runs.id, runId));
+        await publish(runId, { error }, "error");
       }
     };
     c.executionCtx.waitUntil(fetchAll().then(() => undefined, failed));

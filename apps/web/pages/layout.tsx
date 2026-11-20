@@ -1,9 +1,10 @@
 // Every page's frame, as the docs' (VitePress's bar): the app's name, what it does, one link each
 // (the same as the CLI's commands: README), the docs, light or dark, and who's signed in
 // (middleware/01.auth.ts).
-import { Link, useShared } from "@void/react";
+import { Link, useRouter, useShared } from "@void/react";
 import { useEffect, useState } from "react";
 import { auth } from "void/client";
+import { routeUrl } from "void/routes";
 import { APPEARANCE_KEY } from "../src/appearance";
 import "./style.css";
 
@@ -40,9 +41,9 @@ function AppearanceSwitch() {
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { auth: who, path } = useShared();
-  const here = (href: string) =>
-    (href === "/" ? path === "/" : path.startsWith(href)) ? "nav-link active" : "nav-link";
+  const { auth: who } = useShared();
+  // Signing in comes back here.
+  const { path } = useRouter();
 
   async function signOut() {
     await auth.signOut();
@@ -57,10 +58,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             cloudflare-ping
           </Link>
           <nav className="nav-menu" aria-label="Main">
-            <Link href="/" className={here("/")}>
+            {/* Void marks the current one (`data-void-active`, style.css); Runs stays marked on a
+                run's own page. */}
+            <Link href="/" className="nav-link">
               Probe
             </Link>
-            <Link href="/runs" className={here("/runs")}>
+            <Link href="/runs" className="nav-link" activeMatch="prefix">
               Runs
             </Link>
             {/* The docs are their own site (VitePress, apps/docs), so a plain link. */}
@@ -78,9 +81,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </button>
               </>
             ) : (
-              <a href={`/login?next=${encodeURIComponent(path)}`} className="button alt small">
+              <Link
+                href={routeUrl("/login", { query: { next: path } })}
+                className="button alt small"
+              >
                 Sign in
-              </a>
+              </Link>
             )}
           </span>
         </div>

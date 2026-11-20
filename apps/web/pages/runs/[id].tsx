@@ -1,39 +1,58 @@
-// One run and its recorded fetches (`GET /api/runs/<id>`, the CLI's `show`). For its first minute
-// and a half it asks again every 2 seconds, as background fetches arrive (the CLI's `run` does the
-// same).
-import { useEffect, useState } from "react";
-import { fetch } from "void/client";
+// One run and its recorded fetches (src/commands/runs.ts, as `GET /api/runs/<id>`; the CLI's
+// `show`). Fetches still arriving (a run in the background) come in live: the page follows the
+// run's topic on Void's live stream (src/live.ts), where `/run` publishes each fetch it records.
+import { Link, useRouter } from "@void/react";
+import { useEffect, useEffectEvent, useState } from "react";
+import { connectLiveStream } from "void/live/client";
+import { routeUrl } from "void/routes";
 import type { Props } from "./[id].server";
 
-const FOLLOW_MS = 90_000;
+type Row = Props["fetches"][number];
+
+// The rows from the loader and from the live stream together, each once, in recorded order.
+const merged = (a: Array<Row>, b: Array<Row>) =>
+  [...new Map([...a, ...b].map((row) => [row.id, row])).values()].sort((x, y) => x.id - y.id);
 
 export default function RunPage({ run, fetches: first }: Props) {
+  const router = useRouter();
   const [rows, setRows] = useState(first);
+  const [error, setError] = useState(run.error);
+
+  useEffect(() => setRows((now) => merged(first, now)), [first]);
+  useEffect(() => setError(run.error), [run.error]);
+  // Not a reason to subscribe again: the router is a new object after each refresh.
+  const caughtUp = useEffectEvent(() => void router.refresh());
 
   useEffect(() => {
-    const until = Date.parse(run.createdAt) + FOLLOW_MS;
-    if (Date.now() > until) {
-      return undefined;
-    }
-    const timer = setInterval(() => {
-      if (Date.now() > until) {
-        clearInterval(timer);
-        return;
-      }
-      void fetch("/api/runs/[id]", { params: { id: run.id } }).then(
-        (fresh) => setRows(fresh.fetches),
+    const stream = connectLiveStream("/live", { retryDelay: 1_000 });
+    const subscribed = stream.subscribe<Row | { error: string }>({
+      id: "run",
+      topic: `run:${run.id}`,
+      onEvent({ data }) {
+        if ("id" in data) {
+          setRows((now) => merged(now, [data]));
+        } else {
+          setError(data.error);
+        }
+      },
+    });
+    // Anything recorded before the subscription opened: the loader again, once.
+    void subscribed.then(caughtUp, () => undefined);
+    return () => {
+      void subscribed.then(
+        (unsubscribe) => unsubscribe(),
         () => undefined,
       );
-    }, 2000);
-    return () => clearInterval(timer);
-  }, [run.id, run.createdAt]);
+      stream.close();
+    };
+  }, [run.id]);
 
   const mode = run.background === null ? "?" : run.background ? "in the background" : "inline";
 
   return (
     <main className="content wide vp-doc">
       <p>
-        <a href="/runs">← Runs</a>
+        <Link href="/runs">← Runs</Link>
       </p>
       <h1>A run</h1>
       <p className="lead">
@@ -53,12 +72,12 @@ export default function RunPage({ run, fetches: first }: Props) {
           </>
         ) : null}
       </p>
-      {run.error ? (
+      {error ? (
         <div className="custom-block danger">
           <p className="custom-block-title">
             {run.measurement ? "Something went wrong" : "This run didn't start"}
           </p>
-          <p>{run.error}</p>
+          <p>{error}</p>
         </div>
       ) : null}
       <p>
@@ -90,11 +109,18 @@ export default function RunPage({ run, fetches: first }: Props) {
                 <td>{row.ms} ms</td>
                 <td>{row.status}</td>
                 <td>
-                  <a href={`/trace/${row.ray}`}>ours</a>
+                  {/* A request without a cf-ray (only `vp dev`'s) has no log to link to. */}
+                  {row.ray ? (
+                    <Link href={routeUrl("/trace/[ray]", { params: { ray: row.ray } })}>ours</Link>
+                  ) : (
+                    "-"
+                  )}
                   {row.targetRay ? (
                     <>
                       {" · "}
-                      <a href={`/trace/${row.targetRay}`}>target</a>
+                      <Link href={routeUrl("/trace/[ray]", { params: { ray: row.targetRay } })}>
+                        target
+                      </Link>
                     </>
                   ) : null}
                 </td>
