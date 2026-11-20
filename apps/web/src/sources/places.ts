@@ -4,18 +4,29 @@
 // sent to Globalping for each is its own location text, as globalping.io fills it in
 // (`Bangkok+TH`, `Ashburn+US-VA`, a continent by its name). Pure: the tests run it as it is.
 import type { Place } from "@cloudflare-ping/shared/places";
-import type { Datacentre, Names, ProbeIndex } from "./reduce";
+import type { CountryList, Datacentre, Names, ProbeIndex } from "./reduce";
+
+// The one rule for which continent a country is in, for its probes and its data centres alike,
+// everywhere (places, coverage): the countries list's; the probe network's own only for a country
+// the list doesn't know. (The two disagree for Russia: the probe network says Europe, the list
+// Asia.)
+export function continentRule(countries: CountryList, cities: ProbeIndex["cities"]) {
+  const probeContinent = new Map(cities.map((each) => [each.country, each.continent]));
+  return (country: string | null): string =>
+    country ? (countries[country]?.continent ?? probeContinent.get(country) ?? "") : "";
+}
 
 export type PlacedDatacentre = Datacentre & { country: string | null };
 
 export function placesOf(lists: {
   probes: ProbeIndex;
   continents: Names;
-  countries: Names;
+  countries: CountryList;
   states: Names;
   datacentres: Array<PlacedDatacentre>;
 }): Array<Place> {
   const { probes, continents, countries, states } = lists;
+  const continentOf = continentRule(countries, probes.cities);
   const tally = new Map<string, Place>();
   const count = (key: string, place: Omit<Place, "probes">, probes: number) => {
     const found = tally.get(key);
@@ -25,17 +36,18 @@ export function placesOf(lists: {
       tally.set(key, { ...place, probes });
     }
   };
-  const country = (code: string) => countries[code] ?? code;
+  const country = (code: string) => countries[code]?.name ?? code;
 
   for (const city of probes.cities) {
-    const continent = continents[city.continent] ?? city.continent;
+    const code = continentOf(city.country);
+    const continent = continents[code] ?? code;
     count(
-      `continent|${city.continent}`,
+      `continent|${code}`,
       {
         kind: "continent",
         name: continent,
         within: null,
-        codes: [city.continent],
+        codes: [code],
         magic: continent,
         country: null,
       },

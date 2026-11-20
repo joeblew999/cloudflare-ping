@@ -25,7 +25,6 @@ import {
   continentNames,
   countryList,
   countryListOf,
-  countryNames,
   datacentre,
   names,
   probeIndex,
@@ -148,7 +147,7 @@ export async function allPlaces(): Promise<Array<Place>> {
   return placesOf({
     probes: index,
     continents: continentNamed,
-    countries: countryNames(countryNamed),
+    countries: countryNamed,
     states: stateNamed,
     datacentres: centres,
   });

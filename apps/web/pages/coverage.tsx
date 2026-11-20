@@ -2,8 +2,10 @@
 // every one of Globalping's probes, on a world map, complete: where the app can run, and where it
 // can be reached from. None of our own test results (those are the geographical probe map, on
 // the same drawing: src/WorldMap.tsx). The CLI's `coverage`; `GET /api/coverage`. Narrowed to one
-// country with the place picker (`?country=TH`), as the API, CLI and MCP tool are.
+// place, a continent or a country, with the place picker (`?place=Europe`, `?place=TH`), as the
+// API, CLI and MCP tool are.
 import { Link, useRouter } from "@void/react";
+import { asArgument } from "@cloudflare-ping/shared/places";
 import { useState } from "react";
 import { routeUrl } from "void/routes";
 import { PlacePicker } from "../src/PlacePicker";
@@ -11,7 +13,7 @@ import { WorldMap, type WorldPoint } from "../src/WorldMap";
 import type { Props } from "./coverage.server";
 
 export default function CoveragePage({
-  country,
+  place,
   unmatched,
   totals,
   continents,
@@ -43,19 +45,26 @@ export default function CoveragePage({
     ),
   ];
   const router = useRouter();
-  const [wanted, setWanted] = useState(country?.code ?? "");
+  // A country gets its own view; a continent, the every-country table of just its countries.
+  const country = place?.kind === "country" ? place : null;
+  // How the place is written in the box, an address and a command: a country by its code, a
+  // continent by its name (two-letter continent codes clash with countries': SA, AS).
+  const asked = place ? (place.kind === "country" ? place.code : place.name) : "";
+  const [wanted, setWanted] = useState(asked);
   const shown = 8;
   // Thousands with commas, the same on the server and in the browser.
   const count = (n: number) => n.toLocaleString("en-US");
   return (
     <main className="content wide vp-doc">
       <h1>Coverage</h1>
-      {country ? (
+      {place ? (
         <p className="lead">
-          {country.name} ({country.code}): <strong>{totals.datacentres}</strong> of
+          {place.name}
+          {country ? ` (${country.code})` : ""}: <strong>{totals.datacentres}</strong> of
           Cloudflare&apos;s data centres, and <strong>{count(totals.probes)}</strong> probes in{" "}
-          {count(totals.cities)} {totals.cities === 1 ? "city" : "cities"}.{" "}
-          <Link href="/coverage">Every country</Link>
+          {count(totals.cities)} {totals.cities === 1 ? "city" : "cities"}
+          {country ? "" : ` in ${totals.countries} countries`}.{" "}
+          <Link href="/coverage">Everywhere</Link>
         </p>
       ) : (
         <p className="lead">
@@ -68,21 +77,21 @@ export default function CoveragePage({
 
       {unmatched ? (
         <p className="different">
-          No country with probes matches &ldquo;{unmatched}&rdquo;: here is every country.
+          No continent or country with probes matches &ldquo;{unmatched}&rdquo;: here is everywhere.
         </p>
       ) : null}
 
       <form method="get" action="/coverage" className="form coverage-filter">
         <label>
-          One country
+          A continent or a country
           <PlacePicker
-            name="country"
+            name="place"
             value={wanted}
             onChange={setWanted}
-            kinds={["country"]}
-            unknown="Not one of the countries with probes"
-            onPick={(place) => {
-              void router.visit(routeUrl("/coverage", { query: { country: place.magic } }));
+            kinds={["continent", "country"]}
+            unknown="Not a continent or a country with probes"
+            onPick={(picked) => {
+              void router.visit(routeUrl("/coverage", { query: { place: picked.magic } }));
             }}
           />
         </label>
@@ -94,7 +103,7 @@ export default function CoveragePage({
       <figure className="coverage">
         <WorldMap
           points={points}
-          zoom={country !== null}
+          zoom={place !== null}
           label={`A world map of Cloudflare's ${totals.datacentres} data centres and ${count(totals.probes)} probes`}
         />
         <figcaption>
@@ -105,7 +114,7 @@ export default function CoveragePage({
 
       <p>
         The same from a terminal:{" "}
-        <code>cloudflare-ping coverage{country ? ` --country ${country.code}` : ""}</code>
+        <code>cloudflare-ping coverage{place ? ` --place ${asArgument(asked)}` : ""}</code>
       </p>
 
       {country ? (
@@ -155,7 +164,7 @@ export default function CoveragePage({
         </div>
       ) : (
         <section>
-          <h2>Every country</h2>
+          <h2>{place ? `Every country in ${place.name}` : "Every country"}</h2>
           <p>
             {totals.bothCountries} countries have both data centres and probes.{" "}
             {totals.noProbeCountries} have data centres but no probe, so they can only be tested
@@ -182,7 +191,7 @@ export default function CoveragePage({
                         </th>
                       ) : null}
                       <td>
-                        <Link href={routeUrl("/coverage", { query: { country: each.code } })}>
+                        <Link href={routeUrl("/coverage", { query: { place: each.code } })}>
                           {each.name}
                         </Link>
                       </td>

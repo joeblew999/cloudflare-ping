@@ -44,7 +44,10 @@ const probes: ProbeIndex = {
 const all = placesOf({
   probes,
   continents: { AS: "Asia", NA: "North America" },
-  countries: { TH: "Thailand", US: "United States" },
+  countries: {
+    TH: { name: "Thailand", continent: "AS" },
+    US: { name: "United States", continent: "NA" },
+  },
   states: { "US-VA": "Virginia" },
   datacentres: [{ code: "BKK", name: "Bangkok, Thailand", region: "Asia", country: "TH" }],
 });
@@ -102,5 +105,32 @@ describe("placesOf", () => {
       datacentres: [],
     });
     expect(unnamed.find((each) => each.kind === "country" && each.magic === "TH")?.name).toBe("TH");
+  });
+
+  it("puts a country's probes in the continent the countries list gives it, as coverage does", () => {
+    const moved = placesOf({
+      probes: {
+        cities: [
+          {
+            continent: "EU",
+            region: "Eastern Europe",
+            country: "RU",
+            state: null,
+            city: "Moscow",
+            lat: 55.75,
+            lon: 37.6,
+            probes: 1,
+          },
+        ],
+        networks: [],
+      },
+      continents: { AS: "Asia", EU: "Europe" },
+      countries: { RU: { name: "Russia", continent: "AS" } },
+      states: {},
+      datacentres: [],
+    });
+    expect(moved.filter((each) => each.kind === "continent").map((each) => each.name)).toEqual([
+      "Asia",
+    ]);
   });
 });

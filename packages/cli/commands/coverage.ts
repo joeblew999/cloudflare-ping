@@ -1,7 +1,7 @@
-// `cloudflare-ping coverage [--country TH]`: the geographical coverage map's data
-// (`GET /api/coverage`), as a terminal can show it: all of Cloudflare's data centres, by region,
-// and Globalping's probes, by country; or one country's data centres and probe cities. `--json`
-// gives the whole of it, with every place. The Coverage page (`/coverage?country=TH`).
+// `cloudflare-ping coverage [--place Europe|TH] [--cities]`: the geographical coverage map's data
+// (`GET /api/coverage`), as a terminal can show it: every country, its data centres and probes, by
+// continent; for a continent, just its countries; for a country, its data centres and probe
+// cities. `--json` gives the whole of it. The Coverage page (`/coverage?place=Europe`).
 import { parseArgs } from "node:util";
 import { fetch } from "void/client";
 import { asked, commonOptions, headers, printedJson, siteOf } from "../api";
@@ -10,19 +10,19 @@ export async function coverage(args: Array<string>) {
   const { values } = parseArgs({
     args,
     options: {
-      country: { type: "string" },
+      place: { type: "string" },
       cities: { type: "boolean", default: false },
       ...commonOptions,
     },
   });
   const site = siteOf(values.site);
   // The same options as the page, the API and the MCP tool. The cities are asked for, as anyone
-  // asks for them: with `--cities`, or because a country's cities are listed below.
+  // asks for them: with `--cities`, or because a place's cities may be listed below.
   const found = await asked(() =>
     fetch("/api/coverage", {
       query: {
-        ...(values.country ? { country: values.country } : {}),
-        ...(values.cities || values.country ? { cities: "true" } : {}),
+        ...(values.place ? { place: values.place } : {}),
+        ...(values.cities || values.place ? { cities: "true" } : {}),
       },
       baseURL: site,
       headers: headers(),
@@ -31,10 +31,18 @@ export async function coverage(args: Array<string>) {
   if (printedJson(values.json, found)) {
     return;
   }
-  const { country, unmatched, totals, continents, datacentres, cities } = found;
+  const { place, unmatched, totals, continents, datacentres, cities } = found;
   if (unmatched) {
-    console.log(`No country with probes matches "${unmatched}": here is every country.\n`);
+    console.log(
+      `No continent or country with probes matches "${unmatched}": here is everywhere.\n`,
+    );
   }
+  // A country gets its own view; a continent, the every-country table of just its countries. As
+  // the page writes them: a country by its code, a continent by its name.
+  const country = place?.kind === "country" ? place : null;
+  const link = place
+    ? `${site}/coverage?place=${encodeURIComponent(country ? country.code : place.name)}`
+    : `${site}/coverage`;
   // Thousands with commas, as the page shows them.
   const count = (n: number) => n.toLocaleString("en-US");
   if (country) {
@@ -52,11 +60,11 @@ export async function coverage(args: Array<string>) {
         .map((each) => `${each.city}${each.state ? ` (${each.state})` : ""} ${count(each.probes)}`)
         .join(", ")}${cities.length > 12 ? `, and ${cities.length - 12} more cities` : ""}`,
     );
-    console.log(`\n${site}/coverage?country=${country.code}`);
+    console.log(`\n${link}`);
     return;
   }
   console.log(
-    `All ${totals.datacentres} of Cloudflare's data centres, and ${count(totals.probes)} probes in ${count(totals.cities)} cities in ${totals.countries} countries.\n`,
+    `${place ? `${place.name}: ${totals.datacentres} of Cloudflare's data centres` : `All ${totals.datacentres} of Cloudflare's data centres`}, and ${count(totals.probes)} probes in ${count(totals.cities)} cities in ${totals.countries} countries.\n`,
   );
   console.log(
     `${totals.bothCountries} countries have both data centres and probes; ${totals.noProbeCountries} have data centres but no probe; ${totals.noDatacentreCountries} have probes but no data centre.\n`,
@@ -85,5 +93,5 @@ export async function coverage(args: Array<string>) {
   if (totals.unplaced.length > 0) {
     console.log(`\nNot placed yet (no coordinates): ${totals.unplaced.join(" ")}`);
   }
-  console.log(`\n${site}/coverage`);
+  console.log(`\n${link}`);
 }

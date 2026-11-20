@@ -4,8 +4,8 @@
 // what they reached is the geographical probe map, another thing on the same drawing. Open: it
 // spends no tests. `GET /api/coverage`, the Coverage page, the CLI and the MCP tool.
 //
-// Narrowed to one country (plan 2026-11-20-04, "One filter, everywhere"): its data centres (by the
-// country their airport is in) and its probe cities. Nothing given: everything.
+// Narrowed to one place (plan 2026-11-20-04, "One filter, everywhere"): a continent or a country,
+// never both, so nothing combines or conflicts. Nothing given: everything.
 import { z } from "zod";
 import { searchPlaces } from "@cloudflare-ping/shared/places";
 import {
@@ -15,53 +15,75 @@ import {
   placedDatacentres,
   probes,
 } from "../sources/lists";
+import { continentRule } from "../sources/places";
 import { coverageOptions } from "./coverage-options";
 
 export { coverageOptions };
 
-// The country asked for: its code as given, or the country the one place search finds for a name
-// ("japan", "thialand"); none: null.
-async function countryCode(asked: string): Promise<string | null> {
-  if (/^[A-Za-z]{2}$/.test(asked)) {
-    return asked.toUpperCase();
-  }
-  const [found] = searchPlaces(await allPlaces(), { q: asked, kinds: ["country"], limit: 1 });
-  return found?.magic ?? null;
-}
+type Narrowed = { kind: "continent" | "country"; code: string; name: string };
 
 export async function coverage(options: z.infer<typeof coverageOptions> = {}) {
-  const asked = options.country?.trim() ?? "";
-  const code = asked === "" ? undefined : ((await countryCode(asked)) ?? undefined);
   const [
     {
       data: { cities: everyCity },
     },
     everyCentre,
   ] = await Promise.all([probes(), placedDatacentres()]);
-  const cities = code ? everyCity.filter((each) => each.country === code) : everyCity;
-  const all = code ? everyCentre.filter((each) => each.country === code) : everyCentre;
-  // Every country with a data centre or a probe: its data centres and probes side by side,
-  // grouped by continent. Names and continents from the countries list; a country it doesn't
-  // know keeps its code, and the continent its probes are in.
-  const codes = [
+
+  // Every country with a data centre or a probe, its name from the countries list, and its continent
+  // by the one rule (src/sources/places.ts, `continentRule`), as the places have it.
+  const everyCode = [
     ...new Set([
-      ...all.flatMap((each) => (each.country ? [each.country] : [])),
-      ...cities.map((each) => each.country),
+      ...everyCentre.flatMap((each) => (each.country ? [each.country] : [])),
+      ...everyCity.map((each) => each.country),
     ]),
   ];
-  const [known, continentNamed] = await Promise.all([
-    countryList(codes),
-    continents([...new Set(cities.map((each) => each.continent))]),
+  const known = await countryList(everyCode);
+  const continentOf = continentRule(known, everyCity);
+  const continentNamed = await continents([
+    ...new Set(everyCode.map((each) => continentOf(each)).filter((each) => each !== "")),
   ]);
-  const probeContinent = new Map(cities.map((each) => [each.country, each.continent]));
+
+  // The place asked for: two letters are a country's code (continents go by name: "SA" is Saudi
+  // Arabia, not South America); anything else, the continent or country the one place search finds
+  // first ("europe", "japan", "thialand").
+  const asked = options.place?.trim() ?? "";
+  let place: Narrowed | null = null;
+  if (/^[A-Za-z]{2}$/.test(asked)) {
+    const code = asked.toUpperCase();
+    place = everyCode.includes(code)
+      ? { kind: "country", code, name: known[code]?.name ?? code }
+      : null;
+  } else if (asked !== "") {
+    const [found] = searchPlaces(await allPlaces(), {
+      q: asked,
+      kinds: ["continent", "country"],
+      limit: 1,
+    });
+    const code = found?.kind === "continent" ? found.codes[0] : found?.magic;
+    if (found && code) {
+      place = {
+        kind: found.kind === "continent" ? "continent" : "country",
+        code,
+        name: found.name,
+      };
+    }
+  }
+  const inPlace = (country: string | null) =>
+    !place ||
+    (place.kind === "country" ? country === place.code : continentOf(country) === place.code);
+  const cities = everyCity.filter((each) => inPlace(each.country));
+  const all = everyCentre.filter((each) => inPlace(each.country));
+
+  // Every country in the place, its data centres and probes side by side, grouped by continent.
+  const codes = everyCode.filter((each) => inPlace(each));
   const countries = codes
     .map((each) => {
       const here = cities.filter((city) => city.country === each);
-      const continent = known[each]?.continent ?? probeContinent.get(each) ?? "";
       return {
         code: each,
         name: known[each]?.name ?? each,
-        continent,
+        continent: continentOf(each),
         datacentres: all.filter((centre) => centre.country === each).length,
         probes: here.reduce((sum, city) => sum + city.probes, 0),
         cities: here.length,
@@ -73,12 +95,12 @@ export async function coverage(options: z.infer<typeof coverageOptions> = {}) {
   for (const each of countries) {
     byContinent.set(each.continent, [...(byContinent.get(each.continent) ?? []), each]);
   }
-  const named = code ? known[code]?.name : undefined;
   return {
-    // The country it's narrowed to, named from the same list the places are: null for everything.
-    country: code ? { code, name: named ?? code } : null,
-    // What was asked for when no country matched it: every country is shown instead.
-    unmatched: asked !== "" && !code ? asked : null,
+    // The place it's narrowed to, a continent or a country, named from the same lists the places
+    // are: null for everything.
+    place,
+    // What was asked for when no place matched it: everything is shown instead.
+    unmatched: asked !== "" && !place ? asked : null,
     totals: {
       datacentres: all.length,
       // Data centres the airport data couldn't place (a new code): not on the map yet.
