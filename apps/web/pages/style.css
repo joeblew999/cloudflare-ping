@@ -479,6 +479,19 @@ a.card:hover {
   margin-top: 0;
 }
 
+/* The page's own list and link looks (.vp-doc) outrank the cards' plain ones: no bullet, no
+   indent, no underline, no paragraph gaps inside a card. */
+.vp-doc ul.results {
+  padding-left: 0;
+  list-style: none;
+}
+.vp-doc .results .card {
+  text-decoration: none;
+}
+.vp-doc .results .card p {
+  margin: 0;
+}
+
 .results .card-details {
   padding-top: 0.25rem;
 }

@@ -62,7 +62,7 @@ export default function CoveragePage({
         </p>
       ) : (
         <p className="lead">
-          All <strong>{totals.datacentres}</strong> of Cloudflare&apos;s data centres, and
+          All <strong>{totals.datacentres}</strong> of Cloudflare&apos;s data centres, and{" "}
           <strong>{count(totals.probes)}</strong> probes in {count(totals.cities)} cities in{" "}
           {totals.countries} countries: everywhere the app can run, and everywhere it can be reached
           from.
