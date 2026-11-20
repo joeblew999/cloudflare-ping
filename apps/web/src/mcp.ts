@@ -85,7 +85,8 @@ export function mcpServer(context: CommandContext) {
       inputSchema: coverageQuery,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
-    (query) => answer(() => coverage({ cities: query.cities ?? false })),
+    // Everything the agent asked (its country too), with the cities only when asked.
+    (query) => answer(() => coverage({ ...query, cities: query.cities ?? false })),
   );
   server.registerTool(
     "places",

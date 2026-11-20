@@ -107,6 +107,7 @@ export async function coverage(options: z.infer<typeof coverageQuery> = {}) {
       }))
       .sort((a, b) => a.name.localeCompare(b.name, "en")),
     datacentres: all,
-    cities: options.cities === false ? [] : cities,
+    // The probe cities, the most probes first: the page's and the CLI's "Probes, by city" in order.
+    cities: options.cities === false ? [] : [...cities].sort((a, b) => b.probes - a.probes),
   };
 }

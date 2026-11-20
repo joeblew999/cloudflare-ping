@@ -37,12 +37,11 @@ export async function coverage(args: Array<string>) {
       console.log(`  ${each.code}  ${each.name}`);
     }
     console.log("\nProbes, by city (the most first):");
-    const byCity = [...cities].sort((a, b) => b.probes - a.probes);
     console.log(
-      `  ${byCity
+      `  ${cities
         .slice(0, 12)
         .map((each) => `${each.city}${each.state ? ` (${each.state})` : ""} ${count(each.probes)}`)
-        .join(", ")}${byCity.length > 12 ? `, and ${byCity.length - 12} more cities` : ""}`,
+        .join(", ")}${cities.length > 12 ? `, and ${cities.length - 12} more cities` : ""}`,
     );
     console.log(`\n${site}/coverage?country=${country.code}`);
     return;

@@ -45,8 +45,6 @@ export default function CoveragePage({
   const router = useRouter();
   const [wanted, setWanted] = useState(country?.code ?? "");
   const shown = 8;
-  // When narrowed to a country: its probe cities, the most probes first.
-  const byCity = [...cities].sort((a, b) => b.probes - a.probes);
   // Thousands with commas, the same on the server and in the browser.
   const count = (n: number) => n.toLocaleString("en-US");
   return (
@@ -133,13 +131,13 @@ export default function CoveragePage({
           </section>
           <section>
             <h2>Probes, by city</h2>
-            {byCity.length === 0 ? (
+            {cities.length === 0 ? (
               <p>None in {country.name}: it can only be tested from a neighbour.</p>
             ) : (
               <div className="table-scroll">
                 <table>
                   <tbody>
-                    {byCity.slice(0, shown).map((each) => (
+                    {cities.slice(0, shown).map((each) => (
                       <tr key={`${each.state ?? ""}|${each.city}`}>
                         <td>
                           {each.city}
@@ -152,7 +150,7 @@ export default function CoveragePage({
                 </table>
               </div>
             )}
-            {byCity.length > shown ? <p>And {byCity.length - shown} more cities.</p> : null}
+            {cities.length > shown ? <p>And {cities.length - shown} more cities.</p> : null}
           </section>
         </div>
       ) : (
