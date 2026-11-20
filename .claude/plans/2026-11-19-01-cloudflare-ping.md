@@ -399,6 +399,17 @@ again: nothing after it is built on a guess.
   - Next, after the token and a map on the deployed site: one data centre (`--at BKK`), then
     every mapped one; the proof is the run's rows and its total tests.
 
+- **Considered and held (2026-11-20, the user: "could make the thing really complex").**
+  Keeping the map current would be one of these:
+  - a cron that re-maps on a schedule;
+  - a run everywhere starting a map first when there's none or it's old;
+  - runs feeding where their probes really landed back into the map, as sightings.
+
+  None is built. A map stays one clean snapshot, which the day-later comparison needs. A run
+  already shows where each probe really landed, so drift isn't hidden, and a stale map is fixed
+  by running `remap` again. Decide after the first real map, its rerun a day later, and a few
+  runs everywhere, and only if drift turns out to be common.
+
 ### 9. Then, and only then
 
 The pages for the map and the runs (reading the same API), `--json` for void-fbtee's deploy check,
