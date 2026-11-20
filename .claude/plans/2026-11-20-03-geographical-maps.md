@@ -81,6 +81,21 @@ caching layers:
   file is the slowest, about a second, once a week. A map's start warms all three. If a source
   is down and its cache is empty, the page says what's missing rather than drawing it wrong.
 
+### When each cache is refreshed
+
+- **Other people's data: by time**, since they can't tell us.
+  - Probe cities expire in an hour: Globalping has no "list changed" notice.
+  - Data centres expire in a day: Cloudflare doesn't announce new ones on its status page.
+- **The airport places: by the data.** A code in Cloudflare's list that the cached airport
+  places don't cover means a new data centre: the airport file is read again at once. The week
+  is only a backstop.
+- **Our data: by our own event.** A map run that finishes clears `/coverage` and
+  `/api/coverage` from ISR (`revalidate({ paths })`), so its reach shows at once. Deploys clear
+  ISR too, and a TTL backs it up for the lists the page also shows.
+- **Our code: by version.** KV outlives deploys, so each key carries a version
+  (`coverage:v1:probe-cities`), bumped when what's kept changes shape. What's read back is
+  checked against its schema (zod), and anything that doesn't fit is fetched again.
+
 ## Placing data centres
 
 - Cloudflare's codes are airport codes, so a data centre's place is its airport's coordinates,
