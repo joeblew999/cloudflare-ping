@@ -6,6 +6,7 @@ as you, and then has what the CLI has, as tools.
 
 <script setup>
 import { data } from "./cli.data";
+import { data as agents } from "./agents.data";
 </script>
 
 ## Add it
@@ -25,24 +26,39 @@ settings. Nothing else is needed: the server tells the agent where to sign in.
 
 In a project whose agents should use the app, run `npx cloudflare-ping init` in its root (once the
 package is published; until then, `node <this repo>/packages/cli/dist/main.mjs init`, after
-`vp run cli:pack`). As
-`void init` sets agents up for Void, it finds each coding agent by its folder (`.claude`,
-`.cursor`, `.codex`, `.gemini`, `.opencode` and the rest Void knows), then:
+`vp run cli:pack`). As `void init` sets agents up for Void, it finds each coding agent by its
+folder, then:
 
 - puts the app's skill (`cloudflare-ping`: when to use the app, and how) in each agent's skills
   folder: linked when the package is installed in the project, copied otherwise;
 - adds a short cloudflare-ping section to `AGENTS.md`, leaving the rest as it is;
 - adds the MCP server to each agent's own project config, in that agent's format, keeping what's
-  there: Claude Code (`.mcp.json`), Cursor (`.cursor/mcp.json`), VS Code and Copilot
-  (`.vscode/mcp.json`), Codex (`.codex/config.toml`), Gemini CLI (`.gemini/settings.json`),
-  opencode (`opencode.json`), Amp, Roo Code, Kilo Code, Continue, Trae, Junie, Kiro and Qwen Code.
-  Windsurf, Cline, Goose and Zencoder only take MCP servers in their global settings, which
-  `init` doesn't touch: it prints what to add.
+  there. An agent with only a global config isn't touched: `init` prints what to add.
+
+Running it again changes nothing that's already there. The agents, and what `init` does for each
+(from the same table it runs from):
+
+<div class="table-scroll">
+<table>
+  <thead>
+    <tr><th>Agent</th><th>Found by</th><th>Skill in</th><th>MCP server</th></tr>
+  </thead>
+  <tbody>
+    <tr v-for="agent in agents" :key="agent.name">
+      <td>{{ agent.name }}</td>
+      <td><code>{{ agent.markers }}</code></td>
+      <td><code>{{ agent.skillsDir }}</code></td>
+      <td>
+        <template v-if="agent.file"><code>{{ agent.file }}</code>: {{ agent.how }}</template>
+        <template v-else>Printed: {{ agent.how }}</template>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>
 
 Claude Code and opencode are tried with the real agents; the others follow each agent's own docs.
 If one doesn't connect, tell us which agent and what it said.
-
-Running it again changes nothing that's already there.
 
 ## Signing in
 

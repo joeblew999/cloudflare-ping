@@ -1,5 +1,6 @@
-// The coding agents `cloudflare-ping init` sets up, found as `void init` finds them: by a folder or
-// file in the project, each with its skills folder. A copy of Void 1.10.0's own table
+// The coding agents `cloudflare-ping init` (packages/cli/commands/init.ts) sets up, and the
+// docs' "From an AI agent" lists (apps/docs/agents.data.ts), found as `void init` finds them: by
+// a folder or file in the project, each with its skills folder. A copy of Void 1.10.0's own table
 // (node_modules/void/dist/agents-*.mjs, internal, not exported); check it when Void is upgraded.
 //
 // `mcp` is how each agent adds the app's MCP server, from its own docs (looked up 2026-11-20; the

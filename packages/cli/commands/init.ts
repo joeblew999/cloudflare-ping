@@ -1,12 +1,13 @@
 // `cloudflare-ping init`: set this project's coding agents up to use the app, as `void init` sets
 // them up to use Void (its agent step, in the void package's dist/skills-*.mjs). Run in the
 // project's root:
-// - each agent found by its folder (agents.ts) gets this package's skill in its skills folder:
+// - each agent found by its folder (packages/shared/src/agents.ts) gets this package's skill in
+//   its skills folder:
 //   linked, as Void links its own, when the package is installed in the project, so it's always
 //   the installed version's; copied when run from elsewhere (npx), so it doesn't point into a
 //   cache;
 // - AGENTS.md gets a short cloudflare-ping section (kept between markers, the rest untouched);
-// - the MCP server is added in each agent's own project config (agents.ts, from each one's
+// - the MCP server is added in each agent's own project config (the same table, from each one's
 //   docs); an agent with only a global config is told what to add, since init only writes in
 //   the project.
 import {
@@ -24,7 +25,7 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { z } from "zod";
-import { AGENTS, type Agent, type McpSetup } from "../agents";
+import { AGENTS, type Agent, type McpSetup } from "@cloudflare-ping/shared/agents";
 import { siteOf } from "../api";
 
 const SKILL = "cloudflare-ping";
