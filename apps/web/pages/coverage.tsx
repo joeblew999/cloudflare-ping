@@ -56,8 +56,8 @@ export default function CoveragePage({
         <p className="lead">
           {country.name} ({country.code}): <strong>{totals.datacentres}</strong> of
           Cloudflare&apos;s data centres, and Globalping&apos;s{" "}
-          <strong>{count(totals.probes)}</strong> probes in {count(totals.cities)} cities.{" "}
-          <Link href="/coverage">Every country</Link>
+          <strong>{count(totals.probes)}</strong> probes in {count(totals.cities)}{" "}
+          {totals.cities === 1 ? "city" : "cities"}. <Link href="/coverage">Every country</Link>
         </p>
       ) : (
         <p className="lead">

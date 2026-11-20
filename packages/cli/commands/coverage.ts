@@ -27,7 +27,7 @@ export async function coverage(args: Array<string>) {
   const count = (n: number) => n.toLocaleString("en-US");
   if (country) {
     console.log(
-      `${country.name} (${country.code}): ${totals.datacentres} of Cloudflare's data centres, and Globalping's ${count(totals.probes)} probes in ${count(totals.cities)} cities.\n`,
+      `${country.name} (${country.code}): ${totals.datacentres} of Cloudflare's data centres, and Globalping's ${count(totals.probes)} probes in ${count(totals.cities)} ${totals.cities === 1 ? "city" : "cities"}.\n`,
     );
     console.log("Data centres:");
     for (const each of datacentres) {

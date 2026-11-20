@@ -19,7 +19,7 @@ export const head = defineHead<Props>((_c, props) => ({
     {
       name: "description",
       content: props.country
-        ? `${props.country.name}: ${props.totals.datacentres} of Cloudflare's data centres, and Globalping's ${props.totals.probes} probes in ${props.totals.cities} cities.`
+        ? `${props.country.name}: ${props.totals.datacentres} of Cloudflare's data centres, and Globalping's ${props.totals.probes} probes in ${props.totals.cities} ${props.totals.cities === 1 ? "city" : "cities"}.`
         : `All ${props.totals.datacentres} of Cloudflare's data centres, and Globalping's ${props.totals.probes} probes in ${props.totals.countries} countries.`,
     },
   ],
