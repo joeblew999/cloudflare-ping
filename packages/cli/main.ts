@@ -60,5 +60,18 @@ if (name === "--version" || name === "-v") {
     help();
     process.exit(1);
   }
-  await go(rest);
+  try {
+    await go(rest);
+  } catch (error) {
+    // A mistyped option (each command's own, or the common --json and --site): say so plainly.
+    if (
+      error instanceof TypeError &&
+      "code" in error &&
+      String(error.code).startsWith("ERR_PARSE_ARGS")
+    ) {
+      console.error(`${error.message}\n\ncloudflare-ping help lists every option.`);
+      process.exit(1);
+    }
+    throw error;
+  }
 }

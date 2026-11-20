@@ -2,13 +2,13 @@
 // run's page.
 import { parseArgs } from "node:util";
 import { fetch } from "void/client";
-import { asked, headers, printRow, siteOf, stop } from "../api";
+import { asked, commonOptions, headers, printedJson, printRow, siteOf, stop } from "../api";
 
 export async function show(args: Array<string>) {
   const { values, positionals } = parseArgs({
     args,
     allowPositionals: true,
-    options: { json: { type: "boolean", default: false }, site: { type: "string" } },
+    options: { ...commonOptions },
   });
   const site = siteOf(values.site);
   const id = positionals[0];
@@ -16,13 +16,13 @@ export async function show(args: Array<string>) {
     return stop(new Error("Give a run's ID: cloudflare-ping show <run id> (runs lists them)"));
   }
 
-  const { run, fetches, places } = await asked(() =>
+  const found = await asked(() =>
     fetch("/api/runs/[id]", { params: { id }, baseURL: site, headers: headers() }),
   );
-  if (values.json) {
-    console.log(JSON.stringify({ run, fetches, places }, null, 2));
+  if (printedJson(values.json, found)) {
     return;
   }
+  const { run, fetches, places } = found;
   const mode = run.background === null ? "?" : run.background ? "in the background" : "inline";
   console.log(`Run ${run.id}: ${run.target}`);
   console.log(

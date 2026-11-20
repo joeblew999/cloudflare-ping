@@ -4,15 +4,14 @@
 // /api/map`, signed in: it spends one Globalping test per place). The Map page's "Start a map".
 import { parseArgs } from "node:util";
 import { fetch } from "void/client";
-import { asked, headers, signedIn, siteOf, stop } from "../api";
+import { asked, commonOptions, headers, printedJson, signedIn, siteOf, stop } from "../api";
 
 export async function map(args: Array<string>) {
   const { values } = parseArgs({
     args,
     options: {
       id: { type: "string" },
-      json: { type: "boolean", default: false },
-      site: { type: "string" },
+      ...commonOptions,
     },
   });
   const site = siteOf(values.site);
@@ -23,8 +22,7 @@ export async function map(args: Array<string>) {
       headers: headers(),
     }),
   );
-  if (values.json) {
-    console.log(JSON.stringify(found, null, 2));
+  if (printedJson(values.json, found)) {
     return;
   }
   if (!found.map) {
@@ -51,8 +49,7 @@ export async function remap(args: Array<string>) {
     options: {
       level: { type: "string", default: "country" },
       countries: { type: "string" },
-      json: { type: "boolean", default: false },
-      site: { type: "string" },
+      ...commonOptions,
     },
   });
   const site = siteOf(values.site);
@@ -72,8 +69,7 @@ export async function remap(args: Array<string>) {
       headers: headers(authorization),
     }),
   );
-  if (values.json) {
-    console.log(JSON.stringify(started, null, 2));
+  if (printedJson(values.json, started)) {
     return;
   }
   console.log(

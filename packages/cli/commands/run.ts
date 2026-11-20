@@ -7,7 +7,7 @@
 import { parseArgs } from "node:util";
 import { fetch } from "void/client";
 import { DEFAULT_TARGET } from "@cloudflare-ping/shared/targets";
-import { asked, headers, printRow, signedIn, siteOf } from "../api";
+import { asked, commonOptions, headers, printedJson, printRow, signedIn, siteOf } from "../api";
 
 export async function run(args: Array<string>) {
   const { values } = parseArgs({
@@ -20,8 +20,7 @@ export async function run(args: Array<string>) {
       inline: { type: "boolean", default: false },
       everywhere: { type: "boolean", default: false },
       at: { type: "string" },
-      json: { type: "boolean", default: false },
-      site: { type: "string" },
+      ...commonOptions,
     },
   });
   const site = siteOf(values.site);
@@ -86,9 +85,7 @@ export async function run(args: Array<string>) {
     found = await read();
   }
 
-  if (values.json) {
-    console.log(JSON.stringify(found, null, 2));
-  } else {
+  if (!printedJson(values.json, found)) {
     console.log(`\n${shown} of ${started.expected} fetches recorded.`);
   }
 }

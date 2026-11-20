@@ -5,7 +5,7 @@
 // the `cf-ray`s that `test` and `run` print.
 import { parseArgs } from "node:util";
 import { fetch } from "void/client";
-import { headers, signedIn, siteOf, stop } from "../api";
+import { commonOptions, headers, printedJson, signedIn, siteOf, stop } from "../api";
 
 export async function trace(args: Array<string>) {
   const { values, positionals } = parseArgs({
@@ -13,8 +13,7 @@ export async function trace(args: Array<string>) {
     allowPositionals: true,
     options: {
       minutes: { type: "string", default: "60" },
-      json: { type: "boolean", default: false },
-      site: { type: "string" },
+      ...commonOptions,
     },
   });
   const site = siteOf(values.site);
@@ -34,9 +33,10 @@ export async function trace(args: Array<string>) {
     }),
   );
 
-  if (values.json) {
-    console.log(JSON.stringify(found, null, 2));
-  } else if (found.logs.length === 0) {
+  if (printedJson(values.json, found)) {
+    return;
+  }
+  if (found.logs.length === 0) {
     console.log(`No Workers log for ray ${found.ray} in the last ${found.minutes} minutes.`);
   } else {
     for (const log of found.logs.filter((each) => each.kind === "request")) {

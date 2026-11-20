@@ -3,17 +3,16 @@
 // country. `--json` gives the whole of it, with every place. The Coverage page.
 import { parseArgs } from "node:util";
 import { fetch } from "void/client";
-import { asked, headers, siteOf } from "../api";
+import { asked, commonOptions, headers, printedJson, siteOf } from "../api";
 
 export async function coverage(args: Array<string>) {
   const { values } = parseArgs({
     args,
-    options: { json: { type: "boolean", default: false }, site: { type: "string" } },
+    options: { ...commonOptions },
   });
   const site = siteOf(values.site);
   const found = await asked(() => fetch("/api/coverage", { baseURL: site, headers: headers() }));
-  if (values.json) {
-    console.log(JSON.stringify(found, null, 2));
+  if (printedJson(values.json, found)) {
     return;
   }
   const { totals, regions, probeCountries } = found;

@@ -4,7 +4,7 @@
 // back. The home page's "Run a probe".
 import { parseArgs } from "node:util";
 import { fetch } from "void/client";
-import { headers, signedIn, siteOf } from "../api";
+import { commonOptions, headers, printedJson, signedIn, siteOf } from "../api";
 
 export async function test(args: Array<string>) {
   const { values } = parseArgs({
@@ -14,8 +14,7 @@ export async function test(args: Array<string>) {
       path: { type: "string", default: "/where" },
       probes: { type: "string", default: "1" },
       host: { type: "string" },
-      site: { type: "string" },
-      json: { type: "boolean", default: false },
+      ...commonOptions,
     },
   });
   const site = siteOf(values.site);
@@ -34,8 +33,7 @@ export async function test(args: Array<string>) {
     }),
   );
 
-  if (values.json) {
-    console.log(JSON.stringify(answer, null, 2));
+  if (printedJson(values.json, answer)) {
     return;
   }
   console.log(

@@ -12,6 +12,22 @@ import { forget, fromEnv, token } from "./sign-in";
 export const siteOf = (given: string | undefined) =>
   (given ?? `https://${SITE}`).replace(/\/+$/, "");
 
+// The options every command takes (COMMON_OPTIONS, packages/shared/src/commands.ts, says so):
+// `--site`, and `--json` for the API's answer as it is. Spread into each command's own options.
+export const commonOptions = {
+  json: { type: "boolean", default: false },
+  site: { type: "string" },
+} as const;
+
+// With `--json`, a command prints the API's answer as it came, and nothing else: true when it
+// did, so the command stops there. Otherwise the command says it for a person.
+export function printedJson(wanted: boolean, found: unknown): boolean {
+  if (wanted) {
+    console.log(JSON.stringify(found, null, 2));
+  }
+  return wanted;
+}
+
 // The headers every call sends; with `authorization` when signed in.
 export const headers = (authorization?: string): Record<string, string> => ({
   [API_VERSION_HEADER]: String(API_VERSION),
