@@ -1,11 +1,17 @@
 // The geographical coverage map (plan 2026-11-20-03): every one of Cloudflare's data centres and
 // every one of Globalping's probes, on a world map, complete: where the app can run, and where it
 // can be reached from. None of our own test results (those are the geographical probe map, on
-// the same drawing: src/WorldMap.tsx). The CLI's `coverage`; `GET /api/coverage`.
+// the same drawing: src/WorldMap.tsx). The CLI's `coverage`; `GET /api/coverage`. Narrowed to one
+// country with the place picker (`?country=TH`), as the API, CLI and MCP tool are.
+import { Link, useRouter } from "@void/react";
+import { useState } from "react";
+import { routeUrl } from "void/routes";
+import { PlacePicker } from "../src/PlacePicker";
 import { WorldMap, type WorldPoint } from "../src/WorldMap";
 import type { Props } from "./coverage.server";
 
 export default function CoveragePage({
+  country,
   totals,
   regions,
   probeCountries,
@@ -36,22 +42,55 @@ export default function CoveragePage({
           ],
     ),
   ];
+  const router = useRouter();
+  const [wanted, setWanted] = useState(country?.code ?? "");
   const shown = 8;
+  // When narrowed to a country: its probe cities, the most probes first.
+  const byCity = [...cities].sort((a, b) => b.probes - a.probes);
   // Thousands with commas, the same on the server and in the browser.
   const count = (n: number) => n.toLocaleString("en-US");
   return (
     <main className="content wide vp-doc">
       <h1>Coverage</h1>
-      <p className="lead">
-        All <strong>{totals.datacentres}</strong> of Cloudflare&apos;s data centres, and
-        Globalping&apos;s <strong>{count(totals.probes)}</strong> probes in {count(totals.cities)}{" "}
-        cities in {totals.countries} countries: everywhere the app can run, and everywhere it can be
-        reached from.
-      </p>
+      {country ? (
+        <p className="lead">
+          {country.name} ({country.code}): <strong>{totals.datacentres}</strong> of
+          Cloudflare&apos;s data centres, and Globalping&apos;s{" "}
+          <strong>{count(totals.probes)}</strong> probes in {count(totals.cities)} cities.{" "}
+          <Link href="/coverage">Every country</Link>
+        </p>
+      ) : (
+        <p className="lead">
+          All <strong>{totals.datacentres}</strong> of Cloudflare&apos;s data centres, and
+          Globalping&apos;s <strong>{count(totals.probes)}</strong> probes in {count(totals.cities)}{" "}
+          cities in {totals.countries} countries: everywhere the app can run, and everywhere it can
+          be reached from.
+        </p>
+      )}
+
+      <form method="get" action="/coverage" className="form coverage-filter">
+        <label>
+          One country
+          <PlacePicker
+            name="country"
+            value={wanted}
+            onChange={setWanted}
+            kinds={["country"]}
+            unknown="Not one of the countries with probes"
+            onPick={(place) => {
+              void router.visit(routeUrl("/coverage", { query: { country: place.magic } }));
+            }}
+          />
+        </label>
+        <button type="submit" className="button alt">
+          Show
+        </button>
+      </form>
 
       <figure className="coverage">
         <WorldMap
           points={points}
+          zoom={country !== null}
           label={`A world map of Cloudflare's ${totals.datacentres} data centres and Globalping's ${count(totals.probes)} probes`}
         />
         <figcaption>
@@ -61,41 +100,67 @@ export default function CoveragePage({
       </figure>
 
       <p>
-        The same from a terminal: <code>cloudflare-ping coverage</code>
+        The same from a terminal:{" "}
+        <code>cloudflare-ping coverage{country ? ` --country ${country.code}` : ""}</code>
       </p>
 
       <div className="form-row">
         <section>
-          <h2>Data centres, by region</h2>
+          <h2>{country ? "Data centres" : "Data centres, by region"}</h2>
           <div className="table-scroll">
             <table>
               <tbody>
-                {regions.map((each) => (
-                  <tr key={each.region}>
-                    <td>{each.region}</td>
-                    <td>{each.datacentres}</td>
-                  </tr>
-                ))}
+                {country
+                  ? datacentres.map((each) => (
+                      <tr key={each.code}>
+                        <td>{each.code}</td>
+                        <td>{each.name}</td>
+                      </tr>
+                    ))
+                  : regions.map((each) => (
+                      <tr key={each.region}>
+                        <td>{each.region}</td>
+                        <td>{each.datacentres}</td>
+                      </tr>
+                    ))}
               </tbody>
             </table>
           </div>
+          {country && datacentres.length === 0 ? <p>None in {country.name}.</p> : null}
         </section>
         <section>
-          <h2>Probes, by country</h2>
+          <h2>{country ? "Probes, by city" : "Probes, by country"}</h2>
           <div className="table-scroll">
             <table>
               <tbody>
-                {probeCountries.slice(0, shown).map((each) => (
-                  <tr key={each.country}>
-                    <td>{each.country}</td>
-                    <td>{count(each.probes)}</td>
-                  </tr>
-                ))}
+                {country
+                  ? byCity.slice(0, shown).map((each) => (
+                      <tr key={`${each.state ?? ""}|${each.city}`}>
+                        <td>
+                          {each.city}
+                          {each.state ? `, ${each.state}` : ""}
+                        </td>
+                        <td>{count(each.probes)}</td>
+                      </tr>
+                    ))
+                  : probeCountries.slice(0, shown).map((each) => (
+                      <tr key={each.country}>
+                        <td>
+                          <Link href={routeUrl("/coverage", { query: { country: each.country } })}>
+                            {each.country}
+                          </Link>
+                        </td>
+                        <td>{count(each.probes)}</td>
+                      </tr>
+                    ))}
               </tbody>
             </table>
           </div>
-          {probeCountries.length > shown ? (
-            <p>And {probeCountries.length - shown} more countries.</p>
+          {(country ? byCity : probeCountries).length > shown ? (
+            <p>
+              And {(country ? byCity : probeCountries).length - shown} more{" "}
+              {country ? "cities" : "countries"}.
+            </p>
           ) : null}
         </section>
       </div>

@@ -413,8 +413,10 @@ a.card:hover {
   margin: 1.5rem 0;
 }
 
-.form label {
+.form label,
+.form .field {
   display: grid;
+  align-content: start;
   gap: 0.375rem;
   font-size: 0.875rem;
   font-weight: 500;
@@ -528,7 +530,8 @@ a.card:hover {
 .world .dc {
   fill: var(--vp-c-brand-1);
   stroke: var(--vp-c-bg);
-  stroke-width: 0.3;
+  stroke-width: 0.75px;
+  vector-effect: non-scaling-stroke;
 }
 .coverage figcaption {
   margin-top: 8px;
@@ -549,4 +552,131 @@ a.card:hover {
   width: 6px;
   height: 6px;
   background: var(--vp-c-text-2);
+}
+
+/* The place picker (src/PlacePicker.tsx): a box, its suggestions in groups, and chips. */
+.place-picker,
+.place-box {
+  display: block;
+}
+.place-box {
+  position: relative;
+}
+.place-said {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--vp-c-text-2);
+}
+.place-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  width: max(100%, min(28rem, calc(100vw - 2rem)));
+  max-height: 20rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  background: var(--vp-c-bg-elv);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  box-shadow: var(--vp-shadow-3);
+}
+.place-picker .place-list,
+.place-picker .place-list ul {
+  padding-left: 0;
+  list-style: none;
+}
+.place-picker .place-list ul {
+  margin: 0;
+}
+.place-picker .place-list li {
+  margin: 0;
+  line-height: 1.4;
+}
+.place-group {
+  display: block;
+  padding: 0.35rem 0.75rem 0.15rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--vp-c-text-2);
+}
+.place {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--vp-c-text-1);
+  cursor: pointer;
+}
+.place.active {
+  background: var(--vp-c-default-soft);
+}
+.place > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.place-probes {
+  flex: none;
+  color: var(--vp-c-text-2);
+  font-variant-numeric: tabular-nums;
+}
+.place-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 0.5rem;
+  background-color: var(--vp-c-bg-alt);
+}
+.place-chips:focus-within {
+  border-color: var(--vp-c-brand-1);
+}
+.form .place-chips input {
+  flex: 1;
+  width: auto;
+  min-width: 8rem;
+  height: 2rem;
+  border: none;
+  padding: 0 0.25rem;
+  background: none;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.25rem 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-text-1);
+  font-size: 0.8rem;
+}
+.chip button {
+  border: none;
+  background: none;
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  padding: 0 0.25rem;
+  font-size: 1rem;
+  line-height: 1;
+}
+.coverage-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+.coverage-filter label {
+  flex: 0 1 20rem;
+}
+.coverage-filter .button {
+  margin-top: 1.7rem;
 }

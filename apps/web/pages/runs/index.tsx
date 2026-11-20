@@ -6,6 +6,8 @@ import { Suspense, use, useState } from "react";
 import { routeUrl } from "void/routes";
 import { limitsLine } from "@cloudflare-ping/shared/limits";
 import { ALLOWED_HOSTS, DEFAULT_TARGET } from "@cloudflare-ping/shared/targets";
+import { asArgument } from "@cloudflare-ping/shared/places";
+import { PlaceChips, PlacePicker } from "../../src/PlacePicker";
 import type { Props } from "./index.server";
 
 const HOSTS = [...ALLOWED_HOSTS];
@@ -22,23 +24,16 @@ export default function RunsPage({ email, runs, limits }: Props) {
   const [path, setPath] = useState(DEFAULT.pathname);
   // From every data centre the map reached (plan step 8), or only some of them.
   const [everywhere, setEverywhere] = useState(false);
-  const [at, setAt] = useState("");
+  const [at, setAt] = useState<Array<string>>([]);
   const form = useForm(
     "/runs",
     { target: DEFAULT_TARGET, from: "TH", probes: 2, repeat: 1, background: true },
     { throwOnError: false },
   );
 
-  const codes = (text: string) =>
-    text
-      .split(/[\s,]+/)
-      .map((each) => each.trim().toUpperCase())
-      .filter((each) => each !== "");
-
-  function pickEverywhere(on: boolean, text: string) {
+  function pickEverywhere(on: boolean, only: Array<string>) {
     setEverywhere(on);
-    setAt(text);
-    const only = codes(text);
+    setAt(only);
     form.setData("everywhere", on ? (only.length > 0 ? { at: only } : {}) : undefined);
     if (on) {
       form.setData("background", true);
@@ -54,13 +49,11 @@ export default function RunsPage({ email, runs, limits }: Props) {
   const command = [
     "cloudflare-ping run",
     `--target ${form.data.target}`,
-    `--from ${form.data.from}`,
+    `--from ${asArgument(form.data.from)}`,
     `--probes ${form.data.probes}`,
     `--repeat ${form.data.repeat}`,
     ...(form.data.background ? [] : ["--inline"]),
-    ...(everywhere
-      ? ["--everywhere", ...(codes(at).length > 0 ? [`--at ${codes(at).join(",")}`] : [])]
-      : []),
+    ...(everywhere ? ["--everywhere", ...(at.length > 0 ? [`--at ${at.join(",")}`] : [])] : []),
   ].join(" ");
 
   return (
@@ -111,9 +104,10 @@ export default function RunsPage({ email, runs, limits }: Props) {
           <div className="form-row">
             <label>
               From
-              <input
+              <PlacePicker
+                name="from"
                 value={form.data.from}
-                onChange={(event) => form.setData("from", event.target.value)}
+                onChange={(value) => form.setData("from", value)}
                 required
               />
               {form.errors.from ? <span className="different">{form.errors.from}</span> : null}
@@ -162,14 +156,16 @@ export default function RunsPage({ email, runs, limits }: Props) {
             and Probes)
           </label>
           {everywhere ? (
-            <label>
-              Only these data centres (optional)
-              <input
+            <div className="field">
+              <span>Only these data centres (optional)</span>
+              <PlaceChips
+                label="Only these data centres"
                 value={at}
-                placeholder="BKK, SIN"
-                onChange={(event) => pickEverywhere(true, event.target.value)}
+                kinds={["datacentre"]}
+                placeholder="Type a data centre: BKK, Singapore…"
+                onChange={(only) => pickEverywhere(true, only)}
               />
-            </label>
+            </div>
           ) : null}
           <div className="form-actions">
             <button type="submit" className="button brand" disabled={form.pending || !email}>

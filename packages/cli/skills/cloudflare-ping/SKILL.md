@@ -40,7 +40,7 @@ so starting a run or a test spends them; reading runs, limits and logs spends no
 | `cloudflare-ping show <run id>` | `show` | One run and its fetches | `/runs/<id>` |
 | `cloudflare-ping limits` | `limits` | How many Globalping tests the app has left this hour | `/runs` |
 | `cloudflare-ping places [<what>] [--kind <kind>] [--limit <n>]` | `places` | Find a place to test from: continents, regions, countries, US states, cities and networks with Globalping's probes, and Cloudflare's data centres | `/` |
-| `cloudflare-ping coverage` | `coverage` | All of Cloudflare's data centres and Globalping's probes, on a world map | `/coverage` |
+| `cloudflare-ping coverage [--country TH]` | `coverage` | All of Cloudflare's data centres and Globalping's probes, on a world map | `/coverage` |
 | `cloudflare-ping map [--id <map id>]` | `map` | Which Cloudflare data centres Globalping's probes reach, and what it cost to find out | `/map` |
 | `cloudflare-ping remap [--level country|city] [--countries TH,SG]` | `remap` | Start a new map: one Globalping test per place, worked through on a queue (needs sign-in) | `/map` |
 | `cloudflare-ping trace <ray id> [--minutes 60]` | `trace` | A request's Cloudflare log, by its cf-ray (needs sign-in) | `/trace/<ray>` |

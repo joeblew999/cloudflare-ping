@@ -81,7 +81,7 @@ export function mcpServer(context: CommandContext) {
     {
       // Without its ~1,100 probe cities unless asked: the totals, regions and data centres answer
       // most questions.
-      description: `${describe("coverage")} Pass cities: true for every probe city too.`,
+      description: `${describe("coverage")} Pass country (a code, as places gives it: TH) for one country; cities: true for every probe city too.`,
       inputSchema: coverageQuery,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

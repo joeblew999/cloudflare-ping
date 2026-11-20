@@ -3,7 +3,7 @@
 // src/commands/map.ts as `POST /api/map` does; the CLI's `remap`). A map fills in as its queue
 // works through the countries, waiting out Globalping's hourly limit when it must.
 import { Form, Link, useForm } from "@void/react";
-import { useState } from "react";
+import { PlaceChips } from "../src/PlacePicker";
 import type { Props } from "./map.server";
 
 // Every country, unless some are given.
@@ -18,19 +18,7 @@ export default function MapPage({
   reached,
   datacentres,
 }: Props) {
-  const [countries, setCountries] = useState("");
   const form = useForm("/map", { level: "country", countries: ALL }, { throwOnError: false });
-
-  function pickCountries(text: string) {
-    setCountries(text);
-    form.setData(
-      "countries",
-      text
-        .split(/[\s,]+/)
-        .map((each) => each.trim().toUpperCase())
-        .filter((each) => each !== ""),
-    );
-  }
 
   const command = [
     "cloudflare-ping remap",
@@ -121,17 +109,19 @@ export default function MapPage({
               <option value="city">city</option>
             </select>
           </label>
-          <label>
-            Only these countries (optional)
-            <input
-              value={countries}
-              placeholder="TH, SG"
-              onChange={(event) => pickCountries(event.target.value)}
+          <div className="field">
+            <span>Only these countries (optional)</span>
+            <PlaceChips
+              label="Only these countries"
+              value={form.data.countries ?? ALL}
+              kinds={["country"]}
+              placeholder="Type a country: Thailand, SG…"
+              onChange={(countries) => form.setData("countries", countries)}
             />
             {form.errors.countries ? (
               <span className="different">{form.errors.countries}</span>
             ) : null}
-          </label>
+          </div>
         </div>
         <div className="form-actions">
           <button type="submit" className="button brand" disabled={form.pending || !email}>

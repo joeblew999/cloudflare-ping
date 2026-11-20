@@ -6,8 +6,10 @@
 import { Form, Link, useForm } from "@void/react";
 import { Suspense, use } from "react";
 import { routeUrl } from "void/routes";
+import { asArgument } from "@cloudflare-ping/shared/places";
 import { SITE } from "@cloudflare-ping/shared/site";
 import { ALLOWED_HOSTS } from "@cloudflare-ping/shared/targets";
+import { PlacePicker } from "../src/PlacePicker";
 import type { Props } from "./index.server";
 
 const HOSTS = [SITE, ...ALLOWED_HOSTS];
@@ -107,7 +109,7 @@ export default function HomePage({ email, here, measurement, answer }: Props) {
 
   const command = [
     "cloudflare-ping test",
-    `--from ${form.data.from}`,
+    `--from ${asArgument(form.data.from)}`,
     `--path ${form.data.path}`,
     `--probes ${form.data.probes}`,
     ...(ours ? [] : [`--host ${host}`]),
@@ -189,9 +191,10 @@ export default function HomePage({ email, here, measurement, answer }: Props) {
             <div className="form-row">
               <label>
                 From
-                <input
+                <PlacePicker
+                  name="from"
                   value={form.data.from}
-                  onChange={(event) => form.setData("from", event.target.value)}
+                  onChange={(value) => form.setData("from", value)}
                   required
                 />
                 {form.errors.from ? <span className="different">{form.errors.from}</span> : null}

@@ -7,6 +7,7 @@ import { fetch } from "void/client";
 import {
   KIND_LABELS,
   PLACE_KINDS,
+  asArgument,
   groupByKind,
   type PlaceKind,
 } from "@cloudflare-ping/shared/places";
@@ -54,7 +55,8 @@ export async function places(args: Array<string>) {
         place.kind === "datacentre"
           ? ""
           : `${place.probes.toLocaleString("en-US")} ${place.probes === 1 ? "probe" : "probes"}`;
-      const pass = place.kind === "datacentre" ? `--at ${place.magic}` : `--from "${place.magic}"`;
+      const pass =
+        place.kind === "datacentre" ? `--at ${place.magic}` : `--from ${asArgument(place.magic)}`;
       console.log(`  ${what.padEnd(48)} ${probes.padStart(13)}  ${pass}`);
     }
     if (group.places.length > shown) {

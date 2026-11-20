@@ -60,6 +60,13 @@ describe("searchPlaces", () => {
     ]);
   });
 
+  it("a typo or two still finds the place, after everything that matches as typed", () => {
+    expect(names(searchPlaces(places, { q: "thialand" }))).toEqual(["Thailand"]);
+    expect(names(searchPlaces(places, { q: "bankok" }))).toEqual(["Bangkok"]);
+    expect(names(searchPlaces(places, { q: "virginai" }))).toEqual(["Virginia", "West Virginia"]);
+    expect(searchPlaces(places, { q: "xyzzy" })).toEqual([]);
+  });
+
   it("without accents or capitals", () => {
     expect(names(searchPlaces(places, { q: "CHISINAU" }))).toEqual(["Chișinău"]);
   });

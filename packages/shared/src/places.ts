@@ -56,9 +56,34 @@ export function fold(text: string): string {
 
 const wordsOf = (text: string) => text.split(/[\s,()+./-]+/).filter((word) => word !== "");
 
+// Whether two words are at most `limit` typos apart: a letter added, dropped or changed, or two
+// next to each other swapped ("thialand" and "thailand" are one apart).
+function typosApart(a: string, b: string, limit: number): boolean {
+  if (Math.abs(a.length - b.length) > limit) {
+    return false;
+  }
+  let before: Array<number> = [];
+  let row = Array.from({ length: b.length + 1 }, (_, at) => at);
+  for (let i = 1; i <= a.length; i += 1) {
+    const next = [i];
+    for (let j = 1; j <= b.length; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      let best = Math.min((next[j - 1] ?? 0) + 1, (row[j] ?? 0) + 1, (row[j - 1] ?? 0) + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        best = Math.min(best, (before[j - 2] ?? 0) + 1);
+      }
+      next.push(best);
+    }
+    before = row;
+    row = next;
+  }
+  return (row[b.length] ?? limit + 1) <= limit;
+}
+
 // How well a place matches what's typed (already folded): lower is better, null when it doesn't.
 // An exact code or name; the name's start; a word in the name; what it's within (so "bang"
-// finds Dhaka, in Bangladesh); anywhere in the name.
+// finds Dhaka, in Bangladesh); anywhere in the name; last, the name or a word in it a typo or
+// two away ("thialand", "bankok").
 export function scoreOf(place: Place, typed: string): number | null {
   const name = fold(place.name);
   const codes = place.codes.map(fold);
@@ -85,6 +110,15 @@ export function scoreOf(place: Place, typed: string): number | null {
   }
   if (typed.length >= 3 && name.includes(typed)) {
     return 4;
+  }
+  if (typed.length >= 4) {
+    const limit = typed.length >= 7 ? 2 : 1;
+    if (
+      typosApart(name, typed, limit) ||
+      wordsOf(name).some((word) => typosApart(word, typed, limit))
+    ) {
+      return 5;
+    }
   }
   return null;
 }
@@ -147,4 +181,10 @@ export function groupByKind(
     groups.set(place.kind, [...(groups.get(place.kind) ?? []), place]);
   }
   return [...groups].map(([kind, each]) => ({ kind, places: each }));
+}
+
+// A place as a command-line argument: quoted when it has a space ("Bang Khae+TH"), as the pages'
+// "the same from a terminal" and the CLI's `places` both print it.
+export function asArgument(text: string): string {
+  return /^[\w.+,:@/-]+$/.test(text) ? text : `"${text.replaceAll('"', '\\"')}"`;
 }

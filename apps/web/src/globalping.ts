@@ -9,8 +9,25 @@
 import { HTTPException } from "hono/http-exception";
 import { logger } from "void/log";
 import { z } from "zod";
+import { FROM_KINDS, asArgument, searchPlaces } from "@cloudflare-ping/shared/places";
 import { SITE } from "@cloudflare-ping/shared/site";
 import { ALLOWED_HOSTS } from "@cloudflare-ping/shared/targets";
+import { allPlaces } from "./sources/lists";
+
+// Globalping's answer when it has no probes in the place asked (422, checked 2026-11-20: no test
+// is spent).
+const noProbes = z.object({ error: z.object({ type: z.literal("no_probes_found") }) });
+
+// The places the one search (packages/shared/src/places.ts) finds for what was asked, as the
+// picker and `places` would: a typo ("Thialand") gets its place.
+async function didYouMean(from: string): Promise<string> {
+  const near = searchPlaces(await allPlaces(), { q: from, kinds: FROM_KINDS, limit: 3 }).filter(
+    (each) => each.magic.toLowerCase() !== from.toLowerCase(),
+  );
+  return near.length > 0
+    ? ` Did you mean ${near.map((each) => `${each.name} (--from ${asArgument(each.magic)})`).join(", ")}?`
+    : "";
+}
 
 const API = "https://api.globalping.io/v1/measurements";
 const LIMITS = "https://api.globalping.io/v1/limits";
@@ -167,8 +184,10 @@ export async function makeTest(options: ProbeOptions) {
       from: options.from,
       path: options.path,
     });
+    const suggested =
+      !options.places && noProbes.safeParse(body).success ? await didYouMean(options.from) : "";
     throw new HTTPException(502, {
-      message: `Globalping refused the test (${started.status}): ${words}`,
+      message: `Globalping refused the test (${started.status}): ${words}${suggested}`,
     });
   }
   const id = made.data.id;
