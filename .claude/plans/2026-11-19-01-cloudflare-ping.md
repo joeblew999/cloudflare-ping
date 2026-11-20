@@ -3,6 +3,10 @@
 Status: 2026-11-19, approved; steps 1 to 5 proven; step 6 built and deployed. Built on Void 1.10.0 (the user's call, 2026-11-19:
 1.11.0 was hours old, and a release is installed a day after it comes out), with Vite+ held at
 1.6.0, since Void 1.10.0 writes a Vite+ range that takes 1.7.0, whose core it doesn't match.
+Moved to Void 1.11.0 on 2026-11-20, once a day old: it fixes deploys failing on stale Cloudflare
+reads (which stopped every deploy that afternoon). Its upgrade guide turned D1 read replicas off
+(`database.readReplication: false`), and its auth fix added three Better Auth indexes as a
+migration. Vite+ still held at 1.6.0.
 Changed the same day (the user's call): the app's own API is the one way in, for the CLI and the
 pages alike, behind Void's auth (How we use it; step 6).
 
