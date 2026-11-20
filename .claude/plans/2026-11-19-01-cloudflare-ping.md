@@ -6,7 +6,9 @@ Status: 2026-11-19, approved; steps 1 to 5 proven; step 6 built and deployed. Bu
 Moved to Void 1.11.0 on 2026-11-20, once a day old: it fixes deploys failing on stale Cloudflare
 reads (which stopped every deploy that afternoon). Its upgrade guide turned D1 read replicas off
 (`database.readReplication: false`), and its auth fix added three Better Auth indexes as a
-migration. Vite+ still held at 1.6.0.
+migration. Vite+ moved to 1.7.0 with its core, 8.3.8000, the pair Void 1.11.0 writes for a new
+project; and `cf` (for Workers Logs history) to Void's own version, 1.0.0-rc.0, so one copy of
+Cloudflare's tools is installed.
 Changed the same day (the user's call): the app's own API is the one way in, for the CLI and the
 pages alike, behind Void's auth (How we use it; step 6).
 

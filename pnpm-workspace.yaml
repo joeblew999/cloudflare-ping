@@ -22,11 +22,10 @@ catalog:
   "@void/react": 1.11.0
   better-auth: 1.7.25
   typescript: ^7.0.2
-  # Void 1.10.0 writes Vite+ ^1.6.0, which takes Vite+ 1.7.0, whose core must be 8.3.8000 (reported
-  # to Void 2026-11-18): both held at 1.6.0 until a Void release writes a pair (still held with
-  # Void 1.11.0, 2026-11-20).
-  vite: npm:@voidzero-dev/vite-plus-core@1.6.0
-  vite-plus: 1.6.0
+  # The pair Void 1.11.0 writes for a new project (it's built with them): Vite+ 1.7.0 and its core,
+  # 8.3.8000. Held at 1.6.0 with Void 1.10.0, which wrote no pair (reported to Void 2026-11-18).
+  vite: npm:@voidzero-dev/vite-plus-core@8.3.8000
+  vite-plus: 1.7.0
   vitepress: 2.0.0-alpha.21
   void: 1.11.0
   vue: 3.5.45
