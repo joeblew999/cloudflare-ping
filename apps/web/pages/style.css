@@ -693,3 +693,23 @@ a.card:hover {
 .coverage-filter .button {
   margin-top: 1.7rem;
 }
+
+/* The coverage page's every-country table: continents as headings, the gaps marked. */
+.vp-doc table.countries {
+  display: table;
+  width: 100%;
+}
+.countries td:not(:first-child),
+.countries th:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.countries tr.continent th {
+  padding-top: 1rem;
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-1);
+  font-weight: 600;
+}
+.countries .gap {
+  color: var(--vp-c-warning-1);
+}

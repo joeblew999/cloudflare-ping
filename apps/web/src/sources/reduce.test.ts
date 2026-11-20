@@ -6,7 +6,7 @@ import {
   airportPlaces,
   cloudflareDatacentres,
   continentNames,
-  countryNames,
+  countryListOf,
   probeIndexOf,
   usStateNames,
 } from "./reduce";
@@ -96,8 +96,14 @@ describe("the name lists", () => {
   it("names continents and countries from countries-list", () => {
     expect(continentNames({ AS: "Asia", EU: "Europe" })).toEqual({ AS: "Asia", EU: "Europe" });
     expect(
-      countryNames({ TH: { name: "Thailand", continent: "AS" }, HK: { name: "Hong Kong" } }),
-    ).toEqual({ TH: "Thailand", HK: "Hong Kong" });
+      countryListOf({
+        TH: { name: "Thailand", native: "ประเทศไทย", continent: "AS" },
+        HK: { name: "Hong Kong", continent: "AS" },
+      }),
+    ).toEqual({
+      TH: { name: "Thailand", continent: "AS" },
+      HK: { name: "Hong Kong", continent: "AS" },
+    });
   });
 
   it("names US states from OurAirports' regions, as Globalping writes them, and only the US's", () => {

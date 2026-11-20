@@ -22,7 +22,7 @@ export async function coverage(args: Array<string>) {
   if (printedJson(values.json, found)) {
     return;
   }
-  const { country, unmatched, totals, regions, probeCountries, datacentres, cities } = found;
+  const { country, unmatched, totals, continents, datacentres, cities } = found;
   if (unmatched) {
     console.log(`No country with probes matches "${unmatched}": here is every country.\n`);
   }
@@ -50,17 +50,22 @@ export async function coverage(args: Array<string>) {
   console.log(
     `All ${totals.datacentres} of Cloudflare's data centres, and ${count(totals.probes)} probes in ${count(totals.cities)} cities in ${totals.countries} countries.\n`,
   );
-  console.log("Data centres, by region:");
-  for (const each of regions) {
-    console.log(`  ${each.region.padEnd(36)} ${String(each.datacentres).padStart(4)}`);
-  }
-  console.log("\nProbes, by country (the most first):");
   console.log(
-    `  ${probeCountries
-      .slice(0, 12)
-      .map((each) => `${each.country} ${count(each.probes)}`)
-      .join(", ")}, and ${Math.max(probeCountries.length - 12, 0)} more countries`,
+    `${totals.bothCountries} countries have both data centres and probes; ${totals.noProbeCountries} have data centres but no probe; ${totals.noDatacentreCountries} have probes but no data centre.\n`,
   );
+  // As the page shows it: every country, its data centres and probes, by continent.
+  const row = (name: string, centres: string, probes: string) =>
+    `${name.padEnd(34)} ${centres.padStart(12)} ${probes.padStart(8)}`;
+  const shown = (n: number) => (n === 0 ? "none" : count(n));
+  console.log(row("", "Data centres", "Probes"));
+  for (const continent of continents) {
+    console.log(`\n${row(continent.name, count(continent.datacentres), count(continent.probes))}`);
+    for (const each of continent.countries) {
+      console.log(
+        row(`  ${each.name} (${each.code})`, shown(each.datacentres), shown(each.probes)),
+      );
+    }
+  }
   if (totals.unplaced.length > 0) {
     console.log(`\nNot placed yet (no coordinates): ${totals.unplaced.join(" ")}`);
   }

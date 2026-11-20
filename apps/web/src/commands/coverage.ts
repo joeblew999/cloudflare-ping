@@ -8,7 +8,13 @@
 // country their airport is in) and its probe cities. Nothing given: everything.
 import { z } from "zod";
 import { searchPlaces } from "@cloudflare-ping/shared/places";
-import { allPlaces, countries as countryNames, placedDatacentres, probes } from "../sources/lists";
+import {
+  allPlaces,
+  continents,
+  countries as countryList,
+  placedDatacentres,
+  probes,
+} from "../sources/lists";
 import { coverageFilter } from "./coverage-filter";
 
 export { coverageFilter };
@@ -39,19 +45,45 @@ export async function coverage(options: z.infer<typeof coverageQuery> = {}) {
   ] = await Promise.all([probes(), placedDatacentres()]);
   const cities = code ? everyCity.filter((each) => each.country === code) : everyCity;
   const all = code ? everyCentre.filter((each) => each.country === code) : everyCentre;
-  const named = code ? await countryNames([code]) : {};
-  const regions = new Map<string, number>();
-  for (const each of all) {
-    const region = each.region ?? "Elsewhere";
-    regions.set(region, (regions.get(region) ?? 0) + 1);
+  // Every country with a data centre or a probe: its data centres and probes side by side,
+  // grouped by continent. Names and continents from the countries list; a country it doesn't
+  // know keeps its code, and the continent its probes are in.
+  const codes = [
+    ...new Set([
+      ...all.flatMap((each) => (each.country ? [each.country] : [])),
+      ...cities.map((each) => each.country),
+    ]),
+  ];
+  const [known, continentNamed] = await Promise.all([
+    countryList(codes),
+    continents([...new Set(cities.map((each) => each.continent))]),
+  ]);
+  const probeContinent = new Map(cities.map((each) => [each.country, each.continent]));
+  const countries = codes
+    .map((each) => {
+      const here = cities.filter((city) => city.country === each);
+      const continent = known[each]?.continent ?? probeContinent.get(each) ?? "";
+      return {
+        code: each,
+        name: known[each]?.name ?? each,
+        continent,
+        datacentres: all.filter((centre) => centre.country === each).length,
+        probes: here.reduce((sum, city) => sum + city.probes, 0),
+        cities: here.length,
+      };
+    })
+    .sort(
+      (a, b) =>
+        b.datacentres - a.datacentres || b.probes - a.probes || a.name.localeCompare(b.name),
+    );
+  const byContinent = new Map<string, Array<(typeof countries)[number]>>();
+  for (const each of countries) {
+    byContinent.set(each.continent, [...(byContinent.get(each.continent) ?? []), each]);
   }
-  const countries = new Map<string, number>();
-  for (const each of cities) {
-    countries.set(each.country, (countries.get(each.country) ?? 0) + each.probes);
-  }
+  const named = code ? known[code]?.name : undefined;
   return {
     // The country it's narrowed to, named from the same list the places are: null for everything.
-    country: code ? { code, name: named[code] ?? code } : null,
+    country: code ? { code, name: named ?? code } : null,
     // What was asked for when no country matched it: every country is shown instead.
     unmatched: asked !== "" && !code ? asked : null,
     totals: {
@@ -60,16 +92,23 @@ export async function coverage(options: z.infer<typeof coverageQuery> = {}) {
       unplaced: all.filter((each) => each.lat === null).map((each) => each.code),
       probes: cities.reduce((sum, each) => sum + each.probes, 0),
       cities: cities.length,
-      countries: countries.size,
+      countries: new Set(cities.map((each) => each.country)).size,
+      // How the two line up, country by country.
+      bothCountries: countries.filter((each) => each.datacentres > 0 && each.probes > 0).length,
+      noProbeCountries: countries.filter((each) => each.probes === 0).length,
+      noDatacentreCountries: countries.filter((each) => each.datacentres === 0).length,
     },
-    // Cloudflare's data centres by its own regions.
-    regions: [...regions]
-      .map(([region, count]) => ({ region, datacentres: count }))
-      .sort((a, b) => b.datacentres - a.datacentres),
-    // Globalping's probes by country, the most first.
-    probeCountries: [...countries]
-      .map(([country, count]) => ({ country, probes: count }))
-      .sort((a, b) => b.probes - a.probes),
+    // Every country, its data centres and probes, grouped by continent, the most data centres
+    // first.
+    continents: [...byContinent]
+      .map(([continent, members]) => ({
+        code: continent,
+        name: continentNamed[continent] ?? (continent || "Elsewhere"),
+        datacentres: members.reduce((sum, each) => sum + each.datacentres, 0),
+        probes: members.reduce((sum, each) => sum + each.probes, 0),
+        countries: members,
+      }))
+      .sort((a, b) => b.datacentres - a.datacentres || b.probes - a.probes),
     datacentres: all,
     cities: options.cities === false ? [] : cities,
   };

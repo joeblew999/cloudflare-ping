@@ -23,6 +23,8 @@ import {
   airportPlaces,
   cloudflareDatacentres,
   continentNames,
+  countryList,
+  countryListOf,
   countryNames,
   datacentre,
   names,
@@ -100,9 +102,19 @@ const named =
 export const continents = named("lists:v1:continent-names", CONTINENTS_URL, async (response) =>
   continentNames(await response.json()),
 );
-export const countries = named("lists:v1:country-names", COUNTRIES_URL, async (response) =>
-  countryNames(await response.json()),
-);
+// Countries: each one's name and continent, kept until a code isn't covered.
+export const countries = (codes: Array<string>, now?: number) =>
+  covering(
+    {
+      key: "lists:v2:countries",
+      url: COUNTRIES_URL,
+      recheckSeconds: null,
+      schema: countryList,
+      reduce: async (response) => countryListOf(await response.json()),
+    },
+    codes,
+    now,
+  );
 export const states = named("lists:v1:state-names", REGIONS_URL, async (response) =>
   usStateNames(await response.text()),
 );
@@ -136,7 +148,7 @@ export async function allPlaces(): Promise<Array<Place>> {
   return placesOf({
     probes: index,
     continents: continentNamed,
-    countries: countryNamed,
+    countries: countryNames(countryNamed),
     states: stateNamed,
     datacentres: centres,
   });

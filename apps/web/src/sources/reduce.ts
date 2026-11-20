@@ -248,11 +248,28 @@ export function continentNames(body: unknown): Names {
   return names.parse(body);
 }
 
-// Country names by code ("TH": "Thailand"), from countries-list.
-export function countryNames(body: unknown): Names {
-  const countries = z.record(z.string(), z.object({ name: z.string() })).parse(body);
-  return Object.fromEntries(Object.entries(countries).map(([code, each]) => [code, each.name]));
+// Each country by code, with its name and continent ("TH": Thailand, in "AS"), from
+// countries-list: the coverage table groups countries by continent with it.
+export const countryList = z.record(
+  z.string(),
+  z.object({ name: z.string(), continent: z.string() }),
+);
+export type CountryList = z.infer<typeof countryList>;
+export function countryListOf(body: unknown): CountryList {
+  const countries = z
+    .record(z.string(), z.object({ name: z.string(), continent: z.string() }))
+    .parse(body);
+  return Object.fromEntries(
+    Object.entries(countries).map(([code, each]) => [
+      code,
+      { name: each.name, continent: each.continent },
+    ]),
+  );
 }
+
+// Just the names, by code ("TH": "Thailand").
+export const countryNames = (list: CountryList): Names =>
+  Object.fromEntries(Object.entries(list).map(([code, each]) => [code, each.name]));
 
 // US state names by Globalping's code for them ("US-VA": "Virginia"), from OurAirports'
 // regions.csv (Globalping names states only in the US).

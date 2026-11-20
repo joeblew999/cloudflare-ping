@@ -15,7 +15,7 @@ import {
   airportPlaces,
   cloudflareDatacentres,
   continentNames,
-  countryNames,
+  countryListOf,
   probeIndexOf,
   usStateNames,
 } from "../src/sources/reduce";
@@ -98,7 +98,12 @@ named(
 named(
   "countries",
   cities.map((each) => each.country),
-  countryNames(await (await fetch(COUNTRIES_URL)).json()),
+  Object.fromEntries(
+    Object.entries(countryListOf(await (await fetch(COUNTRIES_URL)).json())).map(([code, each]) => [
+      code,
+      each.name,
+    ]),
+  ),
 );
 named(
   "US states",

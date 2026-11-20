@@ -14,8 +14,7 @@ export default function CoveragePage({
   country,
   unmatched,
   totals,
-  regions,
-  probeCountries,
+  continents,
   datacentres,
   cities,
 }: Props) {
@@ -111,37 +110,36 @@ export default function CoveragePage({
         <code>cloudflare-ping coverage{country ? ` --country ${country.code}` : ""}</code>
       </p>
 
-      <div className="form-row">
-        <section>
-          <h2>{country ? "Data centres" : "Data centres, by region"}</h2>
-          <div className="table-scroll">
-            <table>
-              <tbody>
-                {country
-                  ? datacentres.map((each) => (
+      {country ? (
+        <div className="form-row">
+          <section>
+            <h2>Data centres</h2>
+            {datacentres.length === 0 ? (
+              <p>None in {country.name}: visitors there are served from another country&apos;s.</p>
+            ) : (
+              <div className="table-scroll">
+                <table>
+                  <tbody>
+                    {datacentres.map((each) => (
                       <tr key={each.code}>
                         <td>{each.code}</td>
                         <td>{each.name}</td>
                       </tr>
-                    ))
-                  : regions.map((each) => (
-                      <tr key={each.region}>
-                        <td>{each.region}</td>
-                        <td>{each.datacentres}</td>
-                      </tr>
                     ))}
-              </tbody>
-            </table>
-          </div>
-          {country && datacentres.length === 0 ? <p>None in {country.name}.</p> : null}
-        </section>
-        <section>
-          <h2>{country ? "Probes, by city" : "Probes, by country"}</h2>
-          <div className="table-scroll">
-            <table>
-              <tbody>
-                {country
-                  ? byCity.slice(0, shown).map((each) => (
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+          <section>
+            <h2>Probes, by city</h2>
+            {byCity.length === 0 ? (
+              <p>None in {country.name}: it can only be tested from a neighbour.</p>
+            ) : (
+              <div className="table-scroll">
+                <table>
+                  <tbody>
+                    {byCity.slice(0, shown).map((each) => (
                       <tr key={`${each.state ?? ""}|${each.city}`}>
                         <td>
                           {each.city}
@@ -149,28 +147,64 @@ export default function CoveragePage({
                         </td>
                         <td>{count(each.probes)}</td>
                       </tr>
-                    ))
-                  : probeCountries.slice(0, shown).map((each) => (
-                      <tr key={each.country}>
-                        <td>
-                          <Link href={routeUrl("/coverage", { query: { country: each.country } })}>
-                            {each.country}
-                          </Link>
-                        </td>
-                        <td>{count(each.probes)}</td>
-                      </tr>
                     ))}
-              </tbody>
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {byCity.length > shown ? <p>And {byCity.length - shown} more cities.</p> : null}
+          </section>
+        </div>
+      ) : (
+        <section>
+          <h2>Every country</h2>
+          <p>
+            {totals.bothCountries} countries have both data centres and probes.{" "}
+            {totals.noProbeCountries} have data centres but no probe, so they can only be tested
+            from a neighbour; {totals.noDatacentreCountries} have probes but no data centre, so
+            their visitors are served from another country&apos;s.
+          </p>
+          <div className="table-scroll">
+            <table className="countries">
+              <thead>
+                <tr>
+                  <th>Country</th>
+                  <th>Data centres</th>
+                  <th>Probes</th>
+                </tr>
+              </thead>
+              {continents.map((continent) => (
+                <tbody key={continent.code}>
+                  <tr className="continent">
+                    <th scope="rowgroup">{continent.name}</th>
+                    <th>{count(continent.datacentres)}</th>
+                    <th>{count(continent.probes)}</th>
+                  </tr>
+                  {continent.countries.map((each) => (
+                    <tr key={each.code}>
+                      <td>
+                        <Link href={routeUrl("/coverage", { query: { country: each.code } })}>
+                          {each.name}
+                        </Link>
+                      </td>
+                      <td>
+                        {each.datacentres === 0 ? (
+                          <span className="gap">none</span>
+                        ) : (
+                          count(each.datacentres)
+                        )}
+                      </td>
+                      <td>
+                        {each.probes === 0 ? <span className="gap">none</span> : count(each.probes)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              ))}
             </table>
           </div>
-          {(country ? byCity : probeCountries).length > shown ? (
-            <p>
-              And {(country ? byCity : probeCountries).length - shown} more{" "}
-              {country ? "cities" : "countries"}.
-            </p>
-          ) : null}
         </section>
-      </div>
+      )}
 
       {totals.unplaced.length > 0 ? (
         <p>Not on the map yet, since their place isn&apos;t known: {totals.unplaced.join(", ")}.</p>

@@ -32,7 +32,9 @@ const probeList = [
     },
   },
 ];
-let named: Record<string, { name: string }> = { TH: { name: "Thailand" } };
+let named: Record<string, { name: string; continent: string }> = {
+  TH: { name: "Thailand", continent: "AS" },
+};
 const csv = () =>
   [
     '"id","iata_code","latitude_deg","longitude_deg","iso_country"',
@@ -61,7 +63,7 @@ describe("the lists", () => {
     store.clear();
     calls.length = 0;
     codes = ["BKK"];
-    named = { TH: { name: "Thailand" } };
+    named = { TH: { name: "Thailand", continent: "AS" } };
     // Everything read and kept once.
     await noticed({ places: [], colos: [] });
     await airports(codes);
@@ -99,10 +101,16 @@ describe("the lists", () => {
   });
 
   it("the names are only read again for a code they don't name", async () => {
-    expect(await countries(["TH"])).toEqual({ TH: "Thailand" });
+    expect(await countries(["TH"])).toEqual({ TH: { name: "Thailand", continent: "AS" } });
     expect(calls).toEqual([]);
-    named = { TH: { name: "Thailand" }, VN: { name: "Vietnam" } };
-    expect(await countries(["TH", "VN"])).toEqual({ TH: "Thailand", VN: "Vietnam" });
+    named = {
+      TH: { name: "Thailand", continent: "AS" },
+      VN: { name: "Vietnam", continent: "AS" },
+    };
+    expect(await countries(["TH", "VN"])).toEqual({
+      TH: { name: "Thailand", continent: "AS" },
+      VN: { name: "Vietnam", continent: "AS" },
+    });
     expect(calls).toEqual([COUNTRIES_URL]);
   });
 });
