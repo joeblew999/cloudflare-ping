@@ -187,8 +187,8 @@ The docs are their own package, and the app's package doesn't depend on VitePres
 VitePress's CSS through `packages/theme`). Void's guide would have them in the app's package, with
 `inference.appType: "void"` saying it's a Void app, but Void 1.11.0, deploying to Cloudflare, never
 reads that setting (only its own platform's deploy does): it takes a package that lists VitePress
-for a static VitePress site and refuses to deploy it while it has `routes/` and `pages/`. Worth
-reporting to Void.
+for a static VitePress site and refuses to deploy it while it has `routes/` and `pages/`. Reported
+to Void: [void#885](https://github.com/voidzero-dev/void/issues/885).
 
 ## Building and deploying
 

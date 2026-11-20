@@ -5,7 +5,7 @@
 # 1.11.0's `void deploy --platform cloudflare` refuses a package that lists a static site
 # generator and has routes/ or pages/, even with `inference.appType: "void"` set as its guide
 # says (guide/app-types.md, "Adding a backend to a static site"; only its platform deploy reads
-# that setting). Worth reporting to Void.
+# that setting). Reported: https://github.com/voidzero-dev/void/issues/885.
 packages:
   - docs
   - packages/*
