@@ -126,12 +126,11 @@ run".) Each re-read is compared with what's cached, and the sources do the compa
   Cloudflare's 304 is checked at the build.
 - The tag is kept beside each cached list.
   - **304:** the cache is still right. Nothing is downloaded, parsed or cleared.
-  - **200:** it changed. The new list replaces the cache, what changed is logged (probes added
-    or gone, by country; data centres added, renamed or gone), and only then is the coverage
-    page cleared.
+  - **200:** it changed. The new list replaces the cache, and only then is the coverage page
+    cleared.
 - A re-check costs almost nothing, so "by time" becomes asking every few minutes, not reading
   every hour.
-- The log of changes says, over time, how often each list changes, without a single test.
+- It's only about caching: what changed isn't logged or kept (the user, 2026-11-20).
 
 ### Testing the refresh rules
 
@@ -140,7 +139,7 @@ Each rule is a test (`vp test`). Void's KV is swapped for an in-memory map, as V
 
 - **Cached:** two reads, one fetch.
 - **Re-checks:** past the interval, the next read asks with the cached tag. A 304 keeps the
-  cache and clears nothing; a 200 replaces it, logs what changed, and clears the page.
+  cache and clears nothing; a 200 replaces it and clears the page.
 - **A test sees a new place:** a test result with a city the cache doesn't have re-reads the
   probe list.
 - **The chain:** a result in an unknown data centre code re-reads Cloudflare's list, then the
