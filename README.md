@@ -198,6 +198,13 @@ All from the root, which is the app: `vp check` formats, lints and type-checks e
 both first); the first time from a new machine, with `CLOUDFLARE_WORKERS_SUBDOMAIN=gedw99`. Void's
 other commands (`void db …`, `void secret …`) run there too.
 
+After a deploy, `vp run mcp:check` (`scripts/mcp-check.ts`) checks `/mcp` as an agent sees it, with
+the official MCP SDK's client. It signs in once, through your browser, then keeps a refresh token
+in `~/.config/cloudflare-ping/mcp-check.json`. It checks the tools against the commands list, then
+asks each tool that only reads the same question as the API and the CLI, and the three answers must
+be identical. `limits` is compared only between answers from the same Cloudflare data centre, since
+each one's address has its own allowance. It never calls the tools that spend tests.
+
 Locally: `vp dev` runs the app (`vp dev --port 5199` for another port), with the docs at `/docs/`
 once built. `vp preview` runs the production build, which needs `BETTER_AUTH_SECRET` (Void:
 `guide/auth.md`): put one in `.env` (ignored by git; any long random value, such as

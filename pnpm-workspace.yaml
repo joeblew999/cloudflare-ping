@@ -18,6 +18,8 @@ catalog:
   # uses on Workers (its default, Ajv, compiles code at runtime, which Workers forbid).
   "@cfworker/json-schema": 4.1.6
   "@modelcontextprotocol/server": 2.4.0
+  # The same SDK's client, for `vp run mcp:check` (scripts/mcp-check.ts): an agent's view of /mcp.
+  "@modelcontextprotocol/client": 2.4.0
   "@types/node": 26.6.6
   # Signing an MCP client in through Void's auth (plan 2026-11-20-01, step 3): Better Auth's own
   # MCP plugin, the OAuth provider it's built on, and Client ID Metadata Documents, at the Better

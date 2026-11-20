@@ -70,6 +70,9 @@ export default defineConfig({
       // The lists' real-system check: the real sources, through the app's own reducing code;
       // `-- --site <url>` checks that site's /api/coverage and /api/places too.
       "coverage:check": { command: "vpx scripts/coverage-check.ts", cache: false },
+      // The MCP server as an agent sees it (scripts/mcp-check.ts): signed in once in the browser,
+      // then each read-only tool against the API and the CLI. Never a tool that spends tests.
+      "mcp:check": { command: "vpx scripts/mcp-check.ts", cache: false },
       // The world outline (public/world.svg), from Natural Earth: run once, coasts don't move.
       world: { command: "vpx scripts/world-outline.ts", cache: false },
       // Places to test from (`GET /api/places`): what the forms' place picker offers.
