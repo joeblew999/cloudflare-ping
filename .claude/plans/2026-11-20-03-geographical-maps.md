@@ -61,12 +61,12 @@ reading big lists at runtime is fine. There's no dev-time step and no generated 
 source is fetched by the Worker and reduced to what the map needs. The result is kept in Void's
 caching layers:
 
-| Source                                               | Reduced to                                                     | Kept in                          |
-| ---------------------------------------------------- | -------------------------------------------------------------- | -------------------------------- |
-| Globalping's probe list (2.3 MB, 267 KB compressed)  | ~1,100 cities: country, city, coordinates, probes              | KV (`void/kv`), an hour          |
-| Cloudflare's data centre list (177 KB)               | ~345 data centres: code, place, region ("Place - (CODE)" only) | KV, a day                        |
-| OurAirports' `airports.csv` (12.7 MB, public domain) | the ~345 codes' coordinates and two-letter country             | KV, a week (airports don't move) |
-| Our map runs                                         | the data centres reached                                       | D1 (`sightings`), as now         |
+| Source                                               | Reduced to                                                     | Kept in                                             |
+| ---------------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------- |
+| Globalping's probe list (2.3 MB, 267 KB compressed)  | ~1,100 cities: country, city, coordinates, probes              | KV (`void/kv`), an hour                             |
+| Cloudflare's data centre list (177 KB)               | ~345 data centres: code, place, region ("Place - (CODE)" only) | KV, a day                                           |
+| OurAirports' `airports.csv` (12.7 MB, public domain) | the ~345 codes' coordinates and two-letter country             | KV, until a new code needs it (airports don't move) |
+| Our map runs                                         | the data centres reached                                       | D1 (`sightings`), as now                            |
 
 - **KV, the data layer, serves everyone,** signed in or not, since Void's page cache skips any
   request with a cookie.
@@ -162,7 +162,7 @@ So the reading, the checking and the fixes live in one place.
 
 0. **The two lists lifted out of `src/map.ts`, cached in KV** (above). Proof: the map works as before (a
    local map by country and by city), and its tests pass.
-1. **Placing data centres at runtime.** OurAirports read and reduced, cached a week, plus the
+1. **Placing data centres at runtime.** OurAirports read and reduced, kept until a new code needs it, plus the
    five in code. Proof: 345 placed, BKK at Bangkok, TXL at Berlin; a second read comes from the
    cache.
 2. **`coverage`, everywhere but the page.**
