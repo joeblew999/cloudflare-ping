@@ -13,46 +13,11 @@ export type WorldPoint = {
   title: string;
 };
 
-// The part of the world the points are in, with room around them, kept at the world's 2:1 and
-// inside it: from the points' own coordinates, so a map of one country shows that country.
-function around(points: Array<WorldPoint>) {
-  const lons = points.map((point) => point.lon);
-  const lats = points.map((point) => point.lat);
-  const [west, east] = [Math.min(...lons), Math.max(...lons)];
-  const [south, north] = [Math.min(...lats), Math.max(...lats)];
-  const pad = Math.max(3, (east - west) * 0.15, (north - south) * 0.15);
-  let width = Math.min(360, Math.max(east - west + pad * 2, 16));
-  let height = Math.min(180, Math.max(north - south + pad * 2, 8));
-  if (width < height * 2) {
-    width = Math.min(360, height * 2);
-  }
-  height = width / 2;
-  const x = Math.min(Math.max((west + east) / 2 - width / 2, -180), 180 - width);
-  const y = Math.min(Math.max(-(south + north) / 2 - height / 2, -90), 90 - height);
-  return { x, y, width, height };
-}
-
-export function WorldMap({
-  points,
-  label,
-  zoom = false,
-}: {
-  points: Array<WorldPoint>;
-  label: string;
-  // Show only the part of the world the points are in.
-  zoom?: boolean;
-}) {
-  const view =
-    zoom && points.length > 0 ? around(points) : { x: -180, y: -90, width: 360, height: 180 };
-  // Dots keep their size on the page however far it zooms in.
-  const scale = view.width / 360;
+// Always the whole world: the outline is drawn for it (Natural Earth's least detailed), and
+// zoomed in its coasts turn blocky and its dots get lost.
+export function WorldMap({ points, label }: { points: Array<WorldPoint>; label: string }) {
   return (
-    <svg
-      className="world"
-      viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
-      role="img"
-      aria-label={label}
-    >
+    <svg className="world" viewBox="-180 -90 360 180" role="img" aria-label={label}>
       <use href="/world.svg#land" className="land" x="-180" y="-90" width="360" height="180" />
       {points.map((point) => (
         <circle
@@ -60,7 +25,7 @@ export function WorldMap({
           className={point.className}
           cx={point.lon}
           cy={-point.lat}
-          r={point.r * scale}
+          r={point.r}
         >
           <title>{point.title}</title>
         </circle>
