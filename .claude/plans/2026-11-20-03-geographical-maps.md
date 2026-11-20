@@ -83,9 +83,17 @@ caching layers:
 
 ### When each cache is refreshed
 
-- **Other people's data: by time**, since they can't tell us.
-  - Probe cities expire in an hour: Globalping has no "list changed" notice.
-  - Data centres expire in a day: Cloudflare doesn't announce new ones on its status page.
+- **Globalping's probe list: by what our tests see, then by time** (the user, 2026-11-20:
+  "when it runs, if you get a different answer, that tells you the cache has been
+  invalidated").
+  - Every test answers with each probe's place. A probe in a place the cached list doesn't
+    have, or "no probe there" for a place it does, means the list has changed, so it's read
+    again at once. Map runs and runs everywhere correct it where the app is used, for free.
+  - Places no test touches give no signal, so the cached list also expires in an hour.
+  - A probe landing in a different data centre than the map said is a change to our map, not
+    to Globalping's list. Acting on that is "runs feed the map", held in the main plan.
+- **Cloudflare's data centre list: by time**, since it can't tell us.
+  - It expires in a day: Cloudflare doesn't announce new data centres on its status page.
 - **The airport places: by the data.** A code in Cloudflare's list that the cached airport
   places don't cover means a new data centre: the airport file is read again at once. The week
   is only a backstop.
