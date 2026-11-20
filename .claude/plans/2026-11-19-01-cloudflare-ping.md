@@ -415,38 +415,8 @@ again: nothing after it is built on a guess.
 The pages for the map and the runs (reading the same API), `--json` for void-fbtee's deploy check,
 and a cron that re-maps. Each gets its own step, written here once 8 has passed.
 
-Later too (the user, 2026-11-20): two world maps, named by the user.
-
-- **The geographical coverage map**: where we can reach.
-  - Cloudflare's data centres (its status page's list, live) as dots, placed by a small file of
-    their coordinates. A repo task makes that file from the OurAirports dataset, since the codes
-    are airport codes; five are placed by hand: TXL Berlin, KIV Chișinău, FRU Bishkek, QWJ
-    Americana, JXG Jiaxing.
-  - Globalping's probes (its probe list, one free call, live) as dots by city.
-  - Optionally, the data centres our map runs have reached against those not yet.
-  - No tests.
-- **The geographical probe map**: the app at work, in real time. While a run or a map goes,
-  each probe's request is drawn from its city to the data centre it landed in, on the live
-  stream `/run` already publishes to.
-
-Both everywhere, as every command is: written once (`src/commands/`), in the commands list, so
-`help`, the docs, the skill and the MCP tools follow.
-
-- Coverage (`coverage`, open: it spends no tests):
-  - the page `/coverage` draws the map;
-  - `GET /api/coverage` and the MCP tool `coverage` give its data (each data centre with its
-    coordinates and whether a map run has reached it; each probe city with its coordinates and
-    probe count);
-  - the CLI prints a summary (reached and not yet, by region; probes by country), and `--json`
-    gives the whole data.
-- The probe map:
-  - drawn live on the web;
-  - the CLI follows it, printing each probe's line as it lands, as `run` follows its fetches;
-  - the API and the MCP tool give a snapshot so far, since a tool call is one request and one
-    answer.
-
-Build the coverage map first (standalone, free), then the probe map on it. "The map" on its own
-stays step 7's table: which data centre each place reaches.
+Later too (the user, 2026-11-20): the geographical coverage map and the geographical probe map,
+now their own plan: `.claude/plans/2026-11-20-03-geographical-maps.md`.
 
 Later, after 8 (the user, 2026-11-20: "something we should do later"): other users. Each user's
 own allowed targets; their own read-only Cloudflare token (one per user, "Workers Observability
