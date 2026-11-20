@@ -102,8 +102,26 @@ A plain SVG with a public-domain world outline (Natural Earth's land, at a small
 app's own look and in light and dark. No map service, no tiles, no API key, and no request from
 the visitor's browser to anyone but the app.
 
+## Built on what the map already has
+
+Two pieces of `apps/web/src/map.ts` (main plan, step 7) read the same two live lists:
+
+- `placesFor()` fetches Globalping's probe list and groups it by country or city.
+- `refreshDatacentres()` fetches Cloudflare's list and picks out the real data centres (the
+  " - (CODE)" rule).
+
+Each is lifted into its own module, used by both the map and the coverage map:
+
+- Globalping's probe list: read, checked, grouped by city with coordinates and probe count, and
+  cached an hour.
+- Cloudflare's data centre list: read, checked, the real ones only.
+
+So the reading, the checking and the fixes live in one place.
+
 ## Build order, each proved before the next
 
+0. **The two lists lifted out of `src/map.ts`** (above). Proof: the map works as before (a
+   local map by country and by city), and its tests pass.
 1. **The coordinates file and its task.** Proof: about 345 codes placed, the five by hand, BKK
    at Bangkok; a second run makes no diff.
 2. **`coverage`, everywhere but the page.**
