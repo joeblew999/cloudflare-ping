@@ -6,6 +6,12 @@ export default function TracePage({ ray, setUp, logs, error }: Props) {
   return (
     <main className="content vp-doc">
       <h1>Request {ray}</h1>
+      <p className="lead">
+        Cloudflare&apos;s own log of one request, found by its ray ID (its <code>cf-ray</code>):
+        which Worker handled it, in which data centre, for a request from where, how it ended and
+        how long it took. On a run, each fetch has two: the probe&apos;s request to our Worker, and
+        our Worker&apos;s fetch of the target, which ran in the same data centre.
+      </p>
       <p>
         The same from a terminal: <code>cloudflare-ping trace {ray}</code>
       </p>
@@ -13,8 +19,10 @@ export default function TracePage({ ray, setUp, logs, error }: Props) {
         <div className="custom-block warning">
           <p className="custom-block-title">Not set up</p>
           <p>
-            The app needs a Cloudflare API token with &quot;Workers Observability Read&quot;, as its{" "}
-            <code>CLOUDFLARE_OBSERVABILITY_TOKEN</code> secret.
+            Reading Cloudflare&apos;s logs needs a Cloudflare API token that may read them
+            (&quot;Workers Observability Read&quot;), kept as the app&apos;s{" "}
+            <code>CLOUDFLARE_OBSERVABILITY_TOKEN</code> secret. The app has none yet, so this page
+            can&apos;t show the log.
           </p>
         </div>
       ) : null}

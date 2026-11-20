@@ -94,7 +94,7 @@ export default function RunPage({ run, fetches: first }: Props) {
               <th>Cache</th>
               <th>Time</th>
               <th>Status</th>
-              <th>Logs</th>
+              <th>Cloudflare&apos;s log of</th>
             </tr>
           </thead>
           <tbody>
@@ -111,7 +111,9 @@ export default function RunPage({ run, fetches: first }: Props) {
                 <td>
                   {/* A request without a cf-ray (only `vp dev`'s) has no log to link to. */}
                   {row.ray ? (
-                    <Link href={routeUrl("/trace/[ray]", { params: { ray: row.ray } })}>ours</Link>
+                    <Link href={routeUrl("/trace/[ray]", { params: { ray: row.ray } })}>
+                      the probe&apos;s request
+                    </Link>
                   ) : (
                     "-"
                   )}
@@ -119,7 +121,7 @@ export default function RunPage({ run, fetches: first }: Props) {
                     <>
                       {" · "}
                       <Link href={routeUrl("/trace/[ray]", { params: { ray: row.targetRay } })}>
-                        target
+                        our Worker&apos;s fetch
                       </Link>
                     </>
                   ) : null}
