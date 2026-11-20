@@ -168,6 +168,7 @@ export default function CoveragePage({
             <table className="countries">
               <thead>
                 <tr>
+                  <th>Continent</th>
                   <th>Country</th>
                   <th>Data centres</th>
                   <th>Probes</th>
@@ -175,13 +176,13 @@ export default function CoveragePage({
               </thead>
               {continents.map((continent) => (
                 <tbody key={continent.code}>
-                  <tr className="continent">
-                    <th scope="rowgroup">{continent.name}</th>
-                    <th>{count(continent.datacentres)}</th>
-                    <th>{count(continent.probes)}</th>
-                  </tr>
-                  {continent.countries.map((each) => (
+                  {continent.countries.map((each, at) => (
                     <tr key={each.code}>
+                      {at === 0 ? (
+                        <th scope="rowgroup" rowSpan={continent.countries.length + 1}>
+                          {continent.name}
+                        </th>
+                      ) : null}
                       <td>
                         <Link href={routeUrl("/coverage", { query: { country: each.code } })}>
                           {each.name}
@@ -199,6 +200,11 @@ export default function CoveragePage({
                       </td>
                     </tr>
                   ))}
+                  <tr className="total">
+                    <td>All of {continent.name}</td>
+                    <td>{count(continent.datacentres)}</td>
+                    <td>{count(continent.probes)}</td>
+                  </tr>
                 </tbody>
               ))}
             </table>

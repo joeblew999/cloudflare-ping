@@ -53,18 +53,26 @@ export async function coverage(args: Array<string>) {
   console.log(
     `${totals.bothCountries} countries have both data centres and probes; ${totals.noProbeCountries} have data centres but no probe; ${totals.noDatacentreCountries} have probes but no data centre.\n`,
   );
-  // As the page shows it: every country, its data centres and probes, by continent.
-  const row = (name: string, centres: string, probes: string) =>
-    `${name.padEnd(34)} ${centres.padStart(12)} ${probes.padStart(8)}`;
+  // As the page shows it: the continent once, beside its countries, then its total.
+  const row = (continent: string, name: string, centres: string, probes: string) =>
+    `${continent.padEnd(15)} ${name.padEnd(36)} ${centres.padStart(12)} ${probes.padStart(8)}`;
   const shown = (n: number) => (n === 0 ? "none" : count(n));
-  console.log(row("", "Data centres", "Probes"));
+  console.log(row("Continent", "Country", "Data centres", "Probes"));
   for (const continent of continents) {
-    console.log(`\n${row(continent.name, count(continent.datacentres), count(continent.probes))}`);
-    for (const each of continent.countries) {
+    console.log("");
+    continent.countries.forEach((each, at) => {
       console.log(
-        row(`  ${each.name} (${each.code})`, shown(each.datacentres), shown(each.probes)),
+        row(
+          at === 0 ? continent.name : "",
+          `${each.name} (${each.code})`,
+          shown(each.datacentres),
+          shown(each.probes),
+        ),
       );
-    }
+    });
+    console.log(
+      row("", `All of ${continent.name}`, count(continent.datacentres), count(continent.probes)),
+    );
   }
   if (totals.unplaced.length > 0) {
     console.log(`\nNot placed yet (no coordinates): ${totals.unplaced.join(" ")}`);

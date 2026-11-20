@@ -699,17 +699,31 @@ a.card:hover {
   display: table;
   width: 100%;
 }
-.countries td:not(:first-child),
-.countries th:not(:first-child) {
+/* The two number columns: the last two cells of every row. */
+.countries tr > :nth-last-child(-n + 2) {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
-.countries tr.continent th {
-  padding-top: 1rem;
+/* The continent, once, beside its countries. */
+.countries tbody th[scope="rowgroup"] {
+  vertical-align: top;
   background: var(--vp-c-bg-soft);
   color: var(--vp-c-text-1);
   font-weight: 600;
 }
+.countries tr.total td {
+  color: var(--vp-c-text-1);
+  font-weight: 600;
+  background: var(--vp-c-bg-soft);
+}
 .countries .gap {
   color: var(--vp-c-warning-1);
+}
+/* On a phone, all four columns fit: tighter cells, smaller type. */
+@media (max-width: 40rem) {
+  .vp-doc table.countries th,
+  .vp-doc table.countries td {
+    padding: 0.4rem 0.45rem;
+    font-size: 0.8rem;
+  }
 }
