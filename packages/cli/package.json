@@ -21,11 +21,12 @@
   },
   "files": [
     "dist",
+    "skills",
     "README.md"
   ],
   "type": "module",
   "scripts": {
-    "build": "vp pack",
+    "build": "vpx write-skill.ts && vp pack",
     "dev": "vp pack --watch",
     "prepublishOnly": "vp run build"
   },

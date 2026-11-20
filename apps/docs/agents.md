@@ -21,6 +21,22 @@ Then `/mcp`, choose `cloudflare-ping`, and Authenticate.
 Other agents (Cursor, VS Code, Codex, Gemini CLI, opencode) take the same URL in their MCP
 settings. Nothing else is needed: the server tells the agent where to sign in.
 
+## Set a project up
+
+In a project whose agents should use the app, run `npx cloudflare-ping init` in its root (once the
+package is published; until then, `node <this repo>/packages/cli/dist/main.mjs init`, after
+`vp run cli:pack`). As
+`void init` sets agents up for Void, it finds each coding agent by its folder (`.claude`,
+`.cursor`, `.codex`, `.gemini`, `.opencode` and the rest Void knows), then:
+
+- puts the app's skill (`cloudflare-ping`: when to use the app, and how) in each agent's skills
+  folder: linked when the package is installed in the project, copied otherwise;
+- adds a short cloudflare-ping section to `AGENTS.md`, leaving the rest as it is;
+- adds the MCP server to Claude Code's `.mcp.json`, and prints each other agent's way to add it
+  (opencode: `opencode mcp add cloudflare-ping --url …`).
+
+Running it again changes nothing that's already there.
+
 ## Signing in
 
 1. The agent opens the app's sign-in page in your browser, with a notice that an agent is asking.

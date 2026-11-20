@@ -40,8 +40,9 @@ export default defineConfig({
     },
   },
   fmt: {
-    // Written by tools, not by hand: drizzle (migrations), Void (AGENTS.md).
-    ignorePatterns: ["**/db/migrations/**", "**/AGENTS.md"],
+    // Written by tools, not by hand: drizzle (migrations), Void (AGENTS.md), and the CLI's skill
+    // (packages/cli/write-skill.ts, from the commands list).
+    ignorePatterns: ["**/db/migrations/**", "**/AGENTS.md", "packages/cli/skills/**"],
   },
   run: {
     // The repo's tasks, from anywhere in it. The CLI's commands run from source (packages/cli),

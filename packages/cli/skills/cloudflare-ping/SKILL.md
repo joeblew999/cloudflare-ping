@@ -1,0 +1,52 @@
+---
+name: cloudflare-ping
+description: Use cloudflare-ping, our own Globalping run from Cloudflare's data centres, to fetch a site from the Cloudflare data centres Globalping's probes reach, start and read runs, and see how many Globalping tests are left. Use when asked to probe, warm or check a site from Cloudflare's data centres, or about cloudflare-ping's runs.
+---
+
+# cloudflare-ping
+
+cloudflare-ping (https://cloudflare-ping.gedw99.workers.dev) sends one Globalping test from probes in a place (a country such as
+`TH`, a city, a network) to its own Worker. The Worker, in the Cloudflare data centre each probe
+reached, fetches the target from there and records every fetch: a run. Globalping counts tests,
+so starting a run or a test spends them; reading runs, limits and logs spends none.
+
+## How to reach it
+
+- **MCP**, when this agent has the server `cloudflare-ping` (`https://cloudflare-ping.gedw99.workers.dev/mcp`): the tools below.
+  The first time, it signs in through the browser, as an account the app allows.
+- **The CLI** otherwise: `npx cloudflare-ping <command> --json`. The first command that needs
+  it shows a link and a code to approve in the browser; in CI, set `CLOUDFLARE_PING_TOKEN`.
+
+## Working rules
+
+- Check `limits` before starting runs or tests. Without the app's Globalping token, the count
+  is that of a Cloudflare address other customers share, and it can be 0 at any moment.
+- A run in the background (the default) answers once the probes reach the data centres; the
+  fetches come after. Read them a little later with `show <run id>`, or on the run's page.
+- Only targets on the app's allowed list can be fetched; others are refused before any test is
+  spent.
+- Pass a failure on in the app's own words: they say what went wrong (Globalping refusing a
+  test, a probe that didn't reach the Worker).
+- Each step of a run is in the Worker's logs under the run's ID; `trace <ray id>` reads one
+  request's Cloudflare log.
+
+## Commands and tools
+
+| Command | MCP tool | What it does | On the web |
+| --- | --- | --- | --- |
+| `cloudflare-ping test [--from TH] [--path /where] [--probes 1] [--host <target>]` | `test` | One Globalping test, to our probe or straight to a target | `/` |
+| `cloudflare-ping run [--target <url>] [--from TH] [--probes 2] [--repeat 1] [--inline]` | `run` | Start a run and follow its fetches as they're recorded | `/runs` |
+| `cloudflare-ping runs` | `runs` | The newest runs | `/runs` |
+| `cloudflare-ping show <run id>` | `show` | One run and its fetches | `/runs/<id>` |
+| `cloudflare-ping limits` | `limits` | How many Globalping tests the app has left this hour | `/runs` |
+| `cloudflare-ping trace <ray id> [--minutes 60]` | `trace` | A request's Cloudflare log, by its cf-ray | `/trace/<ray>` |
+| `cloudflare-ping init` | - | Set this project's coding agents up to use the app: its skill, its MCP server | `/docs/agents` |
+| `cloudflare-ping sign-in` | - | Sign this machine in | `/login` |
+| `cloudflare-ping sign-out` | - | Sign this machine out | `Sign out` |
+| `cloudflare-ping whoami` | - | Who this machine is signed in as | `the top bar` |
+
+Every command takes --site <url> (another copy of the app; the deployed one unless given), and those that print results take --json.
+
+Signing in: the first command that needs it shows a link and a code to approve in the browser. In CI, set CLOUDFLARE_PING_TOKEN.
+
+The docs: https://cloudflare-ping.gedw99.workers.dev/docs/ ("From an AI agent": https://cloudflare-ping.gedw99.workers.dev/docs/agents).

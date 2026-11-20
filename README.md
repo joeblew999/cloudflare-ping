@@ -28,6 +28,7 @@ and its MCP tool, which runs the same code too. So the web and the terminal do t
 | One run and its fetches    | `/runs/<id>`           | `vp run ping:show -- <id>`       | `cloudflare-ping show <id>`      | `GET /api/runs/<id>`                  | `show`   |
 | Globalping tests left      | `/runs`                | `vp run ping:limits`             | `cloudflare-ping limits`         | `GET /api/limits`                     | `limits` |
 | A request's Cloudflare log | `/trace/<ray id>`      | `vp run probe:trace -- <ray id>` | `cloudflare-ping trace <ray id>` | `GET /api/trace/<ray id>` (signed in) | `trace`  |
+| Set a project's agents up  | `/docs/agents`         | -                                | `cloudflare-ping init`           | none (files in that folder)           | -        |
 
 `cloudflare-ping help` lists every option. Every command also takes `--json` (the API's answer as
 it is) and `--site <url>` (another copy of the app, such as `vp dev`'s); `vp run cli -- <command>`

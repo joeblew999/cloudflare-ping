@@ -8,8 +8,8 @@ export type CommandInfo = {
   page: string;
   // The API route it calls.
   api: string;
-  // The `vp run` task that runs it from source, in the repo.
-  task: string;
+  // The `vp run` task that runs it from source, in the repo, if it has one.
+  task: string | null;
   // Its MCP tool (apps/web/src/mcp.ts), if it has one: signing in and out is the MCP client's own.
   tool: string | null;
 };
@@ -68,6 +68,15 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     api: "GET /api/trace/<ray>",
     task: "probe:trace",
     tool: "trace",
+  },
+  {
+    name: "init",
+    use: "init",
+    about: "Set this project's coding agents up to use the app: its skill, its MCP server",
+    page: "/docs/agents",
+    api: "none: files in this folder",
+    task: null,
+    tool: null,
   },
   {
     name: "sign-in",

@@ -12,6 +12,7 @@
 //   /consent.
 import { cimd } from "@better-auth/cimd";
 import { mcp } from "@better-auth/mcp";
+import { APIError } from "better-auth/api";
 import { bearer } from "better-auth/plugins/bearer";
 import { deviceAuthorization } from "better-auth/plugins/device-authorization";
 import { jwt } from "better-auth/plugins/jwt";
@@ -62,8 +63,16 @@ export default defineAuth(({ defaults, env }) => {
     databaseHooks: {
       user: {
         create: {
-          before: (user) =>
-            Promise.resolve(allowed.has(user.email.toLowerCase()) ? { data: user } : false),
+          // Refused in words the page shows (Better Auth's own would be "Failed to create user").
+          // Not a 403, which Better Auth answers with a generic reply instead.
+          before: async (user) => {
+            if (!allowed.has(user.email.toLowerCase())) {
+              throw new APIError("BAD_REQUEST", {
+                message: "Only the addresses this app allows can make an account.",
+              });
+            }
+            return { data: user };
+          },
         },
       },
     },

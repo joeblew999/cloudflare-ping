@@ -17,7 +17,7 @@ same list: both read it from `packages/shared/src/commands.ts`.
   <p>{{ command.about }}.</p>
   <div class="language-sh"><pre><code>cloudflare-ping {{ command.use }}</code></pre></div>
   <ul>
-    <li>In the repo: <code>vp run {{ command.task }}</code></li>
+    <li v-if="command.task">In the repo: <code>vp run {{ command.task }}</code></li>
     <li>On the web: <code>{{ command.page }}</code></li>
     <li>API: <code>{{ command.api }}</code></li>
     <li v-if="command.tool">MCP tool: <code>{{ command.tool }}</code>, at <code>/mcp</code></li>
