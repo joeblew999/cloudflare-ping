@@ -116,6 +116,24 @@ caching layers:
   (`coverage:v1:probe-cities`), bumped when what's kept changes shape. What's read back is
   checked against its schema (zod), and anything that doesn't fit is fetched again.
 
+### Testing the refresh rules
+
+Each rule is a test (`vp test`). Void's KV is swapped for an in-memory map, as Void's own
+`guide/testing.md` does, and `fetch` and the clock are replaced:
+
+- **Cached:** two reads, one fetch.
+- **Expires:** past the hour (Globalping) or the day (Cloudflare), the next read fetches.
+- **A test sees a new place:** a test result with a city the cache doesn't have re-reads the
+  probe list.
+- **The chain:** a result in an unknown data centre code re-reads Cloudflare's list, then the
+  airport file, in that order.
+- **Airports have no time limit:** a year later, no new code, no re-read.
+- **Our code changed:** an old-shaped value under an old key is ignored and fetched fresh.
+- **A map run finishes:** `revalidate` is called for `/coverage` and `/api/coverage`.
+
+Then under `vp dev`: the logs show one fetch, then cache hits, then a re-read after an unknown
+code.
+
 ## Placing data centres
 
 - Cloudflare's codes are airport codes, so a data centre's place is its airport's coordinates,
@@ -160,7 +178,8 @@ So the reading, the checking and the fixes live in one place.
 
 ## Build order, each proved before the next
 
-0. **The two lists lifted out of `src/map.ts`, cached in KV** (above). Proof: the map works as before (a
+0. **The two lists lifted out of `src/map.ts`, cached in KV, with the refresh rules and their
+   tests** (above). Proof: the map works as before (a
    local map by country and by city), and its tests pass.
 1. **Placing data centres at runtime.** OurAirports read and reduced, kept until a new code needs it, plus the
    five in code. Proof: 345 placed, BKK at Bangkok, TXL at Berlin; a second read comes from the
