@@ -1,17 +1,38 @@
 {
-  "name": "cloudflare-ping-repo",
+  "name": "cloudflare-ping-app",
   "private": true,
   "type": "module",
   "scripts": {
-    "ready": "vp check && vp test run && vp run -r build",
-    "dev": "vp run web#dev",
-    "prepare": "vp config"
+    "ready": "vp check && vp test run && vp run build",
+    "dev": "vp dev",
+    "prepare": "vp config",
+    "postinstall": "void prepare"
+  },
+  "dependencies": {
+    "@better-auth/cimd": "catalog:",
+    "@better-auth/mcp": "catalog:",
+    "@better-auth/oauth-provider": "catalog:",
+    "@cfworker/json-schema": "catalog:",
+    "@cloudflare-ping/shared": "workspace:*",
+    "@cloudflare-ping/theme": "workspace:*",
+    "@modelcontextprotocol/server": "catalog:",
+    "better-auth": "catalog:",
+    "hono": "^4.11.9",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@void/react": "catalog:",
     "cf": "1.0.0-rc.0",
+    "docs": "workspace:*",
+    "oxc-transform-react": ">=0.152.0 <0.157.0",
     "typescript": "catalog:",
     "vite": "catalog:",
-    "vite-plus": "catalog:"
+    "vite-plus": "catalog:",
+    "void": "catalog:"
   }
 }

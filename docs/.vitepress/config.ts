@@ -10,10 +10,10 @@ export default defineConfig({
   title: "cloudflare-ping",
   description: "Probes from around the world, run from Cloudflare's data centres",
   base: "/docs/",
-  outDir: "../web/public/docs",
+  outDir: "../public/docs",
   cleanUrls: true,
   lastUpdated: true,
-  // The app's icon (apps/web/public/favicon.svg): the docs are served by the app, on its site.
+  // The app's icon (public/favicon.svg): the docs are served by the app, on its site.
   head: [["link", { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }]],
   themeConfig: {
     nav: [

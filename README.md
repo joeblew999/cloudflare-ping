@@ -5,15 +5,15 @@ a data centre, and our Worker there does the fetching. Built with [Void](https:/
 and why, step by step: `.claude/plans/2026-11-19-01-cloudflare-ping.md`.
 
 Deployed at https://cloudflare-ping.gedw99.workers.dev (Cloudflare account `7384af54e33b8a54ff240371ea368440`),
-with its docs at https://cloudflare-ping.gedw99.workers.dev/docs/ (`apps/docs`, VitePress).
+with its docs at https://cloudflare-ping.gedw99.workers.dev/docs/ (`docs/`, VitePress).
 
 ## What you can do, on the web and from a terminal
 
-<!-- The docs show this section as it is (apps/docs/guide.md); write it here only. -->
+<!-- The docs show this section as it is (docs/guide.md); write it here only. -->
 <!-- #region use -->
 
-Each thing the app does is written once (`apps/web/src/commands/`) and reached three ways: its
-API route (`apps/web/routes/api/`), which the command calls with Void's typed fetch
+Each thing the app does is written once (`src/commands/`) and reached three ways: its
+API route (`routes/api/`), which the command calls with Void's typed fetch
 (`void/client`); its web page, whose loader and action (Void's page actions) run the same code;
 and its MCP tool, which runs the same code too. So the web and the terminal do the same things, the same way.
 
@@ -68,40 +68,42 @@ works on any machine with Node 22 or later.
 
 The CLI says which version of the API it was built for (`packages/shared/src/version.ts`), and the
 app refuses a CLI built for another one, telling it to update
-(`apps/web/middleware/02.api-version.ts`). Raise `API_VERSION` when an API route changes in a way
+(`middleware/02.api-version.ts`). Raise `API_VERSION` when an API route changes in a way
 an older CLI can't use, and publish a new version of the package with it.
 
 <!-- #endregion package -->
 
 ## The repo
 
-A Vite+ monorepo, as Vite+'s `vite:monorepo` template and its monorepo guide lay one out:
+The Void app is the repo's root, with its docs (VitePress) beside it in `docs/`, as Void's guide
+sets a static site beside an app (`guide/app-types.md`, "Adding a backend to a static site"). The
+packages they share code with are in `packages/`, one Vite+ workspace:
 
 | Where             | Package                   | What                                                                                           |
 | ----------------- | ------------------------- | ---------------------------------------------------------------------------------------------- |
-| `apps/web`        | `web`                     | The Void app: its pages, API routes, database, auth, and the Worker (`void.config.ts`)         |
-| `apps/docs`       | `docs`                    | The docs (VitePress 2), built into `apps/web/public/docs` for the app to serve at `/docs/`     |
+| the root          | `cloudflare-ping-app`     | The Void app: its pages, API routes, database, auth, and the Worker (`void.config.ts`)         |
+| `docs`            | `docs`                    | The docs (VitePress 2), built into `public/docs` for the app to serve at `/docs/`              |
 | `packages/cli`    | `cloudflare-ping`         | The CLI, and the npm package it becomes (`vp pack`)                                            |
 | `packages/shared` | `@cloudflare-ping/shared` | What those three share: where the app is, what `/run` may fetch, the API version, the commands |
 | `packages/theme`  | `@cloudflare-ping/theme`  | One look for the app and the docs: VitePress's own theme CSS, in Void's colours                |
 
 - `pnpm-workspace.yaml`: the packages, and one version of each shared dependency for all of them
   (the catalog: Vite+, Void, VitePress, …; `"catalog:"` in each package.json).
-- The root `vite.config.ts`: lint and format for the whole repo, the pre-commit check (`staged`,
-  set up by `vp config` on install), the repo's tasks (`vp run <task>` from anywhere in it), and
-  `defaultPackage`, so plain `vp dev` and `vp build` at the root mean the app and `vp pack` the CLI.
-  With options (`vp dev --port 5199`), name the app: `vp -C apps/web dev --port 5199`.
-- Each package's own `vite.config.ts`: what it builds. The app's `build` task runs after its
-  workspace dependencies' (the docs: `dependsOn`), so the docs are always built first.
+- The root `vite.config.ts`: the app's (Void and its React pages), lint and format for the whole
+  repo, the pre-commit check (`staged`, set up by `vp config` on install), the repo's tasks
+  (`vp run <task>` from anywhere in it), and `defaultPackage`, so `vp dev`, `vp build` and
+  `vp preview` mean the app and `vp pack` the CLI. `packages/cli` keeps its own for `vp pack`.
+- The app's `build` task runs after its workspace dependencies' (`dependsOn`): the docs, so they're
+  always built first.
 - The CLI and the docs call the app's API with Void's typed fetch, so their tsconfigs extend the
-  app's generated `apps/web/.void/tsconfig.json` (the app's route types).
+  app's generated `.void/tsconfig.json` (the app's route types).
 - At the root too: `.claude/plans/` (the plan), `evidence/` (each step's raw results, copied from
   the probes' results before they expire), `lint/void-rules.ts` (Void's own lint rules; the
   root config adds ours: no casts, no `any`, no `!`).
 
 ## How the app is built
 
-In `apps/web`:
+At the root:
 
 - `routes/where.ts`: answers which Cloudflare data centre it ran in (`/where`). What the
   probes fetch. `?wait=<ms>` answers after that long and `?size=<bytes>` pads the answer, which
@@ -128,7 +130,7 @@ In `apps/web`:
   and failed pages are `pages/_not-found.tsx` and `pages/_error.tsx`.
 - Coverage (`src/commands/coverage.ts`, `src/sources/`): the geographical coverage map. All of
   Cloudflare's data centres and every probe, by city, on a plain world
-  (`public/world.svg`, from Natural Earth, made by `vp run web#world`, drawn by
+  (`public/world.svg`, from Natural Earth, made by `vp run world`, drawn by
   `src/WorldMap.tsx`). None of our own test results: those are for the probe map. Its three
   lists (the probes, Cloudflare's data centres, OurAirports' coordinates for their codes)
   are read at runtime and kept in Void's KV, re-checked by asking "changed?" with each source's
@@ -167,46 +169,46 @@ In `apps/web`:
 
 ## The docs
 
-`apps/docs` is the docs site (VitePress 2), served by the app at `/docs/`: `vp run docs:dev` to
-write them (VitePress's own server), `vp run docs:build` to build them into
-`apps/web/public/docs` (ignored by git), where `vp dev` and the deployed app serve them. Building
-the app builds them first (its `build` task depends on them), so `void deploy` ships them too: one
-deploy, one site.
+`docs/` is the docs site (VitePress 2), served by the app at `/docs/`: `vp run docs:dev` to write
+them (VitePress's own server), `vp run docs:build` to build them into `public/docs` (ignored by
+git), where `vp dev` and the deployed app serve them. Building the app builds them first (its
+`build` task depends on them), so `void deploy` ships them too: one deploy, one site.
 
 They're written once, from the sources: the guide includes this README's sections (the
 `#region` comments), the command reference is the CLI's own list
-(`packages/shared/src/commands.ts`, read by `apps/docs/cli.data.ts`), and the home page's newest
+(`packages/shared/src/commands.ts`, read by `docs/cli.data.ts`), and the home page's newest
 runs come live from the app's API (`GET /api/runs`, with `void/client`, as the Runs page and
 `cloudflare-ping runs` do). The plan isn't in them, nor on the app's pages: it's how the repo is
 worked on, not how the app is used; "How it works" tells each step's question, answer and evidence
 for readers. The theme is VitePress's, in
-Void's colours (`apps/docs/.vitepress/theme`, with `packages/theme/brand.css`).
+Void's colours (`docs/.vitepress/theme`, with `packages/theme/brand.css`).
 
 The docs are their own package, and the app's package doesn't depend on VitePress (the app takes
-VitePress's CSS through `packages/theme`): Void 1.10.0,
-deploying to Cloudflare, takes a package that depends on VitePress for a static VitePress site and
-refuses to deploy it while it has `routes/` and `pages/`, even with `inference.appType: "void"`
-(only its own platform's path reads that setting): worth reporting to Void.
+VitePress's CSS through `packages/theme`). Void's guide would have them in the app's package, with
+`inference.appType: "void"` saying it's a Void app, but Void 1.11.0, deploying to Cloudflare, never
+reads that setting (only its own platform's deploy does): it takes a package that lists VitePress
+for a static VitePress site and refuses to deploy it while it has `routes/` and `pages/`. Worth
+reporting to Void.
 
 ## Building and deploying
 
-From the root: `vp check` formats, lints and type-checks every package; `vp run -r build` builds
-every package, each after the ones it depends on; `pnpm ready` does both. `vp run deploy` deploys
-the app and its docs (`void deploy --platform cloudflare` in `apps/web`, which builds both first);
-the first time from a new machine, with `CLOUDFLARE_WORKERS_SUBDOMAIN=gedw99`. Void's other
-commands (`void db …`, `void secret …`) run in `apps/web`.
+All from the root, which is the app: `vp check` formats, lints and type-checks every package;
+`vp run build` builds the docs and then the app; `pnpm ready` checks, tests and builds.
+`vp run deploy` deploys the app and its docs (`void deploy --platform cloudflare`, which builds
+both first); the first time from a new machine, with `CLOUDFLARE_WORKERS_SUBDOMAIN=gedw99`. Void's
+other commands (`void db …`, `void secret …`) run there too.
 
-Locally: `vp dev` at the root runs the app, with the docs at `/docs/` once built. `vp preview`
-runs the production build, which needs `BETTER_AUTH_SECRET` (Void: `guide/auth.md`): put one in
-`apps/web/.env` (ignored by git; any long random value, such as
+Locally: `vp dev` runs the app (`vp dev --port 5199` for another port), with the docs at `/docs/`
+once built. `vp preview` runs the production build, which needs `BETTER_AUTH_SECRET` (Void:
+`guide/auth.md`): put one in `.env` (ignored by git; any long random value, such as
 `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`).
 
-Every Vite+ command and task was run from the root on 2026-11-19, and each did what it says:
-`vp check`, `vp lint`, `vp fmt --check`, `vp hooks status`, `vp run -r build`, `vp build`,
-`vp pack`, `pnpm ready`, `vp dev`, `vp -C apps/web dev --port 5199`, `pnpm dev`, `vp preview`,
-`vp install`, and the tasks `cli`, `probe:test`, `probe:trace`, `ping:run`, `ping:runs`,
-`ping:show`, `ping:whoami`, `ping:sign-out`, `cli:pack`, `cli:try`, `docs:dev`, `docs:build`,
-`docs:preview` and `deploy`.
+With the app at the root, these were run from it on 2026-11-20, and each did what it says:
+`vp check`, `vp lint`, `vp fmt --check`, `vp hooks status`, `vp test`, `vp build`, `vp pack`,
+`pnpm ready`, `vp dev`, `vp dev --port 5199`, `pnpm dev`, `vp preview`, `vp install`, and the
+tasks `build`, `cli`, `ping:runs`, `ping:whoami`, `ping:limits`, `cli:pack`, `cli:try`,
+`docs:dev`, `docs:build`, `docs:preview` and `deploy`. The tasks that spend tests (`probe:test`,
+`ping:run`) and `ping:sign-out` weren't run again; they run the same CLI code as those that were.
 
 If a deploy stops with "did not pass /\_\_void/ready", Void put the previous version back and left
 the new one inactive; this happened once when deploying straight after another deploy. The next

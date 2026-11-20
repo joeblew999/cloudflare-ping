@@ -1,16 +1,18 @@
 {
-  "extends": "./.void/tsconfig.json",
+  "extends": "../.void/tsconfig.json",
   "compilerOptions": {
+    "noEmit": true,
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["void/env", "node"],
+    "types": ["void/env", "node", "vitepress/client"],
     "jsx": "react-jsx",
     "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true
   },
-  "include": ["src", "pages", "routes", "middleware", "crons", "queues", "db", "scripts", "*.ts"]
+  "include": ["*.ts", ".vitepress/**/*.ts"],
+  "exclude": [".vitepress/cache"]
 }

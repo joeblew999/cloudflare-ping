@@ -84,9 +84,9 @@ Each tool is a command (the same list, the same words, the same code as the page
 
 ## How it's built
 
-`/mcp` is a Void route (`apps/web/routes/mcp.ts`) serving the official MCP SDK
+`/mcp` is a Void route (`routes/mcp.ts`) serving the official MCP SDK
 (`@modelcontextprotocol/server`), a fresh server per request. Signing in is Void's own auth with
-Better Auth's MCP plugin (`apps/web/auth.ts`): it is the OAuth server, binds each token to
+Better Auth's MCP plugin (`auth.ts`): it is the OAuth server, binds each token to
 `/mcp`, and lets an agent register itself, by its metadata document's URL or by Dynamic Client
 Registration. The discovery documents are at
 `/.well-known/oauth-protected-resource/mcp` and `/.well-known/oauth-authorization-server/api/auth`.

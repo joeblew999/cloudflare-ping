@@ -1,4 +1,4 @@
-// The agents table on "From an AI agent" (apps/docs/agents.md), read at build time from the table
+// The agents table on "From an AI agent" (docs/agents.md), read at build time from the table
 // `cloudflare-ping init` sets agents up from (packages/shared/src/agents.ts), so the docs say what
 // init does and can't drift from it.
 import { defineLoader } from "vitepress";

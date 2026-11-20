@@ -25,7 +25,7 @@ export default defineConfig({
     link: [{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }],
   },
   // A Void app with a static docs site beside it (Void's guide/app-types.md, "Adding a backend to
-  // a static site"): `void deploy` builds the docs (apps/docs, VitePress) into public/docs first,
+  // a static site"): `void deploy` builds the docs (docs/, VitePress) into public/docs first,
   // then the app, which ships them with its other public files, at /docs/.
   inference: {
     appType: "void",

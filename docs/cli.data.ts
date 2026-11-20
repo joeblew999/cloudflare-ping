@@ -1,4 +1,4 @@
-// The command reference's data (apps/docs/cli.md), read at build time from the same list
+// The command reference's data (docs/cli.md), read at build time from the same list
 // `cloudflare-ping help` prints (packages/shared/src/commands.ts), so the docs and the CLI never differ.
 import { defineLoader } from "vitepress";
 import {

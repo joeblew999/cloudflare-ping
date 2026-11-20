@@ -2,7 +2,7 @@
 // search, run by the Worker for `GET /api/places` (and so the CLI and MCP) and by the picker in
 // the browser, over the same places from that API: the same matching everywhere. Pure: no
 // Worker, no browser, no packages. The places themselves, and every name, come from the lists
-// the app reads (apps/web/src/sources): nothing about them is written here.
+// the app reads (src/sources): nothing about them is written here.
 
 export const PLACE_KINDS = [
   "continent",

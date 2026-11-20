@@ -58,42 +58,6 @@ overrides:
 importers:
 
   .:
-    devDependencies:
-      '@types/node':
-        specifier: 'catalog:'
-        version: 26.6.6
-      cf:
-        specifier: 1.0.0-rc.0
-        version: 1.0.0-rc.0(@types/node@26.6.6)
-      typescript:
-        specifier: 'catalog:'
-        version: 7.0.2
-      vite:
-        specifier: 'catalog:'
-        version: '@voidzero-dev/vite-plus-core@8.3.8000(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1)'
-      vite-plus:
-        specifier: 'catalog:'
-        version: 1.7.0(@types/node@26.6.6)(@vitest/ui@5.1.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1)
-
-  apps/docs:
-    devDependencies:
-      '@cloudflare-ping/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
-      '@cloudflare-ping/theme':
-        specifier: workspace:*
-        version: link:../../packages/theme
-      vitepress:
-        specifier: 'catalog:'
-        version: 2.0.0-alpha.21(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(postcss@8.5.33)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1)
-      void:
-        specifier: 'catalog:'
-        version: 1.11.0(@types/node@26.6.6)(@voidzero-dev/vite-plus-core@8.3.8000(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1))(arktype@2.2.10)(kysely@0.29.9)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(valibot@1.5.0(typescript@7.0.2))(vitest@5.1.0)(vue@3.5.45(typescript@7.0.2))(workerd@1.20261116.1)(zod@4.6.7)
-      vue:
-        specifier: 'catalog:'
-        version: 3.5.45(typescript@7.0.2)
-
-  apps/web:
     dependencies:
       '@better-auth/cimd':
         specifier: 'catalog:'
@@ -109,10 +73,10 @@ importers:
         version: 4.1.6
       '@cloudflare-ping/shared':
         specifier: workspace:*
-        version: link:../../packages/shared
+        version: link:packages/shared
       '@cloudflare-ping/theme':
         specifier: workspace:*
-        version: link:../../packages/theme
+        version: link:packages/theme
       '@modelcontextprotocol/server':
         specifier: 'catalog:'
         version: 2.4.0
@@ -144,9 +108,12 @@ importers:
       '@void/react':
         specifier: 'catalog:'
         version: 1.11.0(@voidzero-dev/vite-plus-core@8.3.8000(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1))(oxc-transform-react@0.156.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(void@1.11.0(@types/node@26.6.6)(@voidzero-dev/vite-plus-core@8.3.8000(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1))(arktype@2.2.10)(kysely@0.29.9)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(valibot@1.5.0(typescript@7.0.2))(vitest@5.1.0)(vue@3.5.45(typescript@7.0.2))(workerd@1.20261116.1)(zod@4.6.7))
+      cf:
+        specifier: 1.0.0-rc.0
+        version: 1.0.0-rc.0(@types/node@26.6.6)
       docs:
         specifier: workspace:*
-        version: link:../docs
+        version: link:docs
       oxc-transform-react:
         specifier: '>=0.152.0 <0.157.0'
         version: 0.156.0
@@ -162,6 +129,24 @@ importers:
       void:
         specifier: 'catalog:'
         version: 1.11.0(@types/node@26.6.6)(@voidzero-dev/vite-plus-core@8.3.8000(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1))(arktype@2.2.10)(kysely@0.29.9)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(valibot@1.5.0(typescript@7.0.2))(vitest@5.1.0)(vue@3.5.45(typescript@7.0.2))(workerd@1.20261116.1)(zod@4.6.7)
+
+  docs:
+    devDependencies:
+      '@cloudflare-ping/shared':
+        specifier: workspace:*
+        version: link:../packages/shared
+      '@cloudflare-ping/theme':
+        specifier: workspace:*
+        version: link:../packages/theme
+      vitepress:
+        specifier: 'catalog:'
+        version: 2.0.0-alpha.21(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(postcss@8.5.33)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1)
+      void:
+        specifier: 'catalog:'
+        version: 1.11.0(@types/node@26.6.6)(@voidzero-dev/vite-plus-core@8.3.8000(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1))(arktype@2.2.10)(kysely@0.29.9)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(valibot@1.5.0(typescript@7.0.2))(vitest@5.1.0)(vue@3.5.45(typescript@7.0.2))(workerd@1.20261116.1)(zod@4.6.7)
+      vue:
+        specifier: 'catalog:'
+        version: 3.5.45(typescript@7.0.2)
 
   packages/cli:
     devDependencies:

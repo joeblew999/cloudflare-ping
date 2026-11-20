@@ -1,5 +1,5 @@
 // The commands, as `cloudflare-ping help` lists them and the docs' command reference shows them
-// (apps/docs/cli.data.ts): one list, so the two never differ. What each one runs is in packages/cli/main.ts.
+// (docs/cli.data.ts): one list, so the two never differ. What each one runs is in packages/cli/main.ts.
 export type CommandInfo = {
   name: string;
   use: string;
@@ -10,10 +10,10 @@ export type CommandInfo = {
   api: string;
   // The `vp run` task that runs it from source, in the repo, if it has one.
   task: string | null;
-  // Its MCP tool (apps/web/src/mcp.ts), if it has one: signing in and out is the MCP client's own.
+  // Its MCP tool (src/mcp.ts), if it has one: signing in and out is the MCP client's own.
   tool: string | null;
   // Whether it needs this machine signed in. The one place that decides: its API route and its
-  // page enforce what this says (apps/web/src/commands/context.ts, `signedInFor`), and the docs
+  // page enforce what this says (src/commands/context.ts, `signedInFor`), and the docs
   // and `cloudflare-ping help` show it from here.
   signedIn: boolean;
 };

@@ -1,7 +1,13 @@
-# A Vite+ monorepo (Vite+'s `vite:monorepo` template, and its guide/monorepo.md): apps/ (the Void
-# app, the docs), packages/ (the CLI, the code they share).
+# The Void app at the root; its docs (VitePress) in docs/; and packages/ (the CLI, the code the
+# app, the docs and the CLI share, and the look they share).
+#
+# The docs are their own package so that the app's package.json doesn't list VitePress: Void
+# 1.11.0's `void deploy --platform cloudflare` refuses a package that lists a static site
+# generator and has routes/ or pages/, even with `inference.appType: "void"` set as its guide
+# says (guide/app-types.md, "Adding a backend to a static site"; only its platform deploy reads
+# that setting). Worth reporting to Void.
 packages:
-  - apps/*
+  - docs
   - packages/*
 
 catalogMode: prefer

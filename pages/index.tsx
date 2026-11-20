@@ -136,7 +136,7 @@ export default function HomePage({ email, here, measurement, answer }: Props) {
             <Link className="button alt big" href="/runs">
               Runs
             </Link>
-            {/* The docs are their own site (VitePress, apps/docs), so a plain link. */}
+            {/* The docs are their own site (VitePress, docs/), so a plain link. */}
             <a className="button alt big" href="/docs/">
               Docs
             </a>

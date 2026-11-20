@@ -2,7 +2,7 @@
 // smallest scale, as published in the `world-atlas` package (TopoJSON), drawn as one SVG
 // symbol in the map's own projection (equirectangular: x is longitude, y is minus latitude, in a
 // -180 -90 360 180 box), so the page places a dot at its coordinates and nothing else. Written to
-// public/world.svg, a static asset: coastlines don't change. Run once: `vp run web#world`.
+// public/world.svg, a static asset: coastlines don't change. Run once: `vp run world`.
 import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

@@ -1,12 +1,27 @@
 {
+  "extends": "./.void/tsconfig.json",
   "compilerOptions": {
-    "noEmit": true,
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["void/env", "node"],
+    "jsx": "react-jsx",
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true
   },
-  "include": ["*.ts", "lint"]
+  "include": [
+    "src",
+    "pages",
+    "routes",
+    "middleware",
+    "crons",
+    "queues",
+    "db",
+    "scripts",
+    "lint",
+    "*.ts"
+  ]
 }

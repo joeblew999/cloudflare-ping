@@ -3,7 +3,7 @@
    styles (`.vp-doc`: headings, text, links, tables, code) and callouts (`.custom-block`).
    From the vitepress package (MIT, Evan You), at the version the catalog pins. VitePress's
    components (its nav bar, buttons, hero, feature cards) are Vue, so the app restyles its own
-   with the same variables (apps/web/pages/style.css). Then Void's colours (brand.css). */
+   with the same variables (pages/style.css). Then Void's colours (brand.css). */
 @import "vitepress/dist/client/theme-default/styles/fonts.css";
 @import "vitepress/dist/client/theme-default/styles/vars.css";
 @import "vitepress/dist/client/theme-default/styles/base.css";

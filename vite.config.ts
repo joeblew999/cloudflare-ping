@@ -1,15 +1,19 @@
-// The repo's Vite+ config (Vite+'s monorepo guide: one root config for lint, format, staged checks
-// and the repo's tasks; each package keeps its own vite.config.ts for what it builds: apps/web
-// Void, packages/cli `vp pack`).
+// The app's and the repo's Vite+ config: the Void app at the root (Void and its React pages; Void's
+// guide keeps voidPlugin() here only, never in the docs' VitePress config), lint, format, staged
+// checks and the repo's tasks. packages/cli keeps its own for `vp pack`.
+import { voidReact } from "@void/react/plugin";
+import { voidPlugin } from "void";
 import { defineConfig } from "vite-plus";
 import { voidRules } from "./lint/void-rules";
 
 export default defineConfig({
-  // `vp dev`, `vp build` and `vp preview` at the root mean the app; `vp pack`, the CLI.
+  plugins: [voidPlugin(), voidReact({ react: { compiler: true } })],
+  // At the workspace root, `vp dev`, `vp build` and `vp preview` mean the app, which is the root;
+  // `vp pack`, the CLI.
   defaultPackage: {
-    dev: "./apps/web",
-    build: "./apps/web",
-    preview: "./apps/web",
+    dev: ".",
+    build: ".",
+    preview: ".",
     pack: "./packages/cli",
   },
   // Each commit's staged files, checked and fixed (`vp config` sets the hook up, on install).
@@ -63,9 +67,11 @@ export default defineConfig({
       "ping:show": { command: "vpx packages/cli/main.ts show", cache: false },
       // Globalping tests left this hour, as the Worker sees it (`GET /api/limits`): the Runs page.
       "ping:limits": { command: "vpx packages/cli/main.ts limits", cache: false },
-      // The coverage map's real-system check: the three real sources, through the app's own
-      // reducing code; `-- --site <url>` checks that site's /api/coverage too.
-      "coverage:check": { command: "vpx apps/web/scripts/coverage-check.ts", cache: false },
+      // The lists' real-system check: the real sources, through the app's own reducing code;
+      // `-- --site <url>` checks that site's /api/coverage and /api/places too.
+      "coverage:check": { command: "vpx scripts/coverage-check.ts", cache: false },
+      // The world outline (public/world.svg), from Natural Earth: run once, coasts don't move.
+      world: { command: "vpx scripts/world-outline.ts", cache: false },
       // Places to test from (`GET /api/places`): what the forms' place picker offers.
       "ping:places": { command: "vpx packages/cli/main.ts places", cache: false },
       // The geographical coverage map's data (`GET /api/coverage`): the Coverage page.
@@ -80,16 +86,24 @@ export default defineConfig({
       // The CLI package: build it (packages/cli/dist/main.mjs), and try the built file.
       "cli:pack": { command: "vp run cloudflare-ping#build", cache: false },
       "cli:try": { command: "node packages/cli/dist/main.mjs", cache: false },
-      // The docs (apps/docs): write them with docs:dev (VitePress's own server); docs:build puts
-      // them in apps/web/public/docs, where the app serves them at /docs/.
+      // The docs (docs/, VitePress): write them with docs:dev (VitePress's own server); docs:build
+      // puts them in public/docs, where the app serves them at /docs/.
       "docs:dev": { command: "vp run docs#dev", cache: false },
       "docs:build": { command: "vp run docs#build", cache: false },
       "docs:preview": { command: "vp run docs#preview", cache: false },
-      // Deploy the app and its docs (apps/web: `void deploy`, which builds both first).
-      deploy: { command: "vp run web#deploy", cache: false },
+      // The app, after the workspace packages it depends on (package.json): the docs, which build
+      // into public/docs for it to ship at /docs/, the order Void's guide gives a static site
+      // beside an app. `void deploy` runs this (void.config.ts).
+      build: {
+        command: "vp build",
+        dependsOn: [{ task: "build", from: ["dependencies", "devDependencies"] }],
+        cache: false,
+      },
+      // Deploy the app and its docs (`void deploy`, which runs build first).
+      deploy: { command: "void deploy --platform cloudflare", cache: false },
       // The deployed Worker's logs as they happen (Void's `void project logs`: a live tail on
       // Cloudflare). For history, Workers Logs (`pnpm exec cf o11y telemetry query`).
-      logs: { command: "vp run web#logs", cache: false },
+      logs: { command: "void project logs", cache: false },
     },
   },
 });

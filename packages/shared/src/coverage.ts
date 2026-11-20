@@ -1,4 +1,4 @@
-// The words for a coverage answer (apps/web/src/commands/coverage.ts), written once: the page, its
+// The words for a coverage answer (src/commands/coverage.ts), written once: the page, its
 // description, the CLI and anything else that says it in a sentence use these, so they can't say
 // it differently.
 

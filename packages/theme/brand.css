@@ -1,5 +1,5 @@
 /* Void's colours (its accent, #6c3bff), over VitePress's default theme: the docs
-   (apps/docs/.vitepress/theme) and the app (apps/web/pages/style.css) both use them. */
+   (docs/.vitepress/theme) and the app (pages/style.css) both use them. */
 :root {
   --vp-c-brand-1: #6c3bff;
   --vp-c-brand-2: #5b2fe6;

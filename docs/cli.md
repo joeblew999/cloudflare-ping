@@ -31,4 +31,4 @@ same list: both read it from `packages/shared/src/commands.ts`.
 
 ## The CLI, as a package
 
-<!--@include: ../../README.md#package-->
+<!--@include: ../README.md#package-->
