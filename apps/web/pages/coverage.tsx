@@ -24,7 +24,7 @@ export default function CoveragePage({
       lat: each.lat,
       lon: each.lon,
       className: "probe",
-      r: country ? 1 : 0.6,
+      r: 0.6,
       title: `${each.city}, ${each.state ? `${each.state}, ` : ""}${each.country}: ${each.probes} ${each.probes === 1 ? "probe" : "probes"}`,
     })),
     ...datacentres.flatMap((each) =>
@@ -36,7 +36,7 @@ export default function CoveragePage({
               lat: each.lat,
               lon: each.lon,
               className: "dc",
-              r: country ? 2 : 1.3,
+              r: 1.3,
               title: `${each.code}: ${each.name}`,
             },
           ],
@@ -96,6 +96,7 @@ export default function CoveragePage({
       <figure className="coverage">
         <WorldMap
           points={points}
+          zoom={country !== null}
           label={`A world map of Cloudflare's ${totals.datacentres} data centres and ${count(totals.probes)} probes`}
         />
         <figcaption>
