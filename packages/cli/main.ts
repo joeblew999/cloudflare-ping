@@ -42,7 +42,9 @@ Usage: cloudflare-ping <command> [options]
 
 Commands (each does what its web page does, through the same API):`);
   for (const each of COMMAND_LIST) {
-    console.log(`  ${each.use}\n      ${each.about}  (on the web: ${each.page})`);
+    console.log(
+      `  ${each.use}\n      ${each.about}${each.signedIn ? ". Needs sign-in" : ""}  (on the web: ${each.page})`,
+    );
   }
   console.log(
     `\n${COMMON_OPTIONS.join("\n")}\nSigning in: ${SIGNING_IN}\nDocs: https://cloudflare-ping.gedw99.workers.dev/docs/`,

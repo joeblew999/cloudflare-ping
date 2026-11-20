@@ -12,7 +12,7 @@ export function skillText() {
   const site = `https://${SITE}`;
   const rows = COMMAND_LIST.map(
     (each) =>
-      `| \`cloudflare-ping ${each.use}\` | ${each.tool ? `\`${each.tool}\`` : "-"} | ${each.about} | \`${each.page}\` |`,
+      `| \`cloudflare-ping ${each.use}\` | ${each.tool ? `\`${each.tool}\`` : "-"} | ${each.about}${each.signedIn ? " (needs sign-in)" : ""} | \`${each.page}\` |`,
   );
   return `---
 name: cloudflare-ping

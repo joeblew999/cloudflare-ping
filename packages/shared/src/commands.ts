@@ -12,6 +12,10 @@ export type CommandInfo = {
   task: string | null;
   // Its MCP tool (apps/web/src/mcp.ts), if it has one: signing in and out is the MCP client's own.
   tool: string | null;
+  // Whether it needs this machine signed in. The one place that decides: its API route and its
+  // page enforce what this says (apps/web/src/commands/context.ts, `signedInFor`), and the docs
+  // and `cloudflare-ping help` show it from here.
+  signedIn: boolean;
 };
 
 export const COMMAND_LIST: Array<CommandInfo> = [
@@ -23,6 +27,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     api: "POST /api/probe",
     task: "probe:test",
     tool: "test",
+    signedIn: true,
   },
   {
     name: "run",
@@ -33,6 +38,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     api: "POST /api/runs",
     task: "ping:run",
     tool: "run",
+    signedIn: true,
   },
   {
     name: "runs",
@@ -42,6 +48,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     api: "GET /api/runs",
     task: "ping:runs",
     tool: "runs",
+    signedIn: false,
   },
   {
     name: "show",
@@ -51,6 +58,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     api: "GET /api/runs/<id>",
     task: "ping:show",
     tool: "show",
+    signedIn: false,
   },
   {
     name: "limits",
@@ -60,6 +68,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     api: "GET /api/limits",
     task: "ping:limits",
     tool: "limits",
+    signedIn: false,
   },
   {
     name: "places",
@@ -70,6 +79,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     api: "GET /api/places",
     task: "ping:places",
     tool: "places",
+    signedIn: false,
   },
   {
     name: "coverage",
@@ -79,6 +89,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     api: "GET /api/coverage",
     task: "ping:coverage",
     tool: "coverage",
+    signedIn: false,
   },
   {
     name: "map",
@@ -88,6 +99,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     api: "GET /api/map",
     task: "ping:map",
     tool: "map",
+    signedIn: false,
   },
   {
     name: "remap",
@@ -97,6 +109,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     api: "POST /api/map",
     task: "ping:remap",
     tool: "remap",
+    signedIn: true,
   },
   {
     name: "trace",
@@ -106,6 +119,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     api: "GET /api/trace/<ray>",
     task: "probe:trace",
     tool: "trace",
+    signedIn: true,
   },
   {
     name: "init",
@@ -115,6 +129,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     api: "none: files in this folder",
     task: null,
     tool: null,
+    signedIn: false,
   },
   {
     name: "sign-in",
@@ -124,6 +139,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     api: "Void's auth",
     task: "ping:sign-in",
     tool: null,
+    signedIn: false,
   },
   {
     name: "sign-out",
@@ -133,6 +149,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     api: "Void's auth",
     task: "ping:sign-out",
     tool: null,
+    signedIn: false,
   },
   {
     name: "whoami",
@@ -142,6 +159,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     api: "Void's auth",
     task: "ping:whoami",
     tool: null,
+    signedIn: false,
   },
 ];
 
@@ -150,7 +168,10 @@ export const COMMON_OPTIONS = [
   "Every command takes --site <url> (another copy of the app; the deployed one unless given), and those that print results take --json.",
 ];
 
-// How signing in works: in the help, the skill, and the docs under "Signing in". Which commands
-// need it isn't listed here: the API routes decide (`requireAuth`), and the CLI asks when one does.
-export const SIGNING_IN =
-  "Commands that spend Globalping tests or read Cloudflare's logs need this machine signed in. The first time, the command prints a link and a code: open the link, approve the code, and it carries on. If the sign-in has expired, it asks again. cloudflare-ping whoami shows whether you're signed in. In CI, set CLOUDFLARE_PING_TOKEN instead.";
+// The commands that need this machine signed in, from their `signedIn`.
+export const SIGNED_IN_COMMANDS = COMMAND_LIST.filter((each) => each.signedIn).map(
+  (each) => each.name,
+);
+
+// How signing in works: in the help, the skill, and the docs under "Signing in".
+export const SIGNING_IN = `These need this machine signed in: ${SIGNED_IN_COMMANDS.join(", ")}. The first time, the command prints a link and a code: open the link, approve the code, and it carries on. If the sign-in has expired, it asks again. cloudflare-ping whoami shows whether you're signed in. In CI, set CLOUDFLARE_PING_TOKEN instead.`;

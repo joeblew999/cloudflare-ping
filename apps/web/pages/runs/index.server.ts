@@ -2,9 +2,9 @@
 // prop (src/commands/limits.ts, as `GET /api/limits`), and the action that starts one
 // (src/commands/run.ts, as `POST /api/runs`), then opens its page.
 import { defineHandler, defineHead, defer, type InferProps } from "void";
-import { getUser, requireAuth } from "void/auth";
+import { getUser } from "void/auth";
 import { routeUrl } from "void/routes";
-import { contextOf } from "../../src/commands/context";
+import { contextOf, signedInFor } from "../../src/commands/context";
 import { limits } from "../../src/commands/limits";
 import { input, run } from "../../src/commands/run";
 import { runs } from "../../src/commands/runs";
@@ -28,7 +28,7 @@ export const loader = defineHandler(async (c) => {
 });
 
 export const action = defineHandler.withValidator({ body: input })(async (c, { body }) => {
-  requireAuth(c);
+  signedInFor("run", c);
   const started = await run(body, contextOf(c));
   return c.redirect(routeUrl("/runs/[id]", { params: { id: started.id } }));
 });

@@ -1,6 +1,6 @@
 import { HTTPException } from "hono/http-exception";
 import { defineHandler, defineHead, type InferProps } from "void";
-import { requireAuth } from "void/auth";
+import { signedInFor } from "../../src/commands/context";
 import { routeUrl } from "void/routes";
 import { bareRay } from "../../src/trace";
 import { trace, traceParams } from "../../src/commands/trace";
@@ -13,7 +13,7 @@ export const loader = defineHandler.withValidator({ params: traceParams })(async
   c,
   { params },
 ) => {
-  requireAuth(c, {
+  signedInFor("trace", c, {
     throwRedirect: routeUrl("/login", {
       query: { next: routeUrl("/trace/[ray]", { params: { ray: params.ray } }) },
     }),

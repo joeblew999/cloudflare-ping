@@ -2,7 +2,8 @@
 // action makes the test and redirects to `/?measurement=<id>`; the loader then waits for its
 // answer as a deferred prop, so the page shows at once, and the answer has its own link.
 import { defineHandler, defineHead, defer, type InferProps } from "void";
-import { getUser, requireAuth } from "void/auth";
+import { getUser } from "void/auth";
+import { signedInFor } from "../src/commands/context";
 import { routeUrl } from "void/routes";
 import { z } from "zod";
 import { input, measurementId, result, start } from "../src/commands/test";
@@ -38,7 +39,7 @@ export const loader = defineHandler.withValidator({
 });
 
 export const action = defineHandler.withValidator({ body: input })(async (c, { body }) => {
-  requireAuth(c);
+  signedInFor("test", c);
   const measurement = await start(body);
   return c.redirect(routeUrl("/", { query: { measurement }, hash: "probe" }));
 });

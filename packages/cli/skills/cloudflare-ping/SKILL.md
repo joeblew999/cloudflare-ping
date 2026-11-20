@@ -34,16 +34,16 @@ so starting a run or a test spends them; reading runs, limits and logs spends no
 
 | Command | MCP tool | What it does | On the web |
 | --- | --- | --- | --- |
-| `cloudflare-ping test [--from TH] [--path /where] [--probes 1] [--host <target>]` | `test` | One Globalping test, to our probe or straight to a target | `/` |
-| `cloudflare-ping run [--target <url>] [--from TH] [--probes 2] [--repeat 1] [--inline] [--everywhere [--at BKK,SIN]]` | `run` | Start a run and follow its fetches as they're recorded; --everywhere: from every data centre the map reached | `/runs` |
+| `cloudflare-ping test [--from TH] [--path /where] [--probes 1] [--host <target>]` | `test` | One Globalping test, to our probe or straight to a target (needs sign-in) | `/` |
+| `cloudflare-ping run [--target <url>] [--from TH] [--probes 2] [--repeat 1] [--inline] [--everywhere [--at BKK,SIN]]` | `run` | Start a run and follow its fetches as they're recorded; --everywhere: from every data centre the map reached (needs sign-in) | `/runs` |
 | `cloudflare-ping runs` | `runs` | The newest runs | `/runs` |
 | `cloudflare-ping show <run id>` | `show` | One run and its fetches | `/runs/<id>` |
 | `cloudflare-ping limits` | `limits` | How many Globalping tests the app has left this hour | `/runs` |
 | `cloudflare-ping places [<what>] [--kind <kind>] [--limit <n>]` | `places` | Find a place to test from: continents, regions, countries, US states, cities and networks with Globalping's probes, and Cloudflare's data centres | `/` |
 | `cloudflare-ping coverage` | `coverage` | All of Cloudflare's data centres and Globalping's probes, on a world map | `/coverage` |
 | `cloudflare-ping map [--id <map id>]` | `map` | Which Cloudflare data centres Globalping's probes reach, and what it cost to find out | `/map` |
-| `cloudflare-ping remap [--level country|city] [--countries TH,SG]` | `remap` | Start a new map: one Globalping test per place, worked through on a queue | `/map` |
-| `cloudflare-ping trace <ray id> [--minutes 60]` | `trace` | A request's Cloudflare log, by its cf-ray | `/trace/<ray>` |
+| `cloudflare-ping remap [--level country|city] [--countries TH,SG]` | `remap` | Start a new map: one Globalping test per place, worked through on a queue (needs sign-in) | `/map` |
+| `cloudflare-ping trace <ray id> [--minutes 60]` | `trace` | A request's Cloudflare log, by its cf-ray (needs sign-in) | `/trace/<ray>` |
 | `cloudflare-ping init` | - | Set this project's coding agents up to use the app: its skill, its MCP server | `/docs/agents` |
 | `cloudflare-ping sign-in` | - | Sign this machine in | `/login` |
 | `cloudflare-ping sign-out` | - | Sign this machine out | `Sign out` |
@@ -51,6 +51,6 @@ so starting a run or a test spends them; reading runs, limits and logs spends no
 
 Every command takes --site <url> (another copy of the app; the deployed one unless given), and those that print results take --json.
 
-Signing in: Commands that spend Globalping tests or read Cloudflare's logs need this machine signed in. The first time, the command prints a link and a code: open the link, approve the code, and it carries on. If the sign-in has expired, it asks again. cloudflare-ping whoami shows whether you're signed in. In CI, set CLOUDFLARE_PING_TOKEN instead.
+Signing in: These need this machine signed in: test, run, remap, trace. The first time, the command prints a link and a code: open the link, approve the code, and it carries on. If the sign-in has expired, it asks again. cloudflare-ping whoami shows whether you're signed in. In CI, set CLOUDFLARE_PING_TOKEN instead.
 
 The docs: https://cloudflare-ping.gedw99.workers.dev/docs/ ("From an AI agent": https://cloudflare-ping.gedw99.workers.dev/docs/agents).
