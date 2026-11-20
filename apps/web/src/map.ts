@@ -81,7 +81,9 @@ export async function refreshDatacentres() {
     read.data.components.filter((each) => each.group).map((each) => [each.id, each.name]),
   );
   const rows = read.data.components.flatMap((each) => {
-    const code = /\(([A-Z]{3})\)\s*$/.exec(each.name)?.[1];
+    // A data centre is named "Place - (CODE)" ("Bangkok, Thailand - (BKK)", "Hong Kong - (HKG)").
+    // Some services carry a code in brackets too ("Data Loss Prevention (DLP)"), without the " - ".
+    const code = /\s-\s\(([A-Z]{3})\)\s*$/.exec(each.name)?.[1];
     return code
       ? [
           {
