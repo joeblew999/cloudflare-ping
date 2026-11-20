@@ -16,13 +16,14 @@ export async function coverage(args: Array<string>) {
     },
   });
   const site = siteOf(values.site);
-  // The same options as the page, the API and the MCP tool. The cities are asked for, as anyone
-  // asks for them: with `--cities`, or because a place's cities may be listed below.
+  // The same options as the page, the API and the MCP tool, sent as typed: with `--json`, exactly
+  // the API's answer to them. The cities are asked for with `--cities`; and, for the text below, when
+  // a place's cities may be listed.
   const found = await asked(() =>
     fetch("/api/coverage", {
       query: {
         ...(values.place ? { place: values.place } : {}),
-        ...(values.cities || values.place ? { cities: "true" } : {}),
+        ...(values.cities || (values.place && !values.json) ? { cities: "true" } : {}),
       },
       baseURL: site,
       headers: headers(),
