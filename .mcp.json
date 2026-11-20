@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "cloudflare-ping": {
+      "type": "http",
+      "url": "https://cloudflare-ping.gedw99.workers.dev/mcp"
+    }
+  }
+}
