@@ -285,6 +285,12 @@ again: nothing after it is built on a guess.
     token as `CLOUDFLARE_PING_TOKEN`.
   - For steps 2 to 5: `probe:test` now goes through the API, so a session without a browser shows
     its link and code, and the user approves it from any browser.
+  - **2026-11-20: the trace token is set** (the user's call: "You make it"). A Cloudflare API
+    token with one permission, Workers Observability Read, on this account only, named
+    "cloudflare-ping: read Workers logs (/trace)" (id 4200e70afcb33268785fded8acc6654b). It was
+    made with `cf user tokens create` and piped straight into `void secret put
+    CLOUDFLARE_OBSERVABILITY_TOKEN`; its value was never printed. To revoke it: the Cloudflare
+    dashboard, My Profile, API Tokens.
   - **Answered 2026-11-20: Globalping's free limit does not hold from the Worker.** Root cause of
     the "0 of 250" the user saw, and of the run that failed on 2026-11-19
     (`evidence/2026-11-20-globalping-shared-address.json`):
