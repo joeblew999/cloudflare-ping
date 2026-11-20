@@ -1,17 +1,26 @@
-// The three lists the coverage map is drawn from (plan 2026-11-20-03), each turned from its
-// source's answer into what the map needs. Pure functions: no Worker, no cache, so the tests
-// and the real-system check (scripts/coverage-check.ts) run them as they are.
-// - Globalping's probe list → its probes, by city.
+// The lists the app reads (plans 2026-11-20-03 and -04), each turned from its source's answer
+// into what the app needs. Pure functions: no Worker, no cache, so the tests and the real-system
+// check (scripts/coverage-check.ts) run them as they are.
+// - Globalping's probe list → its probes, by city, and its networks.
 // - Cloudflare's status page → its data centres ("Place - (CODE)").
 // - OurAirports' airports.csv → each data centre code's coordinates and country (Cloudflare's
 //   codes are airport codes), with five placed by hand.
+// - Names for Globalping's codes, which its list doesn't spell out: continents and countries
+//   from countries-list (the list Globalping itself checks locations against), US states from
+//   OurAirports' regions.csv.
 import { z } from "zod";
 
 export const PROBES_URL = "https://api.globalping.io/v1/probes";
 export const DATACENTRES_URL = "https://www.cloudflarestatus.com/api/v2/components.json";
 export const AIRPORTS_URL = "https://davidmegginson.github.io/ourairports-data/airports.csv";
+export const CONTINENTS_URL = "https://cdn.jsdelivr.net/npm/countries-list@3/continents.min.json";
+export const COUNTRIES_URL = "https://cdn.jsdelivr.net/npm/countries-list@3/countries.min.json";
+export const REGIONS_URL = "https://davidmegginson.github.io/ourairports-data/regions.csv";
 
 export const probeCity = z.object({
+  // Globalping's continent code ("AS") and UN region ("South-eastern Asia").
+  continent: z.string(),
+  region: z.string(),
   country: z.string(),
   // The US state (Globalping gives one only there): Springfield, Missouri, and Springfield,
   // Virginia, are two places.
@@ -26,21 +35,46 @@ export type ProbeCity = z.infer<typeof probeCity>;
 const probeList = z.array(
   z.object({
     location: z.object({
+      continent: z.string(),
+      region: z.string(),
       country: z.string(),
       state: z.string().nullish(),
       city: z.string(),
       latitude: z.number(),
       longitude: z.number(),
+      asn: z.number(),
+      network: z.string(),
     }),
   }),
 );
 
-// Globalping's probes, one entry per city, with how many probes it has. A city is its name in its
-// country (and state), so same-named cities elsewhere stay apart. Globalping's own page counts
-// names alone, so it shows a few cities fewer.
-export function probeCities(body: unknown): Array<ProbeCity> {
+export const probeNetwork = z.object({
+  // Globalping's name for it ("Amazon.com"), and the AS numbers probes in it are on.
+  name: z.string(),
+  asns: z.array(z.number()),
+  probes: z.number(),
+});
+export type ProbeNetwork = z.infer<typeof probeNetwork>;
+
+export const probeIndex = z.object({
+  cities: z.array(probeCity),
+  networks: z.array(probeNetwork),
+});
+export type ProbeIndex = z.infer<typeof probeIndex>;
+
+// Globalping's probes, by city and by network: everything else (continents, regions, countries,
+// states) is counted from the cities.
+export function probeIndexOf(body: unknown): ProbeIndex {
+  const probes = probeList.parse(body);
+  return { cities: probeCities(probes), networks: probeNetworks(probes) };
+}
+
+// One entry per city, with how many probes it has. A city is its name in its country (and state),
+// so same-named cities elsewhere stay apart. Globalping's own page counts names alone, so it shows
+// a few cities fewer.
+function probeCities(probes: z.infer<typeof probeList>): Array<ProbeCity> {
   const byCity = new Map<string, ProbeCity>();
-  for (const { location } of probeList.parse(body)) {
+  for (const { location } of probes) {
     const state = location.state ?? null;
     const key = `${location.country}|${state ?? ""}|${location.city}`;
     const found = byCity.get(key);
@@ -48,6 +82,8 @@ export function probeCities(body: unknown): Array<ProbeCity> {
       found.probes += 1;
     } else {
       byCity.set(key, {
+        continent: location.continent,
+        region: location.region,
         country: location.country,
         state,
         city: location.city,
@@ -63,6 +99,23 @@ export function probeCities(body: unknown): Array<ProbeCity> {
       a.city.localeCompare(b.city) ||
       (a.state ?? "").localeCompare(b.state ?? ""),
   );
+}
+
+function probeNetworks(probes: z.infer<typeof probeList>): Array<ProbeNetwork> {
+  const byName = new Map<string, { asns: Set<number>; probes: number }>();
+  for (const { location } of probes) {
+    const found = byName.get(location.network) ?? { asns: new Set<number>(), probes: 0 };
+    found.asns.add(location.asn);
+    found.probes += 1;
+    byName.set(location.network, found);
+  }
+  return [...byName]
+    .map(([name, each]) => ({
+      name,
+      asns: [...each.asns].sort((a, b) => a - b),
+      probes: each.probes,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export const datacentre = z.object({
@@ -105,13 +158,13 @@ export function cloudflareDatacentres(body: unknown): Array<Datacentre> {
     .sort((a, b) => a.code.localeCompare(b.code));
 }
 
-export const place = z.object({ lat: z.number(), lon: z.number(), country: z.string() });
-export type Place = z.infer<typeof place>;
+export const airportPlace = z.object({ lat: z.number(), lon: z.number(), country: z.string() });
+export type AirportPlace = z.infer<typeof airportPlace>;
 
 // Data centres whose code the airport data doesn't have: an airport that closed or changed its
 // code since Cloudflare named the data centre after it. Placed from Cloudflare's own names
 // (2026-11-20).
-export const HAND_PLACED: Record<string, Place> = {
+export const HAND_PLACED: Record<string, AirportPlace> = {
   // Berlin, Germany: Tegel, closed in 2020.
   TXL: { lat: 52.5597, lon: 13.2877, country: "DE" },
   // Chișinău, Moldova.
@@ -155,7 +208,7 @@ function csvFields(line: string) {
 
 // The coordinates and country of each of these codes, from OurAirports' airports.csv (public
 // domain), the first airport with that code. The hand-placed ones are added, and win.
-export function airportPlaces(csv: string, codes: Iterable<string>): Record<string, Place> {
+export function airportPlaces(csv: string, codes: Iterable<string>): Record<string, AirportPlace> {
   const wanted = new Set(codes);
   const lines = csv.split("\n");
   const head = csvFields(lines[0] ?? "");
@@ -166,7 +219,7 @@ export function airportPlaces(csv: string, codes: Iterable<string>): Record<stri
     column("longitude_deg"),
     column("iso_country"),
   ];
-  const places: Record<string, Place> = {};
+  const places: Record<string, AirportPlace> = {};
   for (const line of lines.slice(1)) {
     const fields = line.length > 0 ? csvFields(line) : [];
     const code = fields[iata];
@@ -184,4 +237,40 @@ export function airportPlaces(csv: string, codes: Iterable<string>): Record<stri
     }
   }
   return places;
+}
+
+// Names, by code.
+export const names = z.record(z.string(), z.string());
+export type Names = z.infer<typeof names>;
+
+// Continent names by Globalping's codes ("AS": "Asia"), from countries-list.
+export function continentNames(body: unknown): Names {
+  return names.parse(body);
+}
+
+// Country names by code ("TH": "Thailand"), from countries-list.
+export function countryNames(body: unknown): Names {
+  const countries = z.record(z.string(), z.object({ name: z.string() })).parse(body);
+  return Object.fromEntries(Object.entries(countries).map(([code, each]) => [code, each.name]));
+}
+
+// US state names by Globalping's code for them ("US-VA": "Virginia"), from OurAirports'
+// regions.csv (Globalping names states only in the US).
+export function usStateNames(csv: string): Names {
+  const lines = csv.split("\n");
+  const head = csvFields(lines[0] ?? "");
+  const [code, name, country] = [
+    head.indexOf("code"),
+    head.indexOf("name"),
+    head.indexOf("iso_country"),
+  ];
+  const found: Names = {};
+  for (const line of lines.slice(1)) {
+    const fields = line.length > 0 ? csvFields(line) : [];
+    const each = fields[code];
+    if (each && fields[country] === "US" && fields[name]) {
+      found[each] = fields[name];
+    }
+  }
+  return found;
 }

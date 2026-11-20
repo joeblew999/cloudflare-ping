@@ -1,16 +1,23 @@
-// The coverage map's real-system check (plan 2026-11-20-03): the three real sources, through the
-// same reducing code the app runs (src/sources/reduce.ts), and whether the answers make sense.
-// With a site (`-- --site <url>`), that site's `/api/coverage` too. On demand, not in `vp test`:
-// it depends on others' servers being up. `vp run coverage:check`.
+// The lists' real-system check (plans 2026-11-20-03 and -04): the real sources, through the same
+// reducing code the app runs (src/sources/reduce.ts), and whether the answers make sense and
+// line up: every code in Globalping's list named by the name lists. With a site
+// (`-- --site <url>`), that site's `/api/coverage` and `/api/places` too. On demand, not in
+// `vp test`: it depends on others' servers being up. `vp run coverage:check`.
 import { parseArgs } from "node:util";
 import {
   AIRPORTS_URL,
+  CONTINENTS_URL,
+  COUNTRIES_URL,
   DATACENTRES_URL,
   HAND_PLACED,
   PROBES_URL,
+  REGIONS_URL,
   airportPlaces,
   cloudflareDatacentres,
-  probeCities,
+  continentNames,
+  countryNames,
+  probeIndexOf,
+  usStateNames,
 } from "../src/sources/reduce";
 
 const { values } = parseArgs({
@@ -24,9 +31,12 @@ const check = (ok: boolean, what: string) => {
 };
 
 const probesResponse = await fetch(PROBES_URL);
-const cities = probeCities(await probesResponse.json());
+const { cities, networks } = probeIndexOf(await probesResponse.json());
 const probes = cities.reduce((sum, each) => sum + each.probes, 0);
-check(probes > 1000, `Globalping: ${probes} probes in ${cities.length} cities`);
+check(
+  probes > 1000,
+  `Globalping: ${probes} probes in ${cities.length} cities, on ${networks.length} networks`,
+);
 const etag = probesResponse.headers.get("etag");
 const again = etag ? await fetch(PROBES_URL, { headers: { "if-none-match": etag } }) : null;
 check(
@@ -71,12 +81,47 @@ check(
   `BKK is at Bangkok (${bkk ? `${bkk.lat}, ${bkk.lon}, ${bkk.country}` : "not placed"})`,
 );
 
+// Every code in Globalping's list has a name.
+const named = (what: string, codes: Array<string>, names: Record<string, string>) => {
+  const all = [...new Set(codes)];
+  const unnamed = all.filter((code) => !(code in names));
+  check(
+    unnamed.length === 0,
+    `${what}: ${all.length - unnamed.length} of ${all.length} named${unnamed.length > 0 ? `; not: ${unnamed.join(" ")}` : ""}`,
+  );
+};
+named(
+  "continents",
+  cities.map((each) => each.continent),
+  continentNames(await (await fetch(CONTINENTS_URL)).json()),
+);
+named(
+  "countries",
+  cities.map((each) => each.country),
+  countryNames(await (await fetch(COUNTRIES_URL)).json()),
+);
+named(
+  "US states",
+  cities.flatMap((each) => (each.state ? [`${each.country}-${each.state}`] : [])),
+  usStateNames(await (await fetch(REGIONS_URL)).text()),
+);
+
 if (values.site) {
   const site = values.site.replace(/\/+$/, "");
   const response = await fetch(`${site}/api/coverage`);
   const body: unknown = await response.json().catch(() => null);
   const totals = typeof body === "object" && body !== null && "totals" in body ? body.totals : null;
   check(response.ok && totals !== null, `${site}/api/coverage answers: ${JSON.stringify(totals)}`);
+  const found = await fetch(`${site}/api/places?q=bang&limit=3`);
+  const answer: unknown = await found.json().catch(() => null);
+  const first =
+    typeof answer === "object" &&
+    answer !== null &&
+    "places" in answer &&
+    Array.isArray(answer.places)
+      ? JSON.stringify(answer.places[0] ?? null)
+      : "nothing";
+  check(found.ok && first.includes("Bangkok+TH"), `${site}/api/places?q=bang: ${first}`);
 }
 
 console.log(failed === 0 ? "\nAll checks pass." : `\n${failed} checks failed.`);

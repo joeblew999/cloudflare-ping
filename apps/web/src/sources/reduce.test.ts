@@ -1,7 +1,15 @@
 // What each source's answer is turned into (src/sources/reduce.ts), from answers shaped like the
 // real ones (2026-11-20).
 import { describe, expect, it } from "vite-plus/test";
-import { HAND_PLACED, airportPlaces, cloudflareDatacentres, probeCities } from "./reduce";
+import {
+  HAND_PLACED,
+  airportPlaces,
+  cloudflareDatacentres,
+  continentNames,
+  countryNames,
+  probeIndexOf,
+  usStateNames,
+} from "./reduce";
 
 describe("cloudflareDatacentres", () => {
   const body = {
@@ -22,33 +30,83 @@ describe("cloudflareDatacentres", () => {
   });
 });
 
-describe("probeCities", () => {
+// A probe as Globalping's list has it, somewhere in Asia unless said.
+const probe = (location: {
+  country: string;
+  city: string;
+  state?: string | null;
+  latitude?: number;
+  asn?: number;
+  network?: string;
+}) => ({
+  location: {
+    continent: "AS",
+    region: "Eastern Asia",
+    latitude: 35,
+    longitude: 139,
+    asn: 2516,
+    network: "KDDI",
+    ...location,
+  },
+});
+
+describe("probeIndexOf", () => {
+  const where = { continent: "AS", region: "Eastern Asia" };
+
   it("counts the probes in each city", () => {
-    const at = (city: string) => ({
-      location: { country: "JP", city, latitude: 35, longitude: 139 },
-    });
-    expect(probeCities([at("Tokyo"), at("Tokyo"), at("Osaka")])).toEqual([
-      { country: "JP", state: null, city: "Osaka", lat: 35, lon: 139, probes: 1 },
-      { country: "JP", state: null, city: "Tokyo", lat: 35, lon: 139, probes: 2 },
+    const at = (city: string) => probe({ country: "JP", city });
+    expect(probeIndexOf([at("Tokyo"), at("Tokyo"), at("Osaka")]).cities).toEqual([
+      { ...where, country: "JP", state: null, city: "Osaka", lat: 35, lon: 139, probes: 1 },
+      { ...where, country: "JP", state: null, city: "Tokyo", lat: 35, lon: 139, probes: 2 },
     ]);
   });
 
   it("keeps same-named cities apart: in other countries, and in other US states", () => {
-    const at = (country: string, state: string | null, latitude: number) => ({
-      location: { country, state, city: "Manchester", latitude, longitude: 0 },
-    });
+    const at = (country: string, state: string | null, latitude: number) =>
+      probe({ country, state, city: "Manchester", latitude });
     expect(
-      probeCities([
+      probeIndexOf([
         at("GB", null, 53.5),
         at("US", "NH", 43),
         at("US", "CT", 41.8),
         at("US", "NH", 43),
-      ]),
+      ]).cities.map(({ country, state, probes }) => ({ country, state, probes })),
     ).toEqual([
-      { country: "GB", state: null, city: "Manchester", lat: 53.5, lon: 0, probes: 1 },
-      { country: "US", state: "CT", city: "Manchester", lat: 41.8, lon: 0, probes: 1 },
-      { country: "US", state: "NH", city: "Manchester", lat: 43, lon: 0, probes: 2 },
+      { country: "GB", state: null, probes: 1 },
+      { country: "US", state: "CT", probes: 1 },
+      { country: "US", state: "NH", probes: 2 },
     ]);
+  });
+
+  it("counts each network's probes, with every AS number they're on", () => {
+    expect(
+      probeIndexOf([
+        probe({ country: "US", city: "Ashburn", asn: 16509, network: "Amazon.com" }),
+        probe({ country: "US", city: "Ashburn", asn: 14618, network: "Amazon.com" }),
+        probe({ country: "JP", city: "Tokyo" }),
+      ]).networks,
+    ).toEqual([
+      { name: "Amazon.com", asns: [14618, 16509], probes: 2 },
+      { name: "KDDI", asns: [2516], probes: 1 },
+    ]);
+  });
+});
+
+describe("the name lists", () => {
+  it("names continents and countries from countries-list", () => {
+    expect(continentNames({ AS: "Asia", EU: "Europe" })).toEqual({ AS: "Asia", EU: "Europe" });
+    expect(
+      countryNames({ TH: { name: "Thailand", continent: "AS" }, HK: { name: "Hong Kong" } }),
+    ).toEqual({ TH: "Thailand", HK: "Hong Kong" });
+  });
+
+  it("names US states from OurAirports' regions, as Globalping writes them, and only the US's", () => {
+    const csv = [
+      '"id","code","local_code","name","continent","iso_country","wikipedia_link","keywords"',
+      '306122,"US-VA","VA","Virginia","NA","US","https://en.wikipedia.org/wiki/Virginia","Virginian airports"',
+      '302811,"AD-02",02,"Canillo Parish","EU","AD","https://en.wikipedia.org/wiki/Canillo",',
+    ].join("\n");
+    expect(usStateNames(csv)).toEqual({ "US-VA": "Virginia" });
   });
 });
 

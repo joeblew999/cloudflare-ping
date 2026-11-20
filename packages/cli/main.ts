@@ -11,6 +11,7 @@ import { coverage } from "./commands/coverage";
 import { init } from "./commands/init";
 import { limits } from "./commands/limits";
 import { map, remap } from "./commands/map";
+import { places } from "./commands/places";
 import { run } from "./commands/run";
 import { runs } from "./commands/runs";
 import { show } from "./commands/show";
@@ -23,6 +24,7 @@ const RUNS: Record<string, (args: Array<string>) => Promise<void>> = {
   runs,
   show,
   limits,
+  places,
   coverage,
   map,
   remap,

@@ -4,7 +4,7 @@
 // what they reached is the geographical probe map, another thing on the same drawing. Open: it
 // spends no tests. `GET /api/coverage`, the Coverage page, the CLI and the MCP tool.
 import { z } from "zod";
-import { datacentres, places, probes } from "../sources/lists";
+import { placedDatacentres, probes } from "../sources/lists";
 
 export const coverageQuery = z.object({
   // With every probe city (about 1,100), not only the totals, regions and data centres.
@@ -12,14 +12,12 @@ export const coverageQuery = z.object({
 });
 
 export async function coverage(options: z.infer<typeof coverageQuery> = {}) {
-  const [{ data: cities }, { data: centres }] = await Promise.all([probes(), datacentres()]);
-  const placed = await places(centres.map((each) => each.code));
-  const all = centres.map((each) => ({
-    ...each,
-    lat: placed[each.code]?.lat ?? null,
-    lon: placed[each.code]?.lon ?? null,
-    country: placed[each.code]?.country ?? null,
-  }));
+  const [
+    {
+      data: { cities },
+    },
+    all,
+  ] = await Promise.all([probes(), placedDatacentres()]);
   const regions = new Map<string, number>();
   for (const each of all) {
     const region = each.region ?? "Elsewhere";

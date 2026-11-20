@@ -11,6 +11,7 @@ import type { CommandContext } from "./commands/context";
 import { coverage, coverageQuery } from "./commands/coverage";
 import { limits } from "./commands/limits";
 import { map, mapQuery, remap, remapInput } from "./commands/map";
+import { places, placesQuery } from "./commands/places";
 import { input as runInput, run } from "./commands/run";
 import { runs, show, showParams } from "./commands/runs";
 import { input as testInput, test } from "./commands/test";
@@ -85,6 +86,16 @@ export function mcpServer(context: CommandContext) {
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
     (query) => answer(() => coverage({ cities: query.cities ?? false })),
+  );
+  server.registerTool(
+    "places",
+    {
+      // At most 50 unless asked: an agent wants the best few, not all ~3,000.
+      description: `${describe("places")} At most 50, best first, unless limit is given.`,
+      inputSchema: placesQuery,
+      annotations: reads,
+    },
+    (query) => answer(() => places({ ...query, limit: query.limit ?? 50 })),
   );
   server.registerTool(
     "map",

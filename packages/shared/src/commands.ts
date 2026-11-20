@@ -62,10 +62,19 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     tool: "limits",
   },
   {
+    name: "places",
+    use: "places [<what>] [--kind <kind>] [--limit <n>]",
+    about:
+      "Find a place to test from: continents, regions, countries, US states, cities and networks with Globalping's probes, and Cloudflare's data centres",
+    page: "/",
+    api: "GET /api/places",
+    task: "ping:places",
+    tool: "places",
+  },
+  {
     name: "coverage",
     use: "coverage",
-    about:
-      "Which of Cloudflare's data centres the app reaches, on a world map, with Globalping's probes",
+    about: "All of Cloudflare's data centres and Globalping's probes, on a world map",
     page: "/coverage",
     api: "GET /api/coverage",
     task: "ping:coverage",

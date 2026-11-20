@@ -1,39 +1,50 @@
-// The three lists, cached (src/sources/cache.ts), with when each is refreshed (plan
-// 2026-11-20-03):
+// The lists the app reads, cached (src/sources/cache.ts), with when each is refreshed (plans
+// 2026-11-20-03 and -04):
 // - Globalping's probe list: asked "changed?" every five minutes, and at once when a test sees a
 //   probe somewhere it doesn't have, or no probe where it does.
 // - Cloudflare's data centres: asked every hour, and at once when a test lands in a code it
 //   doesn't have.
-// - The airport places: only when a data centre code isn't placed yet (airports don't move).
-// Used by the map (src/map.ts), runs everywhere (src/everywhere.ts) and the coverage map
-// (src/commands/coverage.ts).
+// - The airport places, and the names for Globalping's codes: only when a code isn't covered yet
+//   (airports don't move; names don't change).
+// Used by the map (src/map.ts), runs everywhere (src/everywhere.ts), the coverage map
+// (src/commands/coverage.ts) and places (src/commands/places.ts).
+import type { Place } from "@cloudflare-ping/shared/places";
 import { z } from "zod";
-import { cachedSource, type Read } from "./cache";
+import { cachedSource, type Read, type Source } from "./cache";
+import { placesOf, type PlacedDatacentre } from "./places";
 import {
   AIRPORTS_URL,
+  CONTINENTS_URL,
+  COUNTRIES_URL,
   DATACENTRES_URL,
   PROBES_URL,
+  REGIONS_URL,
+  airportPlace,
   airportPlaces,
   cloudflareDatacentres,
+  continentNames,
+  countryNames,
   datacentre,
-  place,
-  probeCities,
-  probeCity,
+  names,
+  probeIndex,
+  probeIndexOf,
+  usStateNames,
+  type AirportPlace,
   type Datacentre,
-  type Place,
-  type ProbeCity,
+  type Names,
+  type ProbeIndex,
 } from "./reduce";
 
 type Options = { force?: boolean; now?: number };
 
-export const probes = (options?: Options): Promise<Read<Array<ProbeCity>>> =>
+export const probes = (options?: Options): Promise<Read<ProbeIndex>> =>
   cachedSource(
     {
-      key: "coverage:v2:probe-cities",
+      key: "lists:v1:probes",
       url: PROBES_URL,
       recheckSeconds: 300,
-      schema: z.array(probeCity),
-      reduce: async (response) => probeCities(await response.json()),
+      schema: probeIndex,
+      reduce: async (response) => probeIndexOf(await response.json()),
     },
     options,
   );
@@ -41,7 +52,7 @@ export const probes = (options?: Options): Promise<Read<Array<ProbeCity>>> =>
 export const datacentres = (options?: Options): Promise<Read<Array<Datacentre>>> =>
   cachedSource(
     {
-      key: "coverage:v1:datacentres",
+      key: "lists:v1:datacentres",
       url: DATACENTRES_URL,
       recheckSeconds: 3600,
       schema: z.array(datacentre),
@@ -50,25 +61,85 @@ export const datacentres = (options?: Options): Promise<Read<Array<Datacentre>>>
     options,
   );
 
-const AIRPORTS_KEY = "coverage:v1:airport-places";
+// A list kept until it doesn't cover a code it's asked for: then read again, once.
+async function covering<T extends Record<string, unknown>>(
+  source: Source<T>,
+  codes: Array<string>,
+  now?: number,
+): Promise<T> {
+  const kept = await cachedSource(source, { now });
+  const missing = codes.some((code) => !(code in kept.data));
+  return missing && !kept.changed
+    ? (await cachedSource(source, { force: true, now })).data
+    : kept.data;
+}
 
-// Each data centre code's place. Read again from the airport file only when a code isn't placed
-// yet: a new data centre.
-export async function places(codes: Array<string>, now?: number): Promise<Record<string, Place>> {
-  const read = (force: boolean) =>
-    cachedSource(
-      {
-        key: AIRPORTS_KEY,
-        url: AIRPORTS_URL,
-        recheckSeconds: null,
-        schema: z.record(z.string(), place),
-        reduce: async (response) => airportPlaces(await response.text(), codes),
-      },
-      { force, now },
-    );
-  const kept = await read(false);
-  const missing = codes.filter((code) => !(code in kept.data));
-  return missing.length > 0 && !kept.changed ? (await read(true)).data : kept.data;
+// Each data centre code's place, from the airport file.
+export const airports = (
+  codes: Array<string>,
+  now?: number,
+): Promise<Record<string, AirportPlace>> =>
+  covering(
+    {
+      key: "lists:v1:airport-places",
+      url: AIRPORTS_URL,
+      recheckSeconds: null,
+      schema: z.record(z.string(), airportPlace),
+      reduce: async (response) => airportPlaces(await response.text(), codes),
+    },
+    codes,
+    now,
+  );
+
+const named =
+  (key: string, url: string, reduce: (response: Response) => Promise<Names>) =>
+  (codes: Array<string>, now?: number) =>
+    covering({ key, url, recheckSeconds: null, schema: names, reduce }, codes, now);
+
+// Names for Globalping's codes: continents ("AS"), countries ("TH"), US states ("US-VA").
+export const continents = named("lists:v1:continent-names", CONTINENTS_URL, async (response) =>
+  continentNames(await response.json()),
+);
+export const countries = named("lists:v1:country-names", COUNTRIES_URL, async (response) =>
+  countryNames(await response.json()),
+);
+export const states = named("lists:v1:state-names", REGIONS_URL, async (response) =>
+  usStateNames(await response.text()),
+);
+
+// Cloudflare's data centres, each with its place.
+export async function placedDatacentres(): Promise<
+  Array<PlacedDatacentre & { lat: number | null; lon: number | null }>
+> {
+  const { data: centres } = await datacentres();
+  const placed = await airports(centres.map((each) => each.code));
+  return centres.map((each) => ({
+    ...each,
+    lat: placed[each.code]?.lat ?? null,
+    lon: placed[each.code]?.lon ?? null,
+    country: placed[each.code]?.country ?? null,
+  }));
+}
+
+const unique = (codes: Array<string>) => [...new Set(codes)];
+
+// Every place: Globalping's, named, and Cloudflare's data centres.
+export async function allPlaces(): Promise<Array<Place>> {
+  const [{ data: index }, centres] = await Promise.all([probes(), placedDatacentres()]);
+  const [continentNamed, countryNamed, stateNamed] = await Promise.all([
+    continents(unique(index.cities.map((each) => each.continent))),
+    countries(unique(index.cities.map((each) => each.country))),
+    states(
+      unique(index.cities.flatMap((each) => (each.state ? [`${each.country}-${each.state}`] : []))),
+    ),
+  ]);
+  return placesOf({
+    probes: index,
+    continents: continentNamed,
+    countries: countryNamed,
+    states: stateNamed,
+    datacentres: centres,
+  });
 }
 
 // What a test saw, for the lists: where its probes were and which data centres they landed in. A
@@ -79,8 +150,8 @@ export async function noticed(seen: {
   colos: Array<string>;
   unanswered?: number;
 }) {
-  const [cities, centres] = await Promise.all([probes(), datacentres()]);
-  const known = new Set(cities.data.map((each) => `${each.country}|${each.city}`));
+  const [index, centres] = await Promise.all([probes(), datacentres()]);
+  const known = new Set(index.data.cities.map((each) => `${each.country}|${each.city}`));
   if (
     (seen.unanswered ?? 0) > 0 ||
     seen.places.some((each) => !known.has(`${each.country}|${each.city}`))
@@ -90,6 +161,6 @@ export async function noticed(seen: {
   const codes = new Set(centres.data.map((each) => each.code));
   if (seen.colos.some((colo) => colo !== "" && !codes.has(colo))) {
     const fresh = await datacentres({ force: true });
-    await places(fresh.data.map((each) => each.code));
+    await airports(fresh.data.map((each) => each.code));
   }
 }

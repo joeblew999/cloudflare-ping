@@ -8,7 +8,7 @@ import { logger } from "void/log";
 import { z } from "zod";
 
 export type Source<T> = {
-  // The KV key, with a version (coverage:v1:…), bumped when `T` changes shape.
+  // The KV key, with a version (lists:v1:…), bumped when `T` changes shape.
   key: string;
   url: string;
   // How long before asking "changed?" again; null: only when `force`d.

@@ -24,7 +24,9 @@ export type MapMessage = { mapId: string; country: string; places: Array<Place> 
 // probe (src/sources/lists.ts: its probe list, cached). `only`: these countries (ISO codes), to
 // try a map small.
 export async function placesFor(level: Level, only?: Array<string>) {
-  const { data: cities } = await probes();
+  const {
+    data: { cities },
+  } = await probes();
   const wanted = only && only.length > 0 ? new Set(only.map((each) => each.toUpperCase())) : null;
   // A city's name in its country: the map asks Globalping by name, so Springfield, Missouri, and
   // Springfield, Virginia, are one place to ask about.

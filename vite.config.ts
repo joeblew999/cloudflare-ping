@@ -66,6 +66,8 @@ export default defineConfig({
       // The coverage map's real-system check: the three real sources, through the app's own
       // reducing code; `-- --site <url>` checks that site's /api/coverage too.
       "coverage:check": { command: "vpx apps/web/scripts/coverage-check.ts", cache: false },
+      // Places to test from (`GET /api/places`): what the forms' place picker offers.
+      "ping:places": { command: "vpx packages/cli/main.ts places", cache: false },
       // The geographical coverage map's data (`GET /api/coverage`): the Coverage page.
       "ping:coverage": { command: "vpx packages/cli/main.ts coverage", cache: false },
       // The map (`GET /api/map`), and a new one (`POST /api/map`): the Map page.

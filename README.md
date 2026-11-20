@@ -27,6 +27,7 @@ and its MCP tool, which runs the same code too. So the web and the terminal do t
 | The newest runs            | `/runs`                | `vp run ping:runs`               | `cloudflare-ping runs`           | `GET /api/runs`                       | `runs`     |
 | One run and its fetches    | `/runs/<id>`           | `vp run ping:show -- <id>`       | `cloudflare-ping show <id>`      | `GET /api/runs/<id>`                  | `show`     |
 | Globalping tests left      | `/runs`                | `vp run ping:limits`             | `cloudflare-ping limits`         | `GET /api/limits`                     | `limits`   |
+| Find a place to test from  | the forms (to come)    | `vp run ping:places -- bang`     | `cloudflare-ping places bang`    | `GET /api/places?q=bang`              | `places`   |
 | Coverage, on a world map   | `/coverage`            | `vp run ping:coverage`           | `cloudflare-ping coverage`       | `GET /api/coverage`                   | `coverage` |
 | The map                    | `/map`                 | `vp run ping:map`                | `cloudflare-ping map`            | `GET /api/map`                        | `map`      |
 | Start a new map            | `/map`, "Start a map"  | `vp run ping:remap`              | `cloudflare-ping remap`          | `POST /api/map` (signed in)           | `remap`    |
