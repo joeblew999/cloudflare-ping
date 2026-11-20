@@ -9,6 +9,7 @@ import { COMMAND_LIST } from "@cloudflare-ping/shared/commands";
 import { API_VERSION } from "@cloudflare-ping/shared/version";
 import type { CommandContext } from "./commands/context";
 import { limits } from "./commands/limits";
+import { map, mapQuery, remap, remapInput } from "./commands/map";
 import { input as runInput, run } from "./commands/run";
 import { runs, show, showParams } from "./commands/runs";
 import { input as testInput, test } from "./commands/test";
@@ -72,6 +73,16 @@ export function mcpServer(context: CommandContext) {
     "limits",
     { description: describe("limits"), annotations: { readOnlyHint: true, openWorldHint: true } },
     () => answer(() => limits(context)),
+  );
+  server.registerTool(
+    "map",
+    { description: describe("map"), inputSchema: mapQuery, annotations: reads },
+    (query) => answer(() => map(query)),
+  );
+  server.registerTool(
+    "remap",
+    { description: describe("remap"), inputSchema: remapInput, annotations: spends },
+    (body) => answer(() => remap(body)),
   );
   server.registerTool(
     "trace",

@@ -53,3 +53,53 @@ export const fetches = sqliteTable(
   },
   (table) => [index("fetches_run_id").on(table.runId)],
 );
+
+// The map (plan step 7): which Cloudflare data centres Globalping's probes reach, and what it
+// costs to find out. A map is one walk of Globalping's probes, by country or by city: one place
+// each, one test each (src/map.ts, queues/map.ts).
+export const maps = sqliteTable("maps", {
+  id: text("id").primaryKey(),
+  // "country": one probe per country; "city": one per city.
+  level: text("level").notNull(),
+  // How many places it asks about, in how many countries (one queued test each).
+  places: integer("places").notNull(),
+  countries: integer("countries").notNull(),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`),
+});
+
+// One probe's answer in a map: where the probe was (as Globalping says), and the data centre its
+// `/where` ran in. No data centre when the probe didn't reach it.
+export const sightings = sqliteTable(
+  "sightings",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    mapId: text("map_id")
+      .notNull()
+      .references(() => maps.id),
+    measurement: text("measurement").notNull(),
+    country: text("country").notNull(),
+    city: text("city").notNull(),
+    asn: integer("asn").notNull(),
+    network: text("network").notNull(),
+    // The probe's result: "finished", or why not.
+    status: text("status").notNull(),
+    colo: text("colo"),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`),
+  },
+  (table) => [index("sightings_map_id").on(table.mapId)],
+);
+
+// Cloudflare's own list of its data centres (www.cloudflarestatus.com), kept beside the map as
+// reference: what a code such as BKK is, and which ones the map hasn't reached.
+export const datacentres = sqliteTable("datacentres", {
+  code: text("code").primaryKey(),
+  name: text("name").notNull(),
+  region: text("region"),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`),
+});

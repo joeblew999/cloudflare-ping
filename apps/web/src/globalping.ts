@@ -126,6 +126,9 @@ export type ProbeOptions = {
   probes: number;
   host?: string;
   token?: string;
+  // Exact places instead of `from` (the map, src/map.ts): each a country, or a city in one, with
+  // how many probes there.
+  places?: Array<{ country: string; city?: string; limit: number }>;
 };
 
 // Makes the test and answers its measurement's ID, without waiting for it.
@@ -144,7 +147,7 @@ export async function makeTest(options: ProbeOptions) {
     body: JSON.stringify({
       type: "http",
       target: host,
-      locations: [{ magic: options.from, limit: options.probes }],
+      locations: options.places ?? [{ magic: options.from, limit: options.probes }],
       measurementOptions: {
         protocol: "HTTPS",
         request: { method: "GET", path, ...(query ? { query } : {}) },

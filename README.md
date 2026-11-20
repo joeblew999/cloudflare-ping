@@ -27,6 +27,8 @@ and its MCP tool, which runs the same code too. So the web and the terminal do t
 | The newest runs            | `/runs`                | `vp run ping:runs`               | `cloudflare-ping runs`           | `GET /api/runs`                       | `runs`   |
 | One run and its fetches    | `/runs/<id>`           | `vp run ping:show -- <id>`       | `cloudflare-ping show <id>`      | `GET /api/runs/<id>`                  | `show`   |
 | Globalping tests left      | `/runs`                | `vp run ping:limits`             | `cloudflare-ping limits`         | `GET /api/limits`                     | `limits` |
+| The map                    | `/map`                 | `vp run ping:map`                | `cloudflare-ping map`            | `GET /api/map`                        | `map`    |
+| Start a new map            | `/map`, "Start a map"  | `vp run ping:remap`              | `cloudflare-ping remap`          | `POST /api/map` (signed in)           | `remap`  |
 | A request's Cloudflare log | `/trace/<ray id>`      | `vp run probe:trace -- <ray id>` | `cloudflare-ping trace <ray id>` | `GET /api/trace/<ray id>` (signed in) | `trace`  |
 | Set a project's agents up  | `/docs/agents`         | -                                | `cloudflare-ping init`           | none (files in that folder)           | -        |
 
@@ -122,6 +124,11 @@ In `apps/web`:
   data (a probe's answer, Globalping's limit) is a deferred prop; links are `Link` with
   `routeUrl()`, and the bar's current page is the one Void marks (`data-void-active`). Missing
   and failed pages are `pages/_not-found.tsx` and `pages/_error.tsx`.
+- The map (`src/map.ts`, `queues/map.ts`): which Cloudflare data centres Globalping's probes
+  reach. `remap` queues one message per country; the queue sends one test from one probe in each
+  place (country or city) to `/where`, waiting out Globalping's hourly limit when it must, and
+  keeps each answer (`sightings`), beside Cloudflare's own list of data centres. `/map` and
+  `cloudflare-ping map` show it.
 - Live: a run's page follows its fetches as `/run` records them, on Void's live stream
   (`src/live.ts`, `routes/live.ts`; a Durable Object Void manages). The CLI's `run` follows
   through the API.

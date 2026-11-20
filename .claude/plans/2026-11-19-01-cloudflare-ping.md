@@ -322,6 +322,44 @@ again: nothing after it is built on a guess.
   rows changed.
 - If too few, or it changes too often: decide then whether it's still worth it.
 
+- **Built 2026-11-20 (the user's call: "Build only"); the full run waits for the Globalping
+  token.**
+  - What a map costs, from Globalping's probe list (5,597 probes in 123 countries that day): one
+    test per place.
+
+    | By               | Tests |
+    | ---------------- | ----- |
+    | country          | 123   |
+    | city             | 1,094 |
+    | city and network | 3,280 |
+    | every probe      | 5,597 |
+
+    That's 250 an hour from a shared address without the token, or 500 an hour with it.
+
+  - Built the Void way:
+    - Tables `maps`, `sightings` and `datacentres` (`void db generate`).
+    - `src/map.ts`. Its queue, `queues/map.ts` from `void gen queue`, takes one message per
+      country (or per 50 of its cities), at most one at a time. Before each test it checks
+      Globalping's limit, and retries after the reset when there isn't enough left, so a long map
+      waits out the hours.
+    - Commands `map` and `remap` (`src/commands/map.ts`), each with its API route (`GET`/`POST
+      /api/map`), the `/map` page (its loader and action), the CLI and the MCP tools.
+    - Cloudflare's own list of data centres (www.cloudflarestatus.com: 348) is refreshed into
+      `datacentres` at each map's start.
+    - Cloudflare Queues have been on the Workers Free plan since 2026-02-04, with 10,000
+      operations a day.
+  - Tried under `vp dev`, from the Mac's own allowance:
+    - By country, for TH, SG and JP, 3 tests: BKK, SIN and NRT.
+    - By city, for JP and SG, 9 tests: KIX (Osaka) from 4 Japanese cities, NRT from 3, and SIN.
+      One probe (Toyohashi) failed at Globalping ("Private IP ranges are not allowed") and is
+      counted as not reaching /where. So the city level separates data centres the country level
+      can't.
+    - Signed out, starting a map is refused (401).
+  - Deployed: the queue `cloudflare-ping-map`, the tables, `/map`. No map has been run there yet.
+  - Next: once the token is set, run it by country (123 tests), then by city (1,094), and answer
+    the proof: how many data centres, for how many tests. A day later, again: how many rows
+    changed.
+
 ### 8. A run across many data centres
 
 - Build: `POST /api/runs` (signed in): the run goes on a Void queue, one message per data centre,

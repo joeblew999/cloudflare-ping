@@ -66,6 +66,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <Link href="/runs" className="nav-link" activeMatch="prefix">
               Runs
             </Link>
+            <Link href="/map" className="nav-link">
+              Map
+            </Link>
             {/* The docs are their own site (VitePress, apps/docs), so a plain link. */}
             <a href="/docs/" className="nav-link">
               Docs

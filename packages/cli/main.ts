@@ -9,6 +9,7 @@ import { signIn, signOut, whoami } from "./commands/account";
 import { COMMAND_LIST, COMMON_OPTIONS } from "@cloudflare-ping/shared/commands";
 import { init } from "./commands/init";
 import { limits } from "./commands/limits";
+import { map, remap } from "./commands/map";
 import { run } from "./commands/run";
 import { runs } from "./commands/runs";
 import { show } from "./commands/show";
@@ -21,6 +22,8 @@ const RUNS: Record<string, (args: Array<string>) => Promise<void>> = {
   runs,
   show,
   limits,
+  map,
+  remap,
   trace,
   init,
   "sign-in": signIn,

@@ -63,6 +63,9 @@ export default defineConfig({
       "ping:show": { command: "vpx packages/cli/main.ts show", cache: false },
       // Globalping tests left this hour, as the Worker sees it (`GET /api/limits`): the Runs page.
       "ping:limits": { command: "vpx packages/cli/main.ts limits", cache: false },
+      // The map (`GET /api/map`), and a new one (`POST /api/map`): the Map page.
+      "ping:map": { command: "vpx packages/cli/main.ts map", cache: false },
+      "ping:remap": { command: "vpx packages/cli/main.ts remap", cache: false },
       // Sign this machine in, out, and who it's signed in as: /login, "Sign out", the top bar.
       "ping:sign-in": { command: "vpx packages/cli/main.ts sign-in", cache: false },
       "ping:sign-out": { command: "vpx packages/cli/main.ts sign-out", cache: false },
