@@ -1,10 +1,22 @@
 # 2026-11-20-03-geographical-maps.md: the geographical coverage map and the geographical probe map
 
-Status: 2026-11-20, written from the user's own words; **held** for usefulness. Its free layers
-repeat what Cloudflare (its network map) and Globalping (its probe map) already show. The only
-layer that is ours, the data centres reached, needs a real map run first, and a "by region"
-table on `/map` and in `cloudflare-ping map` gives most of that for little work. Build this only
-if that table turns out not to be enough. Names are the user's:
+Status: 2026-11-20, written from the user's own words. Briefly held for usefulness, then taken
+back up (the user: "if people go to the website … if they don't know the coverage, they have no
+idea if this thing really works. The whole point is showing them … we've got the whole of
+Cloudflare covered"). The coverage map is the app's proof to visitors that it works.
+
+- **The proof is the reached layer.** The headline is "N of 345 Cloudflare data centres
+  reached, from M places", with those lit and the rest grey. The free layers (all data
+  centres, Globalping's probes) are only the background; on their own they show what exists,
+  not what we reach.
+- **It's honest.** Where no probe reaches a data centre (China's JXG is a likely one), the map
+  says so.
+- **Where visitors land:** the home page carries the coverage map, or one click to it, beside
+  `/coverage`.
+- **It needs a real map run on the deployed site to light up**, which needs the Globalping
+  token. It can be built and checked locally before that, against a local map.
+
+Names are the user's:
 
 - **The geographical coverage map**: where we can reach. Cloudflare's data centres and
   Globalping's probes on a world map, and which data centres our map runs have reached.
