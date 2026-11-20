@@ -39,6 +39,19 @@ Things to know about source 2 (found 2026-11-20):
 - Cloudflare keeps a data centre's code when its airport closes or renames. Berlin's is still
   TXL, years after Tegel closed in 2020.
 
+## What's made at dev time, what's fetched, what's kept
+
+|     | What                             | When                                                                             | How it's held                                                                                                                                                                                                     |
+| --- | -------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Data centre coordinates          | dev time: `vp run datacentres:places`, re-run when Cloudflare opens data centres | a JSON file in `packages/shared` (~10 KB), bundled into the Worker                                                                                                                                                |
+| 2   | The world outline                | dev time: a task run once (coastlines don't change)                              | an SVG path already projected, in `apps/web/public` (tens of KB)                                                                                                                                                  |
+| 3   | Globalping's probe list          | live                                                                             | 2.3 MB of JSON (267 KB compressed, 2026-11-20): too much to read on every view, given about 10 ms of CPU a request on Workers Free. Reduced to its ~1,100 cities (tens of KB) and cached for an hour (Void's ISR) |
+| 4   | Cloudflare's data centre list    | live                                                                             | 177 KB; cached the same way. The map already copies it into `datacentres` at each map's start                                                                                                                     |
+| 5   | Which data centres we've reached | as map runs happen                                                               | the map's `sightings` (D1), as now                                                                                                                                                                                |
+
+Coordinates become positions on the picture in the browser, by the same projection the outline
+was drawn with. Nothing else is held.
+
 ## The data centre coordinates file
 
 - A repo task, `vp run datacentres:places`, reads source 2 and the OurAirports dataset (12 MB,
