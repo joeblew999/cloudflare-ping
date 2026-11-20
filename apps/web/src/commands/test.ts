@@ -7,7 +7,8 @@ import { makeTest, probeFrom, testResult } from "../globalping";
 
 export const input = z.object({
   from: z.string().min(1),
-  path: z.string().startsWith("/"),
+  // A pattern, not `startsWith`, whose JSON Schema form ("format": "starts_with") isn't standard.
+  path: z.string().regex(/^\//, "A path starts with /"),
   probes: z.number().int().min(1).max(10),
   // Our probe unless given; otherwise a target `/run` may fetch (src/globalping.ts).
   host: z.string().optional(),

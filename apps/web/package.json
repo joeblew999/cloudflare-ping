@@ -10,8 +10,10 @@
     "logs": "void project logs"
   },
   "dependencies": {
+    "@cfworker/json-schema": "catalog:",
     "@cloudflare-ping/shared": "workspace:*",
     "@cloudflare-ping/theme": "workspace:*",
+    "@modelcontextprotocol/server": "catalog:",
     "better-auth": "catalog:",
     "hono": "^4.11.9",
     "react": "^19.2.4",

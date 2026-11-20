@@ -10,6 +10,8 @@ export type CommandInfo = {
   api: string;
   // The `vp run` task that runs it from source, in the repo.
   task: string;
+  // Its MCP tool (apps/web/src/mcp.ts), if it has one: signing in and out is the MCP client's own.
+  tool: string | null;
 };
 
 export const COMMAND_LIST: Array<CommandInfo> = [
@@ -20,6 +22,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     page: "/",
     api: "POST /api/probe",
     task: "probe:test",
+    tool: "test",
   },
   {
     name: "run",
@@ -28,6 +31,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     page: "/runs",
     api: "POST /api/runs",
     task: "ping:run",
+    tool: "run",
   },
   {
     name: "runs",
@@ -36,6 +40,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     page: "/runs",
     api: "GET /api/runs",
     task: "ping:runs",
+    tool: "runs",
   },
   {
     name: "show",
@@ -44,6 +49,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     page: "/runs/<id>",
     api: "GET /api/runs/<id>",
     task: "ping:show",
+    tool: "show",
   },
   {
     name: "limits",
@@ -52,6 +58,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     page: "/runs",
     api: "GET /api/limits",
     task: "ping:limits",
+    tool: "limits",
   },
   {
     name: "trace",
@@ -60,6 +67,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     page: "/trace/<ray>",
     api: "GET /api/trace/<ray>",
     task: "probe:trace",
+    tool: "trace",
   },
   {
     name: "sign-in",
@@ -68,6 +76,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     page: "/login",
     api: "Void's auth",
     task: "ping:sign-in",
+    tool: null,
   },
   {
     name: "sign-out",
@@ -76,6 +85,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     page: "Sign out",
     api: "Void's auth",
     task: "ping:sign-out",
+    tool: null,
   },
   {
     name: "whoami",
@@ -84,6 +94,7 @@ export const COMMAND_LIST: Array<CommandInfo> = [
     page: "the top bar",
     api: "Void's auth",
     task: "ping:whoami",
+    tool: null,
   },
 ];
 

@@ -8,6 +8,10 @@ catalogMode: prefer
 
 # One version each, for every package ("catalog:" in their package.json).
 catalog:
+  # MCP (plan 2026-11-20-01): the official server SDK's version 2, and the JSON Schema checker it
+  # uses on Workers (its default, Ajv, compiles code at runtime, which Workers forbid).
+  "@cfworker/json-schema": 4.1.6
+  "@modelcontextprotocol/server": 2.4.0
   "@types/node": 26.6.6
   "@void/react": 1.10.0
   better-auth: 1.7.25
