@@ -38,7 +38,7 @@ export const places = implement(definition, placesAnswer, async (query) => {
 // The places a page's location fields take (PLACE_FIELDS), for its place pickers
 // (src/PlacePicker.tsx): every place of their kinds, as `places` answers with nothing asked. A
 // loader hands them over deferred, so the page shows at once and its boxes are ready when they
-// come (plan 2026-11-21-04). The lists' words when they can't be read, shown in the box instead.
+// come; Coverage, cached whole, gives them with its answer (plan 2026-11-21-04). The lists' words when they can't be read, shown in the box instead.
 export type PickerPlaces = { ok: true; places: Array<Place> } | { ok: false; error: string };
 
 export async function placesFor(...fields: Array<PlaceField>): Promise<PickerPlaces> {

@@ -1,8 +1,8 @@
 // The place picker (plan 2026-11-21-04): the one box for every location field on the website, a
 // test's and a run's From, the coverage place, a map's countries and a run everywhere's data
 // centres. Which places a field takes is written once, in PLACE_FIELDS
-// (packages/shared/src/places.ts). The page's loader hands them over deferred (placesFor,
-// src/commands/places.ts), so the box is ready when the page is. Every keypress runs the same
+// (packages/shared/src/places.ts). The page's loader hands them over (placesFor,
+// src/commands/places.ts), deferred so the page shows at once. Every keypress runs the same
 // search `GET /api/places` runs, and the list shows the places in the CLI's groups. Downshift's
 // combobox (useCombobox, with useMultipleSelection for several, as chips) does the keys, the
 // list and what screen readers are told. It looks like every other field: the site's form styles
@@ -38,8 +38,9 @@ import type { PickerPlaces } from "./commands/places";
 type Props = {
   label: string;
   field: PlaceField;
-  // From the page's loader: placesFor(...the page's fields).
-  places: Deferred<PickerPlaces>;
+  // From the page's loader: placesFor(...the page's fields), deferred, or at once where the page
+  // is cached whole (Coverage: Void doesn't cache a page with deferred props).
+  places: PickerPlaces | Deferred<PickerPlaces>;
   // The picked places' `magic`: one at most, unless the field takes several.
   value: ReadonlyArray<string>;
   onChange: (value: Array<string>) => void;
@@ -64,7 +65,7 @@ export function PlacePicker(props: Props) {
 }
 
 function Ready(props: Props) {
-  const found = use(props.places);
+  const found = "then" in props.places ? use(props.places) : props.places;
   const places = useMemo(
     () => (found.ok ? found.places.filter((each) => props.field.kinds.includes(each.kind)) : []),
     [found, props.field],

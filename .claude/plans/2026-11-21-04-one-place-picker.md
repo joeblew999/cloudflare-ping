@@ -30,7 +30,7 @@ no: the picker is a form field and looks like every other one.
 - The data is the page's: each loader gives `places: defer(() => placesFor(...its fields))`
   (src/commands/places.ts), every place of those kinds, the same search the API runs. The page
   shows at once; the box says "Loading places…" until they come, or the lists' error if they
-  can't be read.
+  can't be read. Coverage gives them at once, with its answer (below).
 - The value is the picked places' `magic`; the box shows the name ("Bangkok, Thailand (TH)").
   Typing after a pick unpicks it. Typed text that isn't picked keeps the form from being sent, with
   the browser's own message ("Pick one from the list"), and says so under the box.
@@ -48,6 +48,11 @@ no: the picker is a form field and looks like every other one.
   closed: focus fell to the page. The list is `tabIndex={-1}`.
 - The search didn't find a place by how it's shown, so Backspace after a pick said "Nothing
   matches". `scoreOf` now matches the start of "name, within" too (a test in places.test.ts).
+- Deployed with Coverage's places deferred, its page stopped being cached (`cache-control:
+  no-store`, no `x-isr-cache`): Void marks a page with deferred props `no-store` when the app has
+  an error page (protocol code: `hasDeferred && boundaries.errors.length`), since a deferred prop
+  could still fail. Coverage now reads its places with its answer, in parallel (both take 0.3 to
+  1.3 s live, from the same lists), and the picker takes places either way.
 
 ## Costs
 
