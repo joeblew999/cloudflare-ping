@@ -225,6 +225,15 @@ Workers Logs shows who used them.
   the three spending routes refuse an empty body with 400 (Void's validator runs first, as before
   the rewrite). A valid one would get 401: `call` asks `requireAuth` before running the command,
   and all three are `signedIn` (read in the code, not sent, so nothing was spent).
+- ~~The spending steps, proven live~~: done 2026-11-21, 2 tests spent with the user's yes. Step 6:
+  `test` over MCP with a sign-in without `tests` was refused before it ran ("Insufficient scope:
+  required tests"), no run made. The main job: `run --from TH --probes 1` from the CLI, a probe in
+  Bangkok reached BKK, its fetch recorded (BKK to BKK, HTTP 200), read back by `show`, its page
+  and `trace`. Steps 5, 8, 9: a sign-in given `tests` (kept in memory only), MCP `run` asked first
+  ("run spends Globalping tests: 250 of 250 are left this hour. Go ahead?"), its answer linked
+  `cloudflare-ping://runs/<id>`, and the same call again gave the same run, no second one.
+  Found: the same call again still asks first, though it spends nothing; and the question quotes
+  the per-address "tests left", which can be another address's count.
 - **Agents added before this change** were registered without the `tests` scope and can't step
   up: remove and add them again once (docs/agents.md says so).
 - **MCP Apps** (the map or coverage page shown in the AI's chat): its own plan.
