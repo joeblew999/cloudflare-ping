@@ -69,3 +69,24 @@ as a host shows it.
 - Claude: `open` signs Chrome in, so the consent page needs no password. Adding the connector in
   claude.ai needs claude.ai: the user, or the extension if it can be allowed there.
 - Nothing here spends tests.
+
+## Done, 2026-11-21
+
+1. `cloudflare-ping open` (6351ba2): deployed, then `open /runs --browser "Google Chrome"` signed
+   the agent's Chrome in. Its top bar showed the account and "Sign out"; no one typed a password.
+2. `vp run mcp:host` (a2d970e): the sign-in is one shared file now (scripts/mcp-sign-in.ts). The
+   first run crashed on an unhandled HTTP/2 idle timeout: an answer left open under Node's fetch.
+   Fixed: only POST goes on (the app's /mcp has no stream to hold open), an answer read to the end
+   or cancelled, and no leftover client at the start.
+3. The coverage map app (6037516): deployed; `mcp:check` passed, the app's page served (528,390
+   characters: React, the Apps SDK, zod, the world's outline). In `mcp:host`, from the live server:
+   - Thailand: the map zoomed in, its 3 data centres and 24 probe cities. Answer: 8,634
+     characters (11,147 before the text answer was made compact).
+   - The world with `cities: false`: 115,760 characters, under Claude's ~150,000; the app drew
+     every city, asked for a continent at a time.
+   - The world as asked by default (cities included): 423,850 characters, nearly three times
+     Claude's limit. The default was the user's decision (plan 2026-11-20-04), so it's theirs.
+
+Still open: the user's decision on that default; and the app seen inside Claude itself, which
+needs claude.ai (Chrome is now signed in to cloudflare-ping, so Claude's sign-in needs no
+password there).
