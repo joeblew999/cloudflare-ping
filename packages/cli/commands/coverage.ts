@@ -1,4 +1,4 @@
-// `cloudflare-ping coverage [--place Europe|TH] [--no-cities]`: the geographical coverage map's
+// `cloudflare-ping coverage [--place Europe|TH]`: the geographical coverage map's
 // data (`GET /api/coverage`), as a terminal can show it: every country, its data centres and
 // probes, by continent; for a continent, just its countries; for a country, its data centres and
 // probe cities. The same options as the page, the API and the MCP tool, sent as typed, with the
@@ -18,16 +18,12 @@ import { asked, commonOptions, headers, printedJson, siteOf } from "../api";
 export async function coverage(args: Array<string>) {
   const { values } = parseArgs({
     args,
-    allowNegative: true,
     options: { ...definition.cli.flags, ...commonOptions },
   });
   const site = siteOf(values.site);
   const found = await asked(() =>
     fetch("/api/coverage", {
-      query: {
-        ...(values.place ? { place: values.place } : {}),
-        ...(values.cities === undefined ? {} : { cities: String(values.cities) }),
-      },
+      query: values.place ? { place: values.place } : {},
       baseURL: site,
       headers: headers(),
     }),

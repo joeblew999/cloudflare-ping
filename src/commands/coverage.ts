@@ -16,6 +16,7 @@ import {
   probes,
 } from "../sources/lists";
 import { continentRule } from "../sources/places";
+import { middleOf } from "../middle";
 import { implement } from "./context";
 import { coverageAnswer, type Narrowed } from "./coverage-answer";
 
@@ -79,13 +80,27 @@ export const coverage = implement(definition, coverageAnswer, async (options) =>
   const countries = codes
     .map((each) => {
       const here = cities.filter((city) => city.country === each);
+      const centres = all.filter((centre) => centre.country === each);
+      // Where it goes on the map: the middle of its probe cities, by their probes; of its data
+      // centres when it has no probes.
+      const middle =
+        middleOf(here.map((city) => ({ lat: city.lat, lon: city.lon, weight: city.probes }))) ??
+        middleOf(
+          centres.flatMap((centre) =>
+            centre.lat === null || centre.lon === null
+              ? []
+              : [{ lat: centre.lat, lon: centre.lon, weight: 1 }],
+          ),
+        );
       return {
         code: each,
         name: known[each]?.name ?? each,
         continent: continentOf(each),
-        datacentres: all.filter((centre) => centre.country === each).length,
+        datacentres: centres.length,
         probes: here.reduce((sum, city) => sum + city.probes, 0),
         cities: here.length,
+        lat: middle?.lat ?? null,
+        lon: middle?.lon ?? null,
       };
     })
     // A to Z, so a visitor finds their country.
@@ -123,7 +138,8 @@ export const coverage = implement(definition, coverageAnswer, async (options) =>
       }))
       .sort((a, b) => a.name.localeCompare(b.name, "en")),
     datacentres: all,
-    // The probe cities, the most probes first; left out only when asked (`cities: false`).
-    cities: options.cities === false ? [] : [...cities].sort((a, b) => b.probes - a.probes),
+    // A country's probe cities, the most probes first. The world and a continent are drawn by
+    // country (each country's place above), so they have none: plan 2026-11-21-03.
+    cities: place?.kind === "country" ? [...cities].sort((a, b) => b.probes - a.probes) : [],
   };
 });

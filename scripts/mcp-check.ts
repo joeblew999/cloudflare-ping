@@ -70,12 +70,28 @@ async function cli(args: Array<string>): Promise<unknown> {
   }
 }
 
+// Hosts cut an answer past a size: Claude's is about 150,000 characters (its docs). Every answer
+// must fit, so the deploy fails before one grows too big, not after (plan 2026-11-21-03).
+const LIMIT = 150_000;
+let biggest = { size: 0, what: "" };
+
 // The tool's answer: its data, or its error in the words the page and the CLI show.
 async function tool(client: Client, command: AnyCommand, options: Options) {
   if (command.spends || !command.mcp) {
     throw new Error(`${command.name} spends tests: the check never calls it`);
   }
   const result = await client.callTool({ name: command.name, arguments: options });
+  const size = JSON.stringify(result).length;
+  const what = `${command.name} ${JSON.stringify(options)}`;
+  if (size > LIMIT) {
+    check(
+      false,
+      `${what}: ${size.toLocaleString("en-US")} characters over MCP, past Claude's limit`,
+    );
+  }
+  if (size > biggest.size) {
+    biggest = { size, what };
+  }
   if (result.isError) {
     const first = Array.isArray(result.content) ? result.content[0] : undefined;
     const text =
@@ -249,7 +265,7 @@ for (const command of commands.filter((each) => "app" in each && each.app)) {
 const questions: Array<[string, Options]> = [
   ["coverage", {}],
   ["coverage", { place: "TH" }],
-  ["coverage", { place: "Europe", cities: false }],
+  ["coverage", { place: "Europe" }],
   ["coverage", { place: "zz" }],
   ["places", { q: "bang" }],
   ["places", { q: "united", kind: "country" }],
@@ -299,6 +315,11 @@ if (id) {
     await ask(client, "trace", { ray: fetched.ray, minutes: Math.min(10_080, Math.max(60, ago)) });
   }
 }
+
+check(
+  biggest.size <= LIMIT,
+  `every answer under Claude's limit of ${LIMIT.toLocaleString("en-US")} characters over MCP: the biggest, ${biggest.what}, ${biggest.size.toLocaleString("en-US")}`,
+);
 
 // Every command that only reads was asked: a new one fails here until it has a question.
 for (const command of commands.filter((each) => !each.spends)) {

@@ -22,6 +22,10 @@ const country = z.object({
   datacentres: z.number(),
   probes: z.number(),
   cities: z.number(),
+  // Where it goes on the map: the middle of its probe cities, by their probes (of its data
+  // centres when it has none). Null when nothing in it is placed.
+  lat: z.number().nullable(),
+  lon: z.number().nullable(),
 });
 
 export const coverageAnswer = z.object({
@@ -60,7 +64,8 @@ export const coverageAnswer = z.object({
       lon: z.number().nullable(),
     }),
   ),
-  // The probe cities, the most probes first; left out only when asked (`cities: false`).
+  // A country's probe cities, the most probes first; none for the world or a continent, which are
+  // drawn by country.
   cities: z.array(probeCity),
 });
 

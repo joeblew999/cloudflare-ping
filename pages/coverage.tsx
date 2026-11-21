@@ -15,7 +15,7 @@ import { asArgument } from "@cloudflare-ping/shared/places";
 import { useState } from "react";
 import { routeUrl } from "void/routes";
 import { PlacePicker } from "../src/PlacePicker";
-import { coveragePoints } from "../src/coverage-points";
+import { coveragePoints, probesKey } from "../src/coverage-points";
 import { WorldMap } from "../src/WorldMap";
 import type { Props } from "./coverage.server";
 
@@ -27,11 +27,18 @@ export default function CoveragePage({
   datacentres,
   cities,
 }: Props) {
-  const points = coveragePoints({ cities, datacentres });
+  const points = coveragePoints({ place, continents, cities, datacentres });
   const router = useRouter();
   // A country gets its own view; a continent, the every-country table of just its countries.
   const country = place?.kind === "country" ? place : null;
   const [wanted, setWanted] = useState(place?.value ?? "");
+  // Another place by a link on this page (the table, "Everywhere"): the box says it, as when the
+  // page is opened at it (React's "adjusting state when a prop changes").
+  const [boxFor, setBoxFor] = useState(place?.value ?? "");
+  if ((place?.value ?? "") !== boxFor) {
+    setBoxFor(place?.value ?? "");
+    setWanted(place?.value ?? "");
+  }
   const shown = 8;
   return (
     <main className="content wide vp-doc">
@@ -73,8 +80,8 @@ export default function CoveragePage({
           label={`A world map of Cloudflare's ${totals.datacentres} data centres and ${count(totals.probes)} probes`}
         />
         <figcaption>
-          <span className="key dc" /> Cloudflare data centres · <span className="key probe" />{" "}
-          Probes
+          <span className="key dc" /> Cloudflare data centres ·{" "}
+          <span className={`key ${probesKey(place).className}`} /> {probesKey(place).words}
         </figcaption>
       </figure>
 

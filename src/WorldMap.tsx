@@ -13,10 +13,37 @@ export type WorldPoint = {
   r: number;
   // Shown on hover: one string (React renders an SVG title from a single piece of text).
   title: string;
+  // The most it may grow to, as a share of the map's width: a dot stays a dot (a hundredth, the
+  // default); a circle whose area means something (a country's probes) may be bigger.
+  most?: number;
 };
 
-// The part of the world the points are in, with room around them, kept at the world's 2:1 and
-// inside it: from the points' own coordinates, so a map of one country shows that country.
+// Where to cut the world for these points: at the widest gap between their longitudes, so a place
+// across the date line (Oceania: Australia and Fiji east of it, Samoa and Tahiti west) is shown in
+// one piece. The points west of the cut move a whole world east (+360°). Null: cut at the date
+// line, as the plain world is.
+export function cutOf(lons: ReadonlyArray<number>): number | null {
+  const sorted = [...new Set(lons)].sort((a, b) => a - b);
+  const [first] = sorted;
+  const last = sorted.at(-1);
+  if (first === undefined || last === undefined) {
+    return null;
+  }
+  let widest = 360 - (last - first);
+  let cut: number | null = null;
+  for (const [index, lon] of sorted.entries()) {
+    const before = sorted[index - 1];
+    if (before !== undefined && lon - before > widest) {
+      widest = lon - before;
+      cut = lon;
+    }
+  }
+  return cut;
+}
+
+// The part of the world the points are in, with room around them, kept at the world's 2:1: from
+// the points' own coordinates, so a map of one country shows that country. Across the cut, the
+// view may reach past 180° (to 540°), where the land is drawn a second time.
 function around(points: Array<WorldPoint>) {
   const lons = points.map((point) => point.lon);
   const lats = points.map((point) => point.lat);
@@ -29,7 +56,7 @@ function around(points: Array<WorldPoint>) {
     width = Math.min(360, height * 2);
   }
   height = width / 2;
-  const x = Math.min(Math.max((west + east) / 2 - width / 2, -180), 180 - width);
+  const x = Math.min(Math.max((west + east) / 2 - width / 2, -180), 540 - width);
   const y = Math.min(Math.max(-(south + north) / 2 - height / 2, -90), 90 - height);
   return { x, y, width, height };
 }
@@ -48,12 +75,18 @@ export function WorldMap({
   // site's own file (public/world.svg) otherwise.
   land?: string;
 }) {
+  // Zoomed in, the world is cut where the points leave the widest gap (`cutOf`).
+  const cut = zoom ? cutOf(points.map((point) => point.lon)) : null;
+  const placed =
+    cut === null
+      ? points
+      : points.map((point) => (point.lon < cut ? { ...point, lon: point.lon + 360 } : point));
   const view =
-    zoom && points.length > 0 ? around(points) : { x: -180, y: -90, width: 360, height: 180 };
+    zoom && placed.length > 0 ? around(placed) : { x: -180, y: -90, width: 360, height: 180 };
   // Dots grow as the map zooms in, gently (by the square root of the zoom: Singapore's, 22 times
-  // in, are about 5 times bigger), and never past about a hundredth of the map's width.
+  // in, are about 5 times bigger), and never past their share of the map's width (`most`).
   const grow = Math.sqrt(view.width / 360);
-  const most = view.width * 0.012;
+
   return (
     <svg
       className="world"
@@ -61,18 +94,35 @@ export function WorldMap({
       role="img"
       aria-label={label}
     >
-      {land ? (
-        <path className="land" d={land} fill="currentColor" />
-      ) : (
-        <use href="/world.svg#land" className="land" x="-180" y="-90" width="360" height="180" />
+      {/* The land, and once more a world east when the view reaches past 180°. */}
+      {(cut === null ? [0] : [0, 360]).map((shift) =>
+        land ? (
+          <path
+            key={shift}
+            className="land"
+            d={land}
+            fill="currentColor"
+            transform={`translate(${shift} 0)`}
+          />
+        ) : (
+          <use
+            key={shift}
+            href="/world.svg#land"
+            className="land"
+            x={-180 + shift}
+            y="-90"
+            width="360"
+            height="180"
+          />
+        ),
       )}
-      {points.map((point) => (
+      {placed.map((point) => (
         <circle
           key={point.key}
           className={point.className}
           cx={point.lon}
           cy={-point.lat}
-          r={Math.min(point.r * grow, most)}
+          r={Math.min(point.r * grow, view.width * (point.most ?? 0.012))}
         >
           <title>{point.title}</title>
         </circle>

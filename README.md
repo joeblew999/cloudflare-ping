@@ -145,9 +145,12 @@ At the root:
   `routeUrl()`, and the bar's current page is the one Void marks (`data-void-active`). Missing
   and failed pages are `pages/_not-found.tsx` and `pages/_error.tsx`.
 - Coverage (`src/commands/coverage.ts`, `src/sources/`): the geographical coverage map. All of
-  Cloudflare's data centres and every probe, by city, on a plain world
-  (`public/world.svg`, from Natural Earth, made by `vp run world`, drawn by
-  `src/WorldMap.tsx`). None of our own test results: those are for the probe map. Its three
+  Cloudflare's data centres and every probe on a plain world (`public/world.svg`, from Natural
+  Earth, made by `vp run world`, drawn by `src/WorldMap.tsx`): the world and a continent by
+  country (a circle per country, its area by its probes, at the middle of its probe cities), a
+  country by city (plan 2026-11-21-03). One option, `place`, and one answer at that level of
+  detail for every surface, small enough for Claude. A zoomed map is cut at the widest gap between
+  its places, so Oceania is one piece. None of our own test results: those are for the probe map. Its three
   lists (the probes, Cloudflare's data centres, OurAirports' coordinates for their codes)
   are read at runtime and kept in Void's KV, re-checked by asking "changed?" with each source's
   ETag, and at once when a test sees a place or data centre they don't have.

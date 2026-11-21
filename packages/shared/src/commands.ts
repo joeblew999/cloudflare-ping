@@ -230,18 +230,14 @@ export const coverageOptions = z.object({
     .describe(
       'One continent or country: a country by its code ("TH"), a continent by its name ("Europe"); blank for everywhere',
     ),
-  // True or false from an agent; "true" or "false" in an address.
-  cities: z
-    .union([z.boolean(), z.stringbool()])
-    .optional()
-    .describe("Every probe city too (true unless false); false for just the totals and the table"),
 });
 
 export const COVERAGE_OPTION_KEYS = Object.keys(coverageOptions.shape);
 
 export const coverage = command({
   name: "coverage",
-  about: "All of Cloudflare's data centres and every probe, on a world map",
+  about:
+    "Cloudflare's data centres and every probe, on a world map: by country, or a country's by city",
   input: coverageOptions,
   api: { method: "GET", path: "/api/coverage" },
   page: "/coverage",
@@ -255,7 +251,6 @@ export const coverage = command({
     argument: null,
     flags: {
       place: { type: "string", help: "One continent or country", hint: "Europe|TH" },
-      cities: { type: "boolean", help: "Every probe city too; --no-cities for just the totals" },
     },
   },
 });

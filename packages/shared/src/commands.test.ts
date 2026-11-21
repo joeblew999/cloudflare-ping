@@ -20,10 +20,10 @@ describe("questionFor", () => {
   });
 
   it("says true and false as the CLI's own flags", () => {
-    expect(questionFor(command("coverage"), { place: "Europe", cities: false })).toEqual({
-      method: "GET",
-      path: "/api/coverage?place=Europe&cities=false",
-      cli: ["coverage", "--place", "Europe", "--no-cities"],
+    expect(questionFor(command("run"), { from: "TH", inline: true, everywhere: false })).toEqual({
+      method: "POST",
+      path: "/api/runs?from=TH&inline=true&everywhere=false",
+      cli: ["run", "--from", "TH", "--inline", "--no-everywhere"],
     });
   });
 
