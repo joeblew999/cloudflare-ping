@@ -3,8 +3,8 @@
 // check (scripts/coverage-check.ts) run them as they are.
 // - Globalping's probe list → its probes, by city, and its networks.
 // - Cloudflare's status page → its data centres ("Place - (CODE)").
-// - OurAirports' airports.csv → each data centre code's coordinates and country (Cloudflare's
-//   codes are airport codes), with five placed by hand.
+// - OurAirports' airports.csv → each data centre's coordinates and country (Cloudflare's codes are
+//   airport codes): by its code, an airport's old code, or the city in Cloudflare's name for it.
 // - Names for Globalping's codes, which its list doesn't spell out: continents and countries
 //   from countries-list (the list Globalping itself checks locations against), US states from
 //   OurAirports' regions.csv.
