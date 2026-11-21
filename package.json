@@ -15,6 +15,7 @@
     "@cfworker/json-schema": "catalog:",
     "@cloudflare-ping/shared": "workspace:*",
     "@cloudflare-ping/theme": "workspace:*",
+    "@modelcontextprotocol/ext-apps": "catalog:",
     "@modelcontextprotocol/server": "catalog:",
     "better-auth": "catalog:",
     "hono": "^4.11.9",

@@ -4,26 +4,14 @@
 // which hands it to Better Auth and goes on to the page (pages/open.tsx). The token is in the
 // fragment, so no server logs it, and the CLI never prints it. It's this machine's session, so
 // signing out in the browser signs this machine out too.
-import { execFile } from "node:child_process";
-import { parseArgs, promisify } from "node:util";
+import { parseArgs } from "node:util";
 import { FetchError } from "void/client";
 import { z } from "zod";
+import { openInBrowser } from "@cloudflare-ping/shared/browser";
 import { open as definition } from "@cloudflare-ping/shared/commands";
 import { commonOptions, signedIn, siteOf, stop } from "../api";
 
 const issued = z.object({ token: z.string() });
-
-// The browser: the one asked for, by name on a Mac (`open -a`), or as a command elsewhere; the
-// system's default otherwise.
-function opener(url: string, browser: string | undefined): [string, Array<string>] {
-  if (process.platform === "darwin") {
-    return ["open", browser ? ["-a", browser, url] : [url]];
-  }
-  if (process.platform === "win32") {
-    return ["cmd", ["/c", "start", "", url]];
-  }
-  return [browser ?? "xdg-open", [url]];
-}
 
 export async function open(args: Array<string>) {
   const { values, positionals } = parseArgs({
@@ -51,9 +39,8 @@ export async function open(args: Array<string>) {
   });
   const url = `${site}/open?to=${encodeURIComponent(page)}#token=${encodeURIComponent(token)}`;
   const browser = values.browser ?? process.env.BROWSER;
-  const [command, rest] = opener(url, browser);
   try {
-    await promisify(execFile)(command, rest);
+    await openInBrowser(url, browser);
   } catch {
     return stop(new Error(`Couldn't open ${browser ?? "the browser"}`));
   }

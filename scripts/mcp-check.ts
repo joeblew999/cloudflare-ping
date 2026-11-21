@@ -1,8 +1,6 @@
 // The MCP server's real-system check (plan 2026-11-20-01): /mcp as an agent sees it, beside the
-// API and the CLI. It signs in as any MCP client does, with the official SDK's client (it finds
-// where to sign in, registers itself, waits for your approval in the browser, then keeps a
-// refresh token), once per machine. What it's given is kept in
-// ~/.config/cloudflare-ping/mcp-check.json, readable by you only, and never printed.
+// API and the CLI. It signs in as any MCP client does (scripts/mcp-sign-in.ts, shared with
+// `vp run mcp:host`): once per machine, your approval in the browser, then a refresh token.
 //
 // Then it checks the tools against the commands list (packages/shared/src/commands.ts), and asks
 // each tool that only reads the same question as the API and the CLI (`--json`: the API's
@@ -11,25 +9,12 @@
 // commands that spend tests (their `spends`) are never called. `vp run deploy` runs it after each
 // deploy; `vp run mcp:check` on its own (`-- --site <url>` for another copy of the app).
 import { execFile } from "node:child_process";
-import { randomBytes } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { createServer } from "node:http";
-import { homedir } from "node:os";
-import { dirname, join } from "node:path";
 import { parseArgs, promisify } from "node:util";
-import {
-  Client,
-  StreamableHTTPClientTransport,
-  UnauthorizedError,
-  type OAuthClientMetadata,
-  type OAuthClientProvider,
-  type OAuthDiscoveryState,
-  type StoredOAuthClientInformation,
-  type StoredOAuthTokens,
-} from "@modelcontextprotocol/client";
+import type { Client } from "@modelcontextprotocol/client";
 import { z } from "zod";
 import { COMMAND_LIST, questionFor, type AnyCommand } from "@cloudflare-ping/shared/commands";
 import { SITE } from "@cloudflare-ping/shared/site";
+import { signedInClient } from "./mcp-sign-in";
 
 const { values } = parseArgs({
   args: process.argv.slice(2).filter((arg) => arg !== "--"),
@@ -50,184 +35,6 @@ const commandNamed = (name: string) => {
   }
   return found;
 };
-
-// What the check keeps between runs, per site: its registration and its tokens, with the SDK's
-// own fields (StoredOAuthClientInformation, StoredOAuthTokens).
-const FILE = join(homedir(), ".config", "cloudflare-ping", "mcp-check.json");
-const stored = z.object({
-  client: z
-    .object({
-      client_id: z.string(),
-      client_secret: z.string().optional(),
-      client_id_issued_at: z.number().optional(),
-      client_secret_expires_at: z.number().optional(),
-      issuer: z.string().optional(),
-    })
-    .optional(),
-  tokens: z
-    .object({
-      access_token: z.string(),
-      token_type: z.string(),
-      id_token: z.string().optional(),
-      expires_in: z.number().optional(),
-      scope: z.string().optional(),
-      refresh_token: z.string().optional(),
-      issuer: z.string().optional(),
-    })
-    .optional(),
-});
-type Stored = z.infer<typeof stored>;
-
-async function readStored(): Promise<Record<string, Stored>> {
-  try {
-    return z.record(z.string(), stored).parse(JSON.parse(await readFile(FILE, "utf8")));
-  } catch {
-    // None yet, or unreadable: sign in again.
-    return {};
-  }
-}
-
-// Where the browser comes back to, on this machine, with the approval's code.
-const CALLBACK = "http://127.0.0.1:8976/callback";
-const metadata: OAuthClientMetadata = {
-  client_name: "cloudflare-ping mcp:check",
-  redirect_uris: [CALLBACK],
-  grant_types: ["authorization_code", "refresh_token"],
-  response_types: ["code"],
-  token_endpoint_auth_method: "none",
-  application_type: "native",
-  // offline_access: a refresh token, so later runs need no approval.
-  scope: "openid profile email offline_access",
-};
-
-class CheckProvider implements OAuthClientProvider {
-  authorizationUrl: URL | null = null;
-  readonly #all: Record<string, Stored>;
-  readonly #state = randomBytes(16).toString("base64url");
-  #verifier = "";
-  #discovery: OAuthDiscoveryState | undefined;
-
-  constructor(all: Record<string, Stored>) {
-    this.#all = all;
-  }
-  get redirectUrl() {
-    return CALLBACK;
-  }
-  get clientMetadata() {
-    return metadata;
-  }
-  state() {
-    return this.#state;
-  }
-  clientInformation() {
-    return this.#all[site]?.client;
-  }
-  async saveClientInformation(client: StoredOAuthClientInformation) {
-    await this.#save({ ...this.#all[site], client });
-  }
-  tokens() {
-    return this.#all[site]?.tokens;
-  }
-  async saveTokens(tokens: StoredOAuthTokens) {
-    await this.#save({ ...this.#all[site], tokens });
-  }
-  redirectToAuthorization(url: URL) {
-    this.authorizationUrl = url;
-  }
-  saveCodeVerifier(verifier: string) {
-    this.#verifier = verifier;
-  }
-  codeVerifier() {
-    return this.#verifier;
-  }
-  // Which authorization server the sign-in started with, so the SDK can check the approval came
-  // back from the same one (SEP-2352). Only for this run, as the code verifier is.
-  saveDiscoveryState(state: OAuthDiscoveryState) {
-    this.#discovery = state;
-  }
-  discoveryState() {
-    return this.#discovery;
-  }
-  async invalidateCredentials(scope: "all" | "client" | "tokens" | "verifier" | "discovery") {
-    if (scope === "all" || scope === "discovery") {
-      this.#discovery = undefined;
-    }
-    const now = this.#all[site] ?? {};
-    await this.#save({
-      client: scope === "all" || scope === "client" ? undefined : now.client,
-      tokens: scope === "all" || scope === "tokens" ? undefined : now.tokens,
-    });
-  }
-  async #save(next: Stored) {
-    this.#all[site] = next;
-    await mkdir(dirname(FILE), { recursive: true });
-    await writeFile(FILE, `${JSON.stringify(this.#all, null, 2)}\n`, { mode: 0o600 });
-  }
-}
-
-// Your approval, in the browser: the app's /login if you aren't signed in there, then /consent.
-// The browser comes back to CALLBACK with the code.
-function approve(url: URL, state: string): Promise<URLSearchParams> {
-  return new Promise((resolve, reject) => {
-    const server = createServer((request, response) => {
-      const at = new URL(request.url ?? "/", CALLBACK);
-      if (at.pathname !== "/callback") {
-        response.writeHead(404).end();
-        return;
-      }
-      const ok = at.searchParams.get("state") === state && at.searchParams.has("code");
-      response.writeHead(ok ? 200 : 400, { "content-type": "text/plain; charset=utf-8" });
-      response.end(
-        ok ? "Approved. You can close this tab." : "Not approved. The terminal says why.",
-      );
-      clearTimeout(timer);
-      server.close();
-      if (ok) {
-        resolve(at.searchParams);
-      } else {
-        reject(new Error(`Not approved (${at.searchParams.get("error") ?? "no code came back"})`));
-      }
-    });
-    // Declared after the server, and only read by it once a request comes.
-    const timer = setTimeout(() => {
-      server.close();
-      reject(new Error("No approval within 5 minutes"));
-    }, 300_000);
-    server.on("error", reject);
-    server.listen(Number(new URL(CALLBACK).port), "127.0.0.1", () => {
-      console.log(
-        `Approve this check in your browser (sign in if asked, then Allow):\n  ${url.href}`,
-      );
-      const opener =
-        process.platform === "darwin"
-          ? "open"
-          : process.platform === "win32"
-            ? "explorer"
-            : "xdg-open";
-      // If the browser can't be opened, the link above still works.
-      execFile(opener, [url.href], () => undefined);
-    });
-  });
-}
-
-// Connected and signed in: with the kept tokens (refreshed by the SDK when they've run out), or
-// after your approval.
-async function connect(provider: CheckProvider) {
-  const client = new Client({ name: "cloudflare-ping mcp:check", version: "1" });
-  const transport = new StreamableHTTPClientTransport(mcpUrl, { authProvider: provider });
-  try {
-    await client.connect(transport);
-    return client;
-  } catch (caught) {
-    if (!(caught instanceof UnauthorizedError) || !provider.authorizationUrl) {
-      throw caught;
-    }
-  }
-  await transport.finishAuth(await approve(provider.authorizationUrl, provider.state()));
-  const signedIn = new Client({ name: "cloudflare-ping mcp:check", version: "1" });
-  await signedIn.connect(new StreamableHTTPClientTransport(mcpUrl, { authProvider: provider }));
-  return signedIn;
-}
 
 const run = promisify(execFile);
 
@@ -394,7 +201,7 @@ check(
   `signed out: /mcp answers ${refused.status}, naming where to sign in`,
 );
 
-const client = await connect(new CheckProvider(await readStored()));
+const { client } = await signedInClient(site, "cloudflare-ping mcp:check");
 check(true, `signed in to ${mcpUrl.href} as an MCP client`);
 
 // The tools: one per command that has one, in the command's own words, and the ones that spend

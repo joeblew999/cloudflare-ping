@@ -14,11 +14,13 @@
   "exports": {
     ".": "./src/index.ts",
     "./server": "./src/server.ts",
-    "./cli": "./src/cli.ts"
+    "./cli": "./src/cli.ts",
+    "./vite": "./src/vite.ts"
   },
   "devDependencies": {
     "@cfworker/json-schema": "catalog:",
     "@modelcontextprotocol/client": "catalog:",
+    "@modelcontextprotocol/ext-apps": "catalog:",
     "@modelcontextprotocol/server": "catalog:",
     "@types/node": "catalog:",
     "hono": "^4.11.9",
@@ -27,6 +29,7 @@
     "zod": "catalog:"
   },
   "peerDependencies": {
+    "@modelcontextprotocol/ext-apps": "catalog:",
     "@modelcontextprotocol/server": "catalog:",
     "hono": "^4.11.9",
     "zod": "catalog:"

@@ -20,6 +20,9 @@ catalog:
   "@modelcontextprotocol/server": 2.4.0
   # The same SDK's client, for `vp run mcp:check` (scripts/mcp-check.ts): an agent's view of /mcp.
   "@modelcontextprotocol/client": 2.4.0
+  # MCP Apps (plan 2026-11-21-02): a tool's page shown in the AI's chat. 2.0.4 is npm's latest
+  # (27 October); 2.1.0 isn't tagged latest and adds only WebMCP bridging.
+  "@modelcontextprotocol/ext-apps": 2.0.4
   "@types/node": 26.6.6
   # Signing an MCP client in through Void's auth (plan 2026-11-20-01, step 3): Better Auth's own
   # MCP plugin, the OAuth provider it's built on, and Client ID Metadata Documents, at the Better
