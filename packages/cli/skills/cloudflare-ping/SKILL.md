@@ -51,9 +51,10 @@ so starting a run or a test spends them; reading runs, limits and logs spends no
 | `cloudflare-ping sign-in` | - | Sign this machine in | `/login` |
 | `cloudflare-ping sign-out` | - | Sign this machine out | `Sign out` |
 | `cloudflare-ping whoami` | - | Who this machine is signed in as | `the top bar` |
+| `cloudflare-ping open [<page>] [--browser <app>]` | - | Open a page in your browser, signed in as this machine is (needs sign-in) | `any page` |
 
 Every command takes --site <url> (another copy of the app; the deployed one unless given), and those that print results take --json.
 
-Signing in: These need this machine signed in: test, run, remap, trace. The first time, the command prints a link and a code: open the link, approve the code, and it carries on. If the sign-in has expired, it asks again. cloudflare-ping whoami shows whether you're signed in. In CI, set CLOUDFLARE_PING_TOKEN instead.
+Signing in: These need this machine signed in: test, run, remap, trace, open. The first time, the command prints a link and a code: open the link, approve the code, and it carries on. If the sign-in has expired, it asks again. cloudflare-ping whoami shows whether you're signed in. In CI, set CLOUDFLARE_PING_TOKEN instead.
 
 The docs: https://cloudflare-ping.gedw99.workers.dev/docs/ ("From an AI agent": https://cloudflare-ping.gedw99.workers.dev/docs/agents).

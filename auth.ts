@@ -18,6 +18,7 @@ import { APIError } from "better-auth/api";
 import { bearer } from "better-auth/plugins/bearer";
 import { deviceAuthorization } from "better-auth/plugins/device-authorization";
 import { jwt } from "better-auth/plugins/jwt";
+import { oneTimeToken } from "better-auth/plugins/one-time-token";
 import { defineAuth } from "void/auth";
 import { CLI_CLIENT_ID, SITE } from "@cloudflare-ping/shared/site";
 import { SPEND_SCOPE } from "./src/mcp-scope";
@@ -51,6 +52,10 @@ export default defineAuth(({ defaults, env }) => {
         validateClient: (clientId) => clientId === CLI_CLIENT_ID,
       }),
       jwt(),
+      // `cloudflare-ping open` (plan 2026-11-21-02): the signed-in CLI asks for a token that
+      // signs a browser into the same session, once, within 3 minutes (pages/open.tsx). Kept
+      // hashed, in the verification table Better Auth already has.
+      oneTimeToken({ expiresIn: 3, storeToken: "hashed" }),
       mcp({
         resource: `${origin}/mcp`,
         loginPage: "/login",

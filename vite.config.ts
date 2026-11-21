@@ -86,6 +86,8 @@ export default defineConfig({
       "ping:sign-in": { command: "vpx packages/cli/main.ts sign-in", cache: false },
       "ping:sign-out": { command: "vpx packages/cli/main.ts sign-out", cache: false },
       "ping:whoami": { command: "vpx packages/cli/main.ts whoami", cache: false },
+      // A page in a browser, signed in as this machine is (`-- /runs --browser "Google Chrome"`).
+      "ping:open": { command: "vpx packages/cli/main.ts open", cache: false },
       // The CLI package: build it (packages/cli/dist/main.mjs), and try the built file.
       "cli:pack": { command: "vp run cloudflare-ping#build", cache: false },
       "cli:try": { command: "node packages/cli/dist/main.mjs", cache: false },

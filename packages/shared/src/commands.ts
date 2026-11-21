@@ -370,6 +370,37 @@ export const whoami = ofTheCli(
   "ping:whoami",
 );
 
+// The CLI's own, signed in: this machine's sign-in carried to a browser, once (plan
+// 2026-11-21-02; Better Auth's one-time token, auth.ts; pages/open.tsx). It's the same session, so
+// signing out in the browser signs this machine out too.
+export const open = defineCommand({
+  name: "open",
+  about: "Open a page in your browser, signed in as this machine is",
+  input: z.object({
+    page: z
+      .string()
+      .regex(/^\/(?!\/)/, "A page on the app starts with /")
+      .optional()
+      .describe("The page to open, a path on the app (/runs); the home page unless given"),
+  }),
+  api: null,
+  page: "any page",
+  task: "ping:open",
+  signedIn: true,
+  spends: false,
+  mcp: false,
+  cli: {
+    argument: "page",
+    flags: {
+      browser: {
+        type: "string",
+        help: 'Which browser (on a Mac, its name: "Google Chrome"); BROWSER, or the default, unless given',
+        hint: "<app>",
+      },
+    },
+  },
+});
+
 // Every command, in the order the help and the docs list them.
 export const COMMAND_LIST = [
   test,
@@ -386,6 +417,7 @@ export const COMMAND_LIST = [
   signIn,
   signOut,
   whoami,
+  open,
 ] as const;
 
 export type AnyCommand = (typeof COMMAND_LIST)[number];

@@ -26,6 +26,7 @@ things, the same way. The machinery is the repo's own package, `void-commands`
 | Sign in                    | `/login`               | `vp run ping:sign-in`            | `cloudflare-ping sign-in`        | Void's auth (`/api/auth/…`)           | -          |
 | Sign out                   | "Sign out"             | `vp run ping:sign-out`           | `cloudflare-ping sign-out`       | Void's auth                           | -          |
 | Who's signed in            | the top bar            | `vp run ping:whoami`             | `cloudflare-ping whoami`         | Void's auth                           | -          |
+| A page, signed in as here  | any page               | `vp run ping:open -- /runs`      | `cloudflare-ping open /runs`     | Void's auth (a one-time token)        | -          |
 | One test                   | `/`, "Run a probe"     | `vp run probe:test -- --from TH` | `cloudflare-ping test --from TH` | `POST /api/probe` (signed in)         | `test`     |
 | Start a run and follow it  | `/runs`, "Start a run" | `vp run ping:run -- --from TH`   | `cloudflare-ping run --from TH`  | `POST /api/runs` (signed in)          | `run`      |
 | The newest runs            | `/runs`                | `vp run ping:runs`               | `cloudflare-ping runs`           | `GET /api/runs`                       | `runs`     |

@@ -12,6 +12,7 @@ import { coverage } from "./commands/coverage";
 import { init } from "./commands/init";
 import { limits } from "./commands/limits";
 import { map, remap } from "./commands/map";
+import { open } from "./commands/open";
 import { places } from "./commands/places";
 import { run } from "./commands/run";
 import { runs } from "./commands/runs";
@@ -34,6 +35,7 @@ const RUNS: Record<string, (args: Array<string>) => Promise<void>> = {
   "sign-in": signIn,
   "sign-out": signOut,
   whoami,
+  open,
 };
 
 function help() {
