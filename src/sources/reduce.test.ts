@@ -2,7 +2,6 @@
 // real ones (2026-11-20).
 import { describe, expect, it } from "vite-plus/test";
 import {
-  HAND_PLACED,
   airportPlaces,
   cloudflareDatacentres,
   continentNames,
@@ -118,15 +117,33 @@ describe("the name lists", () => {
 
 describe("airportPlaces", () => {
   const csv = [
-    '"id","ident","name","latitude_deg","longitude_deg","iso_country","iata_code"',
-    '1,"VTBS","Suvarnabhumi, Bangkok",13.68,100.75,"TH","BKK"',
-    '2,"XXXX","Not wanted",1,2,"US","ZZZ"',
+    '"id","name","latitude_deg","longitude_deg","iso_country","municipality","scheduled_service","iata_code","keywords"',
+    '1,"Suvarnabhumi, Bangkok",13.68,100.75,"TH","Bangkok","yes","BKK",',
+    '2,"Berlin-Tegel Otto Lilienthal International Airport",52.56,13.29,"DE","Berlin","no",,"TXL, EDDT"',
+    '3,"Jiaxing Nanhu Airport",30.7,120.66,"CN","Xiuzhou, Hangzhou","yes","JNH",',
+    '4,"Chişinău International Airport",46.93,28.93,"MD","Chişinău","yes","RMO","KIV"',
+    '5,"Springfield Airport",39.84,-89.68,"US","Springfield","yes","SPI",',
+    '6,"Springfield Airport",-43.33,171.92,"NZ","Springfield","yes",,',
+    '7,"Not wanted",1,2,"US","Nowhere","yes","ZZZ",',
   ].join("\n");
 
-  it("places the wanted codes, quoted names and all, and the hand-placed ones", () => {
-    expect(airportPlaces(csv, ["BKK", "TXL"])).toEqual({
+  it("places a data centre by its code, an airport's old code, or the city in its name", () => {
+    expect(
+      airportPlaces(csv, [
+        { code: "BKK", name: "Bangkok, Thailand" },
+        { code: "TXL", name: "Berlin, Germany" },
+        { code: "JXG", name: "Jiaxing, China" },
+        { code: "KIV", name: "Chișinău, Moldova" },
+      ]),
+    ).toEqual({
       BKK: { lat: 13.68, lon: 100.75, country: "TH" },
-      TXL: HAND_PLACED.TXL,
+      TXL: { lat: 52.56, lon: 13.29, country: "DE" },
+      JXG: { lat: 30.7, lon: 120.66, country: "CN" },
+      KIV: { lat: 46.93, lon: 28.93, country: "MD" },
     });
+  });
+
+  it("leaves a data centre unplaced when its city is in more than one country", () => {
+    expect(airportPlaces(csv, [{ code: "SPX", name: "Springfield, United States" }])).toEqual({});
   });
 });

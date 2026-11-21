@@ -161,22 +161,6 @@ export function cloudflareDatacentres(body: unknown): Array<Datacentre> {
 export const airportPlace = z.object({ lat: z.number(), lon: z.number(), country: z.string() });
 export type AirportPlace = z.infer<typeof airportPlace>;
 
-// Data centres whose code the airport data doesn't have: an airport that closed or changed its
-// code since Cloudflare named the data centre after it. Placed from Cloudflare's own names
-// (2026-11-20).
-export const HAND_PLACED: Record<string, AirportPlace> = {
-  // Berlin, Germany: Tegel, closed in 2020.
-  TXL: { lat: 52.5597, lon: 13.2877, country: "DE" },
-  // Chișinău, Moldova.
-  KIV: { lat: 46.9277, lon: 28.931, country: "MD" },
-  // Bishkek, Kyrgyzstan.
-  FRU: { lat: 43.0613, lon: 74.4776, country: "KG" },
-  // Americana, Brazil.
-  QWJ: { lat: -22.739, lon: -47.331, country: "BR" },
-  // Jiaxing, China.
-  JXG: { lat: 30.746, lon: 120.756, country: "CN" },
-};
-
 // One line of a CSV file, by its quoted fields ("a","b ""c""",,1.5).
 function csvFields(line: string) {
   const fields: Array<string> = [];
@@ -206,34 +190,81 @@ function csvFields(line: string) {
   return fields;
 }
 
-// The coordinates and country of each of these codes, from OurAirports' airports.csv (public
-// domain), the first airport with that code. The hand-placed ones are added, and win.
-export function airportPlaces(csv: string, codes: Iterable<string>): Record<string, AirportPlace> {
-  const wanted = new Set(codes);
+// Letters as a name is written without accents, in lower case: "Chișinău" and "Chişinău" (two
+// different s's) are both "chisinau".
+const plain = (words: string) =>
+  words
+    .normalize("NFD")
+    .replaceAll(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+
+// Where each data centre is, from OurAirports' airports.csv (public domain), by the first of:
+// 1. its code, as an airport's code today (BKK);
+// 2. its code among an airport's old names (the `keywords` column): an airport that closed or
+//    changed its code since Cloudflare named the data centre after it (TXL: Tegel, closed 2020;
+//    FRU: Manas, now BSZ);
+// 3. the city in Cloudflare's own name ("Jiaxing, China"), as an airport with scheduled flights
+//    named after it or serving it, when all such airports are in one country.
+// Nothing typed in by hand; a data centre none of these finds stays unplaced (`totals.unplaced`).
+export function airportPlaces(
+  csv: string,
+  centres: ReadonlyArray<{ code: string; name: string }>,
+): Record<string, AirportPlace> {
+  const wanted = new Set(centres.map((each) => each.code));
+  const cities = new Map(
+    centres.map((each) => [each.code, plain(each.name.split(",")[0]?.trim() ?? "")]),
+  );
   const lines = csv.split("\n");
   const head = csvFields(lines[0] ?? "");
   const column = (name: string) => head.indexOf(name);
-  const [iata, lat, lon, country] = [
+  const [iata, keywords, name, municipality, scheduled, lat, lon, country] = [
     column("iata_code"),
+    column("keywords"),
+    column("name"),
+    column("municipality"),
+    column("scheduled_service"),
     column("latitude_deg"),
     column("longitude_deg"),
     column("iso_country"),
   ];
-  const places: Record<string, AirportPlace> = {};
+  const byCode: Record<string, AirportPlace> = {};
+  const byOldCode: Record<string, AirportPlace> = {};
+  const byCity = new Map<string, Array<AirportPlace>>();
   for (const line of lines.slice(1)) {
-    const fields = line.length > 0 ? csvFields(line) : [];
+    if (line.length === 0) {
+      continue;
+    }
+    const fields = csvFields(line);
+    const place = () => ({
+      lat: Number(fields[lat]),
+      lon: Number(fields[lon]),
+      country: fields[country] ?? "",
+    });
     const code = fields[iata];
-    if (code && wanted.has(code) && !(code in places)) {
-      places[code] = {
-        lat: Number(fields[lat]),
-        lon: Number(fields[lon]),
-        country: fields[country] ?? "",
-      };
+    if (code && wanted.has(code) && !(code in byCode)) {
+      byCode[code] = place();
+    }
+    for (const old of (fields[keywords] ?? "").split(",").map((each) => each.trim())) {
+      if (wanted.has(old) && !(old in byOldCode)) {
+        byOldCode[old] = place();
+      }
+    }
+    if (fields[scheduled] === "yes") {
+      const where = plain(`${fields[name] ?? ""} ${fields[municipality] ?? ""}`);
+      for (const [wantedCode, city] of cities) {
+        if (city && where.includes(city)) {
+          byCity.set(wantedCode, [...(byCity.get(wantedCode) ?? []), place()]);
+        }
+      }
     }
   }
-  for (const [code, placed] of Object.entries(HAND_PLACED)) {
-    if (wanted.has(code)) {
-      places[code] = placed;
+  const places: Record<string, AirportPlace> = {};
+  for (const code of wanted) {
+    const named = byCity.get(code) ?? [];
+    const inOneCountry = new Set(named.map((each) => each.country)).size === 1;
+    const found = byCode[code] ?? byOldCode[code] ?? (inOneCountry ? named[0] : undefined);
+    if (found) {
+      places[code] = found;
     }
   }
   return places;

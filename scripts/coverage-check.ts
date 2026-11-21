@@ -10,7 +10,6 @@ import {
   CONTINENTS_URL,
   COUNTRIES_URL,
   DATACENTRES_URL,
-  HAND_PLACED,
   PROBES_URL,
   REGIONS_URL,
   airportPlaces,
@@ -58,18 +57,11 @@ const centresAgain = centresTag
   : null;
 console.log(`info  Cloudflare answers ${centresAgain?.status ?? "no tag"} to its own tag`);
 
-const placed = airportPlaces(
-  await (await fetch(AIRPORTS_URL)).text(),
-  centres.map((each) => each.code),
-);
+const placed = airportPlaces(await (await fetch(AIRPORTS_URL)).text(), centres);
 const unplaced = centres.filter((each) => !(each.code in placed)).map((each) => each.code);
 check(
   unplaced.length === 0,
   `every data centre placed${unplaced.length > 0 ? `; not: ${unplaced.join(" ")}` : ""}`,
-);
-check(
-  Object.keys(HAND_PLACED).every((code) => placed[code] === HAND_PLACED[code]),
-  `the hand-placed ones: ${Object.keys(HAND_PLACED).join(" ")}`,
 );
 const bkk = placed.BKK;
 check(

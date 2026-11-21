@@ -2,7 +2,12 @@
 // Earth's land) in its own projection, where x is longitude and y is minus latitude, so a point
 // sits at its coordinates and nothing else. Used by the geographical coverage map (pages/
 // coverage.tsx), and later by the geographical probe map: two maps, one drawing.
+import world from "../public/world.svg?raw";
 import "./WorldMap.css";
+
+// The land, built in: the path in public/world.svg (Natural Earth's land, `vp run world`), the same
+// on the site and in the coverage map's MCP App, which can load nothing.
+const LAND = /\sd="([^"]+)"/.exec(world)?.[1] ?? "";
 
 export type WorldPoint = {
   key: string;
@@ -65,15 +70,11 @@ export function WorldMap({
   points,
   label,
   zoom = false,
-  land,
 }: {
   points: Array<WorldPoint>;
   label: string;
   // Show only the part of the world the points are in.
   zoom?: boolean;
-  // The land's path data, for a page that can load nothing (the coverage map's MCP App); the
-  // site's own file (public/world.svg) otherwise.
-  land?: string;
 }) {
   // Zoomed in, the world is cut where the points leave the widest gap (`cutOf`).
   const cut = zoom ? cutOf(points.map((point) => point.lon)) : null;
@@ -95,27 +96,15 @@ export function WorldMap({
       aria-label={label}
     >
       {/* The land, and once more a world east when the view reaches past 180°. */}
-      {(cut === null ? [0] : [0, 360]).map((shift) =>
-        land ? (
-          <path
-            key={shift}
-            className="land"
-            d={land}
-            fill="currentColor"
-            transform={`translate(${shift} 0)`}
-          />
-        ) : (
-          <use
-            key={shift}
-            href="/world.svg#land"
-            className="land"
-            x={-180 + shift}
-            y="-90"
-            width="360"
-            height="180"
-          />
-        ),
-      )}
+      {(cut === null ? [0] : [0, 360]).map((shift) => (
+        <path
+          key={shift}
+          className="land"
+          d={LAND}
+          fill="currentColor"
+          transform={`translate(${shift} 0)`}
+        />
+      ))}
       {placed.map((point) => (
         <circle
           key={point.key}

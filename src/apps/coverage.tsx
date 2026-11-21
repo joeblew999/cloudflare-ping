@@ -1,22 +1,17 @@
-// The coverage map as an MCP App (plan 2026-11-21-02): the coverage tool's answer drawn on the
-// site's own world map, inside an AI's chat. The same map (src/WorldMap.tsx), the same points
-// (src/coverage-points.ts: by country, or a country's by city), the same answer checked by the
-// same schema the command answers with (src/commands/coverage-answer.ts). The host lets it load
-// nothing, so everything comes with it, built into one page (void-commands/vite): the world's
-// outline too.
+// The coverage map as an MCP App (plan 2026-11-21-02): the coverage tool's answer inside an AI's
+// chat, drawn by the Coverage page's own figure (src/CoverageMap.tsx: the same map, points and
+// key), the answer checked by the schema the command answers with
+// (src/commands/coverage-answer.ts). The host lets it load nothing, so everything comes with it,
+// built into one page (void-commands/vite). Only what a chat needs differs: the host's light or
+// dark, and the theme's colours without its fonts.
 import { useApp, useDocumentTheme, useHostStyles } from "@modelcontextprotocol/ext-apps/react";
 import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { coverageHeadline } from "@cloudflare-ping/shared/coverage";
-import world from "../../public/world.svg?raw";
 import { coverageAnswer, type CoverageAnswer } from "../commands/coverage-answer";
-import { coveragePoints, probesKey } from "../coverage-points";
-import { WorldMap } from "../WorldMap";
+import { CoverageMap } from "../CoverageMap";
 import "@cloudflare-ping/theme/vars.css";
 import "./coverage.css";
-
-// The land's outline, from the same file the site draws (public/world.svg: one path).
-const LAND = /\sd="([^"]+)"/.exec(world)?.[1] ?? "";
 
 function CoverageApp() {
   const [answer, setAnswer] = useState<CoverageAnswer | null>(null);
@@ -49,19 +44,10 @@ function CoverageApp() {
     return <p className="note">{note}</p>;
   }
   return (
-    <figure className="coverage">
-      <WorldMap
-        points={coveragePoints(answer)}
-        zoom={answer.place !== null}
-        land={LAND}
-        label={coverageHeadline(answer)}
-      />
-      <figcaption>
-        <span className="key dc" /> Cloudflare data centres ·{" "}
-        <span className={`key ${probesKey(answer.place).className}`} />{" "}
-        {probesKey(answer.place).words} · {coverageHeadline(answer)}
-      </figcaption>
-    </figure>
+    <>
+      <p className="note">{coverageHeadline(answer)}</p>
+      <CoverageMap answer={answer} />
+    </>
   );
 }
 

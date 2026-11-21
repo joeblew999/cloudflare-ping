@@ -75,20 +75,22 @@ async function covering<T extends Record<string, unknown>>(
     : kept.data;
 }
 
-// Each data centre code's place, from the airport file.
+// Each data centre's place, from the airport file, by its code or Cloudflare's own name for it
+// (airportPlaces). v2: placed from the data alone, with nothing typed in by hand (plan
+// 2026-11-21-03).
 export const airports = (
-  codes: Array<string>,
+  centres: Array<{ code: string; name: string }>,
   now?: number,
 ): Promise<Record<string, AirportPlace>> =>
   covering(
     {
-      key: "lists:v1:airport-places",
+      key: "lists:v2:airport-places",
       url: AIRPORTS_URL,
       recheckSeconds: null,
       schema: z.record(z.string(), airportPlace),
-      reduce: async (response) => airportPlaces(await response.text(), codes),
+      reduce: async (response) => airportPlaces(await response.text(), centres),
     },
-    codes,
+    centres.map((each) => each.code),
     now,
   );
 
@@ -123,7 +125,7 @@ export async function placedDatacentres(): Promise<
   Array<PlacedDatacentre & { lat: number | null; lon: number | null }>
 > {
   const { data: centres } = await datacentres();
-  const placed = await airports(centres.map((each) => each.code));
+  const placed = await airports(centres);
   return centres.map((each) => ({
     ...each,
     lat: placed[each.code]?.lat ?? null,
@@ -172,6 +174,6 @@ export async function noticed(seen: {
   const codes = new Set(centres.data.map((each) => each.code));
   if (seen.colos.some((colo) => colo !== "" && !codes.has(colo))) {
     const fresh = await datacentres({ force: true });
-    await airports(fresh.data.map((each) => each.code));
+    await airports(fresh.data);
   }
 }

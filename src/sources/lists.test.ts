@@ -58,6 +58,10 @@ vi.stubGlobal("fetch", async (url: string) => {
   return new Response(csv());
 });
 
+// Data centres as Cloudflare names them, for the airport places.
+const centresOf = (list: Array<string>) =>
+  list.map((code) => ({ code, name: "Somewhere, Nowhere" }));
+
 describe("the lists", () => {
   beforeEach(async () => {
     store.clear();
@@ -66,7 +70,7 @@ describe("the lists", () => {
     named = { TH: { name: "Thailand", continent: "AS" } };
     // Everything read and kept once.
     await noticed({ places: [], colos: [] });
-    await airports(codes);
+    await airports(centresOf(codes));
     await countries(["TH"]);
     calls.length = 0;
   });
@@ -80,7 +84,7 @@ describe("the lists", () => {
     codes = ["BKK", "NEW"];
     await noticed({ places: [], colos: ["NEW"] });
     expect(calls).toEqual([DATACENTRES_URL, AIRPORTS_URL]);
-    expect((await airports(codes)).NEW).toEqual({ lat: 10, lon: 20, country: "VN" });
+    expect((await airports(centresOf(codes))).NEW).toEqual({ lat: 10, lon: 20, country: "VN" });
   });
 
   it("a probe in a place the list doesn't have re-reads the probe list", async () => {
@@ -94,9 +98,9 @@ describe("the lists", () => {
   });
 
   it("the airport places are only read again for a code they don't have", async () => {
-    await airports(["BKK"]);
+    await airports(centresOf(["BKK"]));
     expect(calls).toEqual([]);
-    await airports(["BKK", "NEW"]);
+    await airports(centresOf(["BKK", "NEW"]));
     expect(calls).toEqual([AIRPORTS_URL]);
   });
 

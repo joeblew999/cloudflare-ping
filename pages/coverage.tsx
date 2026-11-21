@@ -15,8 +15,7 @@ import { asArgument } from "@cloudflare-ping/shared/places";
 import { useState } from "react";
 import { routeUrl } from "void/routes";
 import { PlacePicker } from "../src/PlacePicker";
-import { coveragePoints, probesKey } from "../src/coverage-points";
-import { WorldMap } from "../src/WorldMap";
+import { CoverageMap } from "../src/CoverageMap";
 import type { Props } from "./coverage.server";
 
 export default function CoveragePage({
@@ -27,7 +26,6 @@ export default function CoveragePage({
   datacentres,
   cities,
 }: Props) {
-  const points = coveragePoints({ place, continents, cities, datacentres });
   const router = useRouter();
   // A country gets its own view; a continent, the every-country table of just its countries.
   const country = place?.kind === "country" ? place : null;
@@ -73,17 +71,7 @@ export default function CoveragePage({
         </button>
       </form>
 
-      <figure className="coverage">
-        <WorldMap
-          points={points}
-          zoom={place !== null}
-          label={`A world map of Cloudflare's ${totals.datacentres} data centres and ${count(totals.probes)} probes`}
-        />
-        <figcaption>
-          <span className="key dc" /> Cloudflare data centres ·{" "}
-          <span className={`key ${probesKey(place).className}`} /> {probesKey(place).words}
-        </figcaption>
-      </figure>
+      <CoverageMap answer={{ place, continents, cities, datacentres, totals }} />
 
       <p>
         The same from a terminal:{" "}
