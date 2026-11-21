@@ -1,6 +1,7 @@
 # Coverage by level: countries for the world, cities for a country
 
-Status: 2026-11-21, proposed. The user: "We've obviously built the coverage map badly."
+Status: 2026-11-21, built, played with, deployed (c3832aa). The user: "We've obviously built the
+coverage map badly"; then "play with it… It's probably lots of bugs", "You could decide what's best."
 
 ## Why
 
@@ -51,3 +52,23 @@ MCP). A deploy then fails before an answer grows too big for Claude, rather than
   the limit, with the world's size measured.
 - `mcp:host`: the world map with country dots, Europe, and a country with its cities, screenshots.
 - The Coverage page and the CLI, by hand.
+
+## Done, 2026-11-21
+
+Built on a branch, tried locally as a visitor would, fixed, then deployed:
+
+- The first country dots were grey, and lost on the grey land under the data centres: now green,
+  see-through, outlined, and probes are green at every level (a country's cities too, which were
+  hard to see on land before). Sized by the square root of their probes (1 to the US's 1,115),
+  allowed up to 3% of the map's width (a dot's cap of 1.2% made the US, Germany and the
+  Netherlands the same size).
+- Found and fixed, older than this change: Oceania didn't zoom (its places sit both sides of the
+  date line, so the view was the whole world); the place box stayed stale after a link to another
+  place on the page.
+- Positions checked: the US in Kansas, Canada by Ontario, Australia by Sydney, Fiji at 178.6°E;
+  every one of the 152 countries placed. Fiji (a data centre, no probes) and Benin (probes, no
+  data centre) show the right words. Old addresses with `cities` still work; typos still find
+  their place; light and dark both read.
+- Live, after the deploy: `mcp:check` passed; every answer under Claude's limit, the biggest (the
+  world) 123,680 characters over MCP, from 423,850. The page is 219,925 characters, from 373,380.
+  In `mcp:host`, the map in the chat for the world and for Oceania, from the live server.
