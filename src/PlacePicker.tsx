@@ -56,11 +56,15 @@ type Props = {
 const PICK = "Pick one from the list";
 const NOTHING = "Nothing matches that";
 
+// Waiting only for places still to come: React sends even a finished Suspense boundary's fallback
+// first when it's big enough, so places given at once would flash "Loading places…".
 export function PlacePicker(props: Props) {
-  return (
+  return "then" in props.places ? (
     <Suspense fallback={<Unready label={props.label} words="Loading places…" />}>
       <Ready {...props} />
     </Suspense>
+  ) : (
+    <Ready {...props} />
   );
 }
 

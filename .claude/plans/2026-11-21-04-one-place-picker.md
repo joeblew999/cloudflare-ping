@@ -52,7 +52,9 @@ no: the picker is a form field and looks like every other one.
   no-store`, no `x-isr-cache`): Void marks a page with deferred props `no-store` when the app has
   an error page (protocol code: `hasDeferred && boundaries.errors.length`), since a deferred prop
   could still fail. Coverage now reads its places with its answer, in parallel (both take 0.3 to
-  1.3 s live, from the same lists), and the picker takes places either way.
+  1.3 s live, from the same lists), and the picker takes places either way. It waits (Suspense)
+  only for places still to come: React 19.2 sends a finished boundary over 500 bytes as its
+  fallback first, so Coverage flashed "Loading places…" until it did.
 
 ## Costs
 
