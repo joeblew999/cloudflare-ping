@@ -1,0 +1,16 @@
+/* The coverage map's MCP App (src/apps/coverage.tsx): the page around the map, in the theme's
+   colours, with the host's font when it gives one. The map's own look is src/WorldMap.css. */
+body {
+  margin: 0;
+  padding: 8px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 14px;
+}
+.coverage {
+  margin: 0;
+}
+.note {
+  color: var(--vp-c-text-2);
+}

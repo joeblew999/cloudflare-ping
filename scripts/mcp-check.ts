@@ -10,6 +10,10 @@
 // deploy; `vp run mcp:check` on its own (`-- --site <url>` for another copy of the app).
 import { execFile } from "node:child_process";
 import { parseArgs, promisify } from "node:util";
+import {
+  RESOURCE_MIME_TYPE,
+  getToolUiResourceUri,
+} from "@modelcontextprotocol/ext-apps/app-bridge";
 import type { Client } from "@modelcontextprotocol/client";
 import { z } from "zod";
 import { COMMAND_LIST, questionFor, type AnyCommand } from "@cloudflare-ping/shared/commands";
@@ -222,6 +226,22 @@ for (const command of commands) {
       readOnly === !command.spends &&
       found?.outputSchema?.type === "object",
     `${command.name}: described as \`cloudflare-ping help\` describes it, ${readOnly ? "read-only" : "spends tests"}, with what it answers`,
+  );
+}
+
+// Each command with an app (its definition's `app`): its tool points at a page, and the server
+// serves it, one self-contained page a host can show.
+for (const command of commands.filter((each) => "app" in each && each.app)) {
+  const found = tools.find((each) => each.name === command.name);
+  const uri = found ? getToolUiResourceUri(found) : undefined;
+  const read = uri ? await client.readResource({ uri }) : null;
+  const page = read?.contents.find((each) => each.mimeType === RESOURCE_MIME_TYPE);
+  const html = page && "text" in page ? page.text : "";
+  check(
+    uri === `ui://cloudflare-ping/${command.name}.html` &&
+      html.startsWith("<!doctype html>") &&
+      html.includes('<script type="module">'),
+    `${command.name}: its app, ${uri ?? "none"}, is a page of ${html.length.toLocaleString("en-US")} characters`,
   );
 }
 

@@ -15,7 +15,8 @@ import { asArgument } from "@cloudflare-ping/shared/places";
 import { useState } from "react";
 import { routeUrl } from "void/routes";
 import { PlacePicker } from "../src/PlacePicker";
-import { WorldMap, type WorldPoint } from "../src/WorldMap";
+import { coveragePoints } from "../src/coverage-points";
+import { WorldMap } from "../src/WorldMap";
 import type { Props } from "./coverage.server";
 
 export default function CoveragePage({
@@ -26,30 +27,7 @@ export default function CoveragePage({
   datacentres,
   cities,
 }: Props) {
-  const points: Array<WorldPoint> = [
-    ...cities.map((each) => ({
-      key: `${each.country}|${each.state ?? ""}|${each.city}`,
-      lat: each.lat,
-      lon: each.lon,
-      className: "probe",
-      r: 0.6,
-      title: `${each.city}, ${each.state ? `${each.state}, ` : ""}${each.country}: ${each.probes} ${each.probes === 1 ? "probe" : "probes"}`,
-    })),
-    ...datacentres.flatMap((each) =>
-      each.lat === null || each.lon === null
-        ? []
-        : [
-            {
-              key: each.code,
-              lat: each.lat,
-              lon: each.lon,
-              className: "dc",
-              r: 1.3,
-              title: `${each.code}: ${each.name}`,
-            },
-          ],
-    ),
-  ];
+  const points = coveragePoints({ cities, datacentres });
   const router = useRouter();
   // A country gets its own view; a continent, the every-country table of just its countries.
   const country = place?.kind === "country" ? place : null;

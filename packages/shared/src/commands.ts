@@ -249,6 +249,8 @@ export const coverage = command({
   signedIn: false,
   spends: false,
   mcp: true,
+  // The map, in an AI's chat (src/apps/coverage.tsx; plan 2026-11-21-02).
+  app: { title: "Coverage map" },
   cli: {
     argument: null,
     flags: {

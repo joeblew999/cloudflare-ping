@@ -1,6 +1,11 @@
 // void-commands/server: what runs in the Worker. A command's code is `implement(definition,
 // output, run)`; it fails with `fail(kind, words)`; `call` runs it for the API and the pages; and
 // `commandsMcpServer` and `openApiOf` make the MCP server and the OpenAPI document from the list.
+import {
+  RESOURCE_MIME_TYPE,
+  RESOURCE_URI_META_KEY,
+  registerAppResource,
+} from "@modelcontextprotocol/ext-apps/server";
 import { HTTPException } from "hono/http-exception";
 import {
   McpServer,
@@ -159,7 +164,13 @@ export type McpOptions<Context> = {
   askBeforeSpending?: (definition: CommandDefinition) => Promise<string>;
   log?: (entry: CallLog) => void;
   serverOptions?: McpServerOptions;
+  // Each command with an `app`: its page, one HTML string (void-commands/vite), by the command's
+  // name.
+  apps?: Readonly<Record<string, string>>;
 };
+
+// Where a command's app is: one page per command, named by the server and the command.
+const appUriOf = (server: string, command: string) => `ui://${server}/${command}.html`;
 
 // A stable text of a value: the same input written in another order is the same call.
 function stable(value: unknown): string {
@@ -242,6 +253,16 @@ export function commandsMcpServer<Context>(options: McpOptions<Context>) {
           : { readOnlyHint: true },
         ...(definition.spends && options.spendScope
           ? { scopeChallenge: requireScopes(options.spendScope) }
+          : {}),
+        // Its app, as `registerAppTool` says it (@modelcontextprotocol/ext-apps/server): the
+        // page's address, under today's key and the one older hosts read.
+        ...(definition.app
+          ? {
+              _meta: {
+                ui: { resourceUri: appUriOf(options.info.name, definition.name) },
+                [RESOURCE_URI_META_KEY]: appUriOf(options.info.name, definition.name),
+              },
+            }
           : {}),
       },
       async (
@@ -332,6 +353,22 @@ export function commandsMcpServer<Context>(options: McpOptions<Context>) {
       },
     );
 
+    if (definition.app) {
+      const uri = appUriOf(options.info.name, definition.name);
+      const html = options.apps?.[definition.name];
+      if (!html) {
+        throw new Error(
+          `${definition.name} has an app, but no page was given (apps.${definition.name})`,
+        );
+      }
+      registerAppResource(
+        server,
+        definition.app.title,
+        uri,
+        { description: `${definition.about}, shown in the chat.` },
+        () => ({ contents: [{ uri, mimeType: RESOURCE_MIME_TYPE, text: html }] }),
+      );
+    }
     if (definition.resource) {
       const { resource } = definition;
       server.registerResource(
@@ -396,7 +433,9 @@ function answered(
   answer: Record<string, unknown>,
   note?: string,
 ): CallToolResult {
-  const content: Array<ContentBlock> = [{ type: "text", text: JSON.stringify(answer, null, 2) }];
+  // Compact: the same data as the structured answer, so as small as it can be (hosts cut answers
+  // past a size: Claude's is about 150,000 characters).
+  const content: Array<ContentBlock> = [{ type: "text", text: JSON.stringify(answer) }];
   if (note) {
     content.unshift({ type: "text", text: note });
   }

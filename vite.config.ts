@@ -4,10 +4,13 @@
 import { voidReact } from "@void/react/plugin";
 import { voidPlugin } from "void";
 import { defineConfig } from "vite-plus";
+import { mcpApps } from "void-commands/vite";
 import { voidRules } from "./lint/void-rules";
 
 export default defineConfig({
-  plugins: [voidPlugin(), voidReact({ react: { compiler: true } })],
+  // Void and its React pages, and each MCP App's page built into one HTML string for the Worker
+  // (void-commands/vite: src/apps/<name>.tsx as virtual:mcp-app/<name>).
+  plugins: [voidPlugin(), voidReact({ react: { compiler: true } }), mcpApps({ dir: "src/apps" })],
   // At the workspace root, `vp dev`, `vp build` and `vp preview` mean the app, which is the root;
   // `vp pack`, the CLI.
   defaultPackage: {

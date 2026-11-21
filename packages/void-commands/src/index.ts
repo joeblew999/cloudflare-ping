@@ -53,6 +53,9 @@ export type CommandDefinition<
   follow?: { command: string; by: string; uri: string };
   // A thing to read as well as a tool: the MCP resource template, with the input's keys in braces.
   resource?: { uri: string; title: string };
+  // A page that shows its answer in an AI's chat, for a client that can show one (an MCP App:
+  // its page is built by void-commands/vite and handed to the MCP server); others get the answer.
+  app?: { title: string };
 };
 
 // A definition, with its literal name and route path kept for the types.

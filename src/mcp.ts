@@ -6,6 +6,7 @@
 // same-call answers in KV.
 import { CfWorkerJsonSchemaValidator } from "@modelcontextprotocol/server/validators/cf-worker";
 import { commandsMcpServer, type McpCaller } from "void-commands/server";
+import coverageApp from "virtual:mcp-app/coverage";
 import { kv } from "void/kv";
 import { API_VERSION } from "@cloudflare-ping/shared/version";
 import { COMMANDS } from "./commands/all";
@@ -26,6 +27,8 @@ export function mcpServer(context: CommandContext, caller: McpCaller) {
         "Probes from around the world, run from Cloudflare's data centres. Starting a run, a test or a map spends Globalping tests: check limits first. Places finds what to pass as from.",
     },
     commands: COMMANDS,
+    // Each command's app, by name (its definition's `app`): the page, built into the Worker.
+    apps: { coverage: coverageApp },
     context,
     caller,
     spendScope: SPEND_SCOPE,

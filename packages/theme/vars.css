@@ -1,0 +1,5 @@
+/* VitePress's colour variables and Void's colours, and nothing that loads a file: for a page that
+   can load nothing, the coverage map's MCP App (src/apps/coverage.tsx). base.css is the whole
+   theme, with its fonts. */
+@import "vitepress/dist/client/theme-default/styles/vars.css";
+@import "./brand.css";

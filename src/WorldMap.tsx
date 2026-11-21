@@ -2,6 +2,8 @@
 // Earth's land) in its own projection, where x is longitude and y is minus latitude, so a point
 // sits at its coordinates and nothing else. Used by the geographical coverage map (pages/
 // coverage.tsx), and later by the geographical probe map: two maps, one drawing.
+import "./WorldMap.css";
+
 export type WorldPoint = {
   key: string;
   lat: number;
@@ -36,11 +38,15 @@ export function WorldMap({
   points,
   label,
   zoom = false,
+  land,
 }: {
   points: Array<WorldPoint>;
   label: string;
   // Show only the part of the world the points are in.
   zoom?: boolean;
+  // The land's path data, for a page that can load nothing (the coverage map's MCP App); the
+  // site's own file (public/world.svg) otherwise.
+  land?: string;
 }) {
   const view =
     zoom && points.length > 0 ? around(points) : { x: -180, y: -90, width: 360, height: 180 };
@@ -55,7 +61,11 @@ export function WorldMap({
       role="img"
       aria-label={label}
     >
-      <use href="/world.svg#land" className="land" x="-180" y="-90" width="360" height="180" />
+      {land ? (
+        <path className="land" d={land} fill="currentColor" />
+      ) : (
+        <use href="/world.svg#land" className="land" x="-180" y="-90" width="360" height="180" />
+      )}
       {points.map((point) => (
         <circle
           key={point.key}

@@ -1,6 +1,7 @@
 // The MCP server as a client sees it, with the official SDK on both sides: the client's HTTP
 // transport talks to the server's own `createMcpHandler`, as on a Worker, with its fetch handed
 // straight to the handler instead of the network. No mocks: the same code paths as `/mcp`.
+import { RESOURCE_MIME_TYPE, RESOURCE_URI_META_KEY } from "@modelcontextprotocol/ext-apps/server";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { createMcpHandler } from "@modelcontextprotocol/server";
 import { CfWorkerJsonSchemaValidator } from "@modelcontextprotocol/server/validators/cf-worker";
@@ -176,6 +177,66 @@ describe("commandsMcpServer", () => {
       id: "a1",
       name: "The first",
     });
+  });
+});
+
+// A command with an app: its page, in an AI's chat.
+const glance = implement(
+  defineCommand({
+    name: "glance",
+    about: "Things, on a page",
+    input: z.object({}),
+    api: null,
+    page: null,
+    task: null,
+    signedIn: false,
+    spends: false,
+    mcp: true,
+    cli: null,
+    app: { title: "Things" },
+  }),
+  z.object({ count: z.number() }),
+  () => ({ count: things.size }),
+);
+
+const PAGE = "<!doctype html><p>The things</p>";
+
+function appServer(apps: Record<string, string>) {
+  return commandsMcpServer({
+    info: { name: "test", version: "1" },
+    commands: [glance],
+    context: { spent: [] },
+    caller: { client: "client-1", user: "user-1", scopes: [] },
+    apps,
+    serverOptions: { jsonSchemaValidator: new CfWorkerJsonSchemaValidator() },
+  });
+}
+
+describe("a command's app", () => {
+  it("links its tool to its page, as registerAppTool does, and serves the page", async () => {
+    const handler = createMcpHandler(() => appServer({ glance: PAGE }));
+    const client = new Client({ name: "test client", version: "1" });
+    await client.connect(
+      new StreamableHTTPClientTransport(new URL("http://test/mcp"), {
+        fetch: (url, init) =>
+          handler.fetch(new Request(url, init), {
+            authInfo: { token: "t", clientId: "client-1", scopes: [] },
+          }),
+      }),
+    );
+    const { tools } = await client.listTools();
+    expect(tools.find((each) => each.name === "glance")?._meta).toMatchObject({
+      ui: { resourceUri: "ui://test/glance.html" },
+      [RESOURCE_URI_META_KEY]: "ui://test/glance.html",
+    });
+    const read = await client.readResource({ uri: "ui://test/glance.html" });
+    expect(read.contents[0]).toMatchObject({ mimeType: RESOURCE_MIME_TYPE, text: PAGE });
+    const answer = await client.callTool({ name: "glance", arguments: {} });
+    expect(answer.structuredContent).toEqual({ count: things.size });
+  });
+
+  it("won't start without the page", () => {
+    expect(() => appServer({})).toThrow("glance has an app, but no page was given");
   });
 });
 
