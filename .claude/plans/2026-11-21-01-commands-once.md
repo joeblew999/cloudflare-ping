@@ -1,7 +1,7 @@
 # 2026-11-21-01-commands-once.md: each command written once, every surface made from it
 
 Status: 2026-11-21, approved in the conversation ("do it all"), built and proven locally the same
-day (see "How it was proven"); not deployed yet. Found from
+day (see "How it was proven"); deployed and checked live 2026-11-21 ("Still open"). Found from
 the repo as it was (commit ed02c31), Void 1.11.0's docs (`node_modules/void/docs`), the MCP SDK
 2.4.0's and Better Auth 1.7.26's own types, and three other Void apps serving MCP, checked on
 2026-11-21: elecdeer/tsuke (`apps/ledger/routes/mcp.ts`, `src/mcp/server.ts`), yagipass/nestodo
@@ -214,8 +214,17 @@ Workers Logs shows who used them.
 
 ## Still open
 
-- **Deploy and check on the Mac:** `vp run deploy` (it runs `mcp:check` after, which signs in
-  through the browser).
+- ~~Deploy and check on the Mac~~: done 2026-11-21. `vp run deploy` went through first time
+  (migrations up to date, staged, live), then `coverage:check` and `mcp:check` passed against the
+  live site, 3/3: the tools with their output schemas, every read-only command identical on MCP,
+  the API and the CLI (runs paged with limit and cursor too), `show` against its resource, `trace`
+  with the fetch's real log; `limits` differing only in each request's own address counts. By
+  hand on the live site: every page and docs page 200, missing ones 404, `/api/openapi.json`
+  (OpenAPI 3.1, the eight routes), the server card, failures in the app's words (404 for a run
+  that isn't there, 400 naming the field), the CLI's help, paging and exit code 5. Signed out,
+  the three spending routes refuse an empty body with 400 (Void's validator runs first, as before
+  the rewrite) and a valid one with 401 (`call` asks `requireAuth` before running), so no test
+  can be spent signed out; not sent with a valid body, so nothing was spent.
 - **Agents added before this change** were registered without the `tests` scope and can't step
   up: remove and add them again once (docs/agents.md says so).
 - **MCP Apps** (the map or coverage page shown in the AI's chat): its own plan.
