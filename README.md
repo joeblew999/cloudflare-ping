@@ -12,10 +12,14 @@ with its docs at https://cloudflare-ping.gedw99.workers.dev/docs/ (`docs/`, Vite
 <!-- The docs show this section as it is (docs/guide.md); write it here only. -->
 <!-- #region use -->
 
-Each thing the app does is written once (`src/commands/`) and reached three ways: its
-API route (`routes/api/`), which the command calls with Void's typed fetch
-(`void/client`); its web page, whose loader and action (Void's page actions) run the same code;
-and its MCP tool, which runs the same code too. So the web and the terminal do the same things, the same way.
+Each thing the app does is defined once (`packages/shared/src/commands.ts`: what it takes, where
+it is, whether it spends tests) and its code written once beside it (`src/commands/`: what it
+answers and what it does). It's reached four ways: its API route (`routes/api/`), which the CLI
+calls with Void's typed fetch (`void/client`); its web page, whose loader and action (Void's page
+actions) run the same code; its MCP tool, which runs the same code too; and the CLI, whose flags
+and help come from the same definition. So the web, the terminal and an AI agent do the same
+things, the same way. The machinery is the repo's own package, `void-commands`
+(`packages/void-commands`), made for any Void app (plan 2026-11-21-01).
 
 | What                       | Web page               | In the repo                      | Anywhere (the package)           | API                                   | MCP tool   |
 | -------------------------- | ---------------------- | -------------------------------- | -------------------------------- | ------------------------------------- | ---------- |
@@ -39,7 +43,14 @@ it is) and `--site <url>` (another copy of the app, such as `vp dev`'s); `vp run
 runs any of them from source. Each page shows its command. An agent can use the same things as MCP
 tools at `/mcp`, signing itself in through your browser (the docs: "From an AI agent"):
 `claude mcp add --transport http cloudflare-ping https://cloudflare-ping.gedw99.workers.dev/mcp`. Signing in is also automatic: the first
-command that needs it shows a link and a code to approve at `/device`.
+command that needs it shows a link and a code to approve at `/device`. Over MCP, the tools that
+spend tests also need the `tests` scope, granted on the allow page. The API is also described as
+an OpenAPI document, at `/api/openapi.json`, and the MCP server by its Server Card, at
+`/.well-known/mcp/server-card.json`.
+
+When a call fails, the CLI says why in the app's words and exits with a code for the kind of
+failure: 3 signed out, 4 not allowed, 5 not found, 6 a limit reached, 7 another service refused,
+8 not set up (`FAILURES`, `packages/void-commands/src/index.ts`).
 
 A run sends one test, from probes in a place, to `/run` for that run; `/run` fetches
 the target from each data centre the probes reach and records every fetch. Reading runs is open;
@@ -79,13 +90,14 @@ The Void app is the repo's root, with its docs (VitePress) beside it in `docs/`,
 sets a static site beside an app (`guide/app-types.md`, "Adding a backend to a static site"). The
 packages they share code with are in `packages/`, one Vite+ workspace:
 
-| Where             | Package                   | What                                                                                           |
-| ----------------- | ------------------------- | ---------------------------------------------------------------------------------------------- |
-| the root          | `cloudflare-ping-app`     | The Void app: its pages, API routes, database, auth, and the Worker (`void.config.ts`)         |
-| `docs`            | `docs`                    | The docs (VitePress 2), built into `public/docs` for the app to serve at `/docs/`              |
-| `packages/cli`    | `cloudflare-ping`         | The CLI, and the npm package it becomes (`vp pack`)                                            |
-| `packages/shared` | `@cloudflare-ping/shared` | What those three share: where the app is, what `/run` may fetch, the API version, the commands |
-| `packages/theme`  | `@cloudflare-ping/theme`  | One look for the app and the docs: VitePress's own theme CSS, in Void's colours                |
+| Where                    | Package                   | What                                                                                                                              |
+| ------------------------ | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| the root                 | `cloudflare-ping-app`     | The Void app: its pages, API routes, database, auth, and the Worker (`void.config.ts`)                                            |
+| `docs`                   | `docs`                    | The docs (VitePress 2), built into `public/docs` for the app to serve at `/docs/`                                                 |
+| `packages/cli`           | `cloudflare-ping`         | The CLI, and the npm package it becomes (`vp pack`)                                                                               |
+| `packages/shared`        | `@cloudflare-ping/shared` | What those three share: where the app is, what `/run` may fetch, the API version, the commands                                    |
+| `packages/void-commands` | `void-commands`           | Commands written once, for any Void app: the definitions, the failure kinds, the MCP server, the OpenAPI document, the CLI's help |
+| `packages/theme`         | `@cloudflare-ping/theme`  | One look for the app and the docs: VitePress's own theme CSS, in Void's colours                                                   |
 
 - `pnpm-workspace.yaml`: the packages, and one version of each shared dependency for all of them
   (the catalog: Vite+, Void, VitePress, …; `"catalog:"` in each package.json).
@@ -115,10 +127,13 @@ At the root:
   `&background=1` answers at once and fetches afterwards. Public, since the probes can't
   sign in. Needs `global_fetch_strictly_public` (`void.config.ts`) to reach other Workers on
   `gedw99.workers.dev`.
-- `src/commands/`: each thing the app does, written once: what it takes (one zod schema, which
-  the route's and the page action's `withValidator` both use) and what it does. The API routes,
-  the pages' loaders and actions, and the MCP tools (`src/mcp.ts`, served at `/mcp`) run these; tests beside them
-  (`vp test`).
+- `src/commands/`: each thing the app does, written once, as `implement(definition, output,
+  run)`: its definition (`packages/shared/src/commands.ts`, whose input schema the route's and the
+  page action's `withValidator` both use), what it answers (one schema; database rows from the
+  Drizzle tables with `void/drizzle-zod`), and what it does. A failure is a kind, never an HTTP
+  code (`fail("not_found", …)`, void-commands). The API routes and pages run them with
+  `runCommand` (`src/commands/context.ts`: signed in when the definition says, logged), and the MCP
+  server (`src/mcp.ts`, served at `/mcp`) is made from the list (`src/commands/all.ts`).
 - `src/globalping.ts`, `src/runs.ts`, `src/trace.ts`: what the commands use. `src/trace.ts`
   reads the account's Workers logs with the app's own Cloudflare API token
   (`CLOUDFLARE_OBSERVABILITY_TOKEN`, "Workers Observability Read"); without it, the log lookups
@@ -209,14 +224,18 @@ also run on their own:
   asks each command that only reads the same question of MCP, the API and the CLI, and the three
   answers must be identical. Each question is written once, as the command's options
   (`questionFor`, `packages/shared/src/commands.ts`, makes the API request and the CLI arguments
-  from them, using the command's `api` and `argument`), and a command that only reads must be asked,
+  from them, using the command's `api.path` and `cli.argument`), and a command that only reads must be asked,
   so a new one fails the check until it has a question. What's about the request rather than the
   app (`limits`: which data centre ran it, which address it went out from, and that address's tests
   left) is shown side by side, not compared: even in one data centre, a Worker's requests can go
   out from different addresses, each with its own count. Answers that differ are asked once more,
   so a source answering differently once is shown but doesn't fail the check, while a difference
   in the code still does. It never calls a command that spends tests (`spends` in the commands
-  list, which also marks the MCP tools, `cloudflare-ping help`, the docs and the skill).
+  list, which also marks the MCP tools, `cloudflare-ping help`, the docs and the skill). It also
+  checks each tool says what it answers, reads a run as the resource `cloudflare-ping://runs/<id>`
+  against `show`, and follows `runs`' `next` to the next lot. It runs against `vp dev` too
+  (`-- --site http://localhost:5199`); there, a command that needs signing in asks the CLI to
+  sign in first, at `/device`.
 
 Locally: `vp dev` runs the app (`vp dev --port 5199` for another port), with the docs at `/docs/`
 once built. `vp preview` runs the production build, which needs `BETTER_AUTH_SECRET` (Void:

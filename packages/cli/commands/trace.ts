@@ -5,16 +5,14 @@
 // the `cf-ray`s that `test` and `run` print.
 import { parseArgs } from "node:util";
 import { fetch } from "void/client";
+import { trace as definition } from "@cloudflare-ping/shared/commands";
 import { commonOptions, headers, printedJson, signedIn, siteOf, stop } from "../api";
 
 export async function trace(args: Array<string>) {
   const { values, positionals } = parseArgs({
     args,
     allowPositionals: true,
-    options: {
-      minutes: { type: "string", default: "60" },
-      ...commonOptions,
-    },
+    options: { ...definition.cli.flags, ...commonOptions },
   });
   const site = siteOf(values.site);
   const ray = positionals[0] ?? "";

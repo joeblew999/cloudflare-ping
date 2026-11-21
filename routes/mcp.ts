@@ -3,7 +3,9 @@
 // Signed in by OAuth through Void's auth (auth.ts, `mcp()`): `requireMcpAuth` takes only an access
 // token issued for this resource (signed by `jwt()`, for an allowed account). Without one it
 // answers 401, with a `WWW-Authenticate` naming /.well-known/oauth-protected-resource/mcp, which
-// is how an agent finds where to sign in.
+// is how an agent finds where to sign in. The tools that spend tests also need the token to carry
+// the `tests` scope (src/mcp-scope.ts); without it, the SDK answers them with an
+// `insufficient_scope` challenge, so the client can ask for it.
 import { requireMcpAuth } from "@better-auth/mcp";
 import { createMcpHandler, originValidationResponse } from "@modelcontextprotocol/server";
 import { defineHandler } from "void";
@@ -25,7 +27,12 @@ export const POST = defineHandler(async (c) => {
     (request, claims) => {
       const scopes = typeof claims.scope === "string" ? claims.scope.split(" ") : [];
       logger.info("MCP request", { client: claims.azp ?? null, user: claims.sub ?? null });
-      return createMcpHandler(() => mcpServer(context)).fetch(request, {
+      const caller = {
+        client: typeof claims.azp === "string" ? claims.azp : null,
+        user: typeof claims.sub === "string" ? claims.sub : null,
+        scopes,
+      };
+      return createMcpHandler(() => mcpServer(context, caller)).fetch(request, {
         authInfo: {
           token: request.headers.get("authorization")?.replace(/^Bearer /i, "") ?? "",
           clientId: typeof claims.azp === "string" ? claims.azp : "",

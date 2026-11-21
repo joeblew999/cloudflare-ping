@@ -4,6 +4,7 @@
 // place picker offers.
 import { parseArgs } from "node:util";
 import { fetch } from "void/client";
+import { places as definition } from "@cloudflare-ping/shared/commands";
 import {
   KIND_LABELS,
   PLACE_KINDS,
@@ -19,7 +20,7 @@ export async function places(args: Array<string>) {
   const { values, positionals } = parseArgs({
     args,
     allowPositionals: true,
-    options: { kind: { type: "string" }, limit: { type: "string" }, ...commonOptions },
+    options: { ...definition.cli.flags, ...commonOptions },
   });
   const site = siteOf(values.site);
   const kind = values.kind;
@@ -33,6 +34,7 @@ export async function places(args: Array<string>) {
         ...(q ? { q } : {}),
         ...(kind ? { kind } : {}),
         ...(values.limit ? { limit: values.limit } : {}),
+        ...(values.cursor ? { cursor: values.cursor } : {}),
       },
       baseURL: site,
       headers: headers(),
@@ -62,5 +64,8 @@ export async function places(args: Array<string>) {
     if (group.places.length > shown) {
       console.log(`  and ${group.places.length - shown} more`);
     }
+  }
+  if (found.next) {
+    console.log(`\nMore: --cursor ${found.next}`);
   }
 }

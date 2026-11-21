@@ -2,13 +2,14 @@
 // run's page.
 import { parseArgs } from "node:util";
 import { fetch } from "void/client";
+import { show as definition } from "@cloudflare-ping/shared/commands";
 import { asked, commonOptions, headers, printedJson, printRow, siteOf, stop } from "../api";
 
 export async function show(args: Array<string>) {
   const { values, positionals } = parseArgs({
     args,
     allowPositionals: true,
-    options: { ...commonOptions },
+    options: { ...definition.cli.flags, ...commonOptions },
   });
   const site = siteOf(values.site);
   const id = positionals[0];

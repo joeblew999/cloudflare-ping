@@ -6,7 +6,7 @@
 // 500 (globalping.io/credits, checked 2026-11-19).
 // Made in two parts, so a page can make the test, redirect, and wait for it in its loader
 // (`makeTest`, then `testResult`); `probeFrom` does both, for the API.
-import { HTTPException } from "hono/http-exception";
+import { fail } from "void-commands/server";
 import { logger } from "void/log";
 import { z } from "zod";
 import { FROM_KINDS, asArgument, searchPlaces } from "@cloudflare-ping/shared/places";
@@ -122,7 +122,7 @@ export async function globalpingLimits(token: string | undefined) {
   if (!response.ok || !read.success) {
     const words = wordsOf(body, response.status);
     logger.error(`The test allowance couldn't be read: ${words}`);
-    throw new HTTPException(502, { message: `The test allowance couldn't be read: ${words}` });
+    fail("refused", `The test allowance couldn't be read: ${words}`);
   }
   const create = read.data.rateLimit.measurements.create;
   return {
@@ -156,7 +156,7 @@ export async function makeTest(options: ProbeOptions) {
   const query = mark === -1 ? "" : options.path.slice(mark + 1);
   const host = options.host ?? SITE;
   if (host !== SITE && !ALLOWED_HOSTS.has(host)) {
-    throw new HTTPException(403, { message: `Not on the allowed list: ${host}` });
+    fail("not_allowed", `Not on the allowed list: ${host}`);
   }
   const started = await fetch(API, {
     method: "POST",
@@ -186,9 +186,11 @@ export async function makeTest(options: ProbeOptions) {
     });
     const suggested =
       !options.places && noProbes.safeParse(body).success ? await didYouMean(options.from) : "";
-    throw new HTTPException(502, {
-      message: `The test was refused (${started.status}): ${words}${suggested}`,
-    });
+    // Its hourly limit is a limit reached; anything else, a refusal.
+    fail(
+      started.status === 429 ? "limit_reached" : "refused",
+      `The test was refused (${started.status}): ${words}${suggested}`,
+    );
   }
   const id = made.data.id;
   logger.info(`Test ${id} made, from ${options.from} to ${host}${options.path}`, {
@@ -217,9 +219,10 @@ export async function testResult(id: string, token: string | undefined) {
       logger.error(`Test ${id} couldn't be read: ${words}`, {
         measurement: id,
       });
-      throw new HTTPException(response.status === 404 ? 404 : 502, {
-        message: `Test ${id} couldn't be read: ${words}`,
-      });
+      fail(
+        response.status === 404 ? "not_found" : "refused",
+        `Test ${id} couldn't be read: ${words}`,
+      );
     }
     done = read.data;
   }

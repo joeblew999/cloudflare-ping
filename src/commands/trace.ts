@@ -1,26 +1,41 @@
 // `trace`: Cloudflare's own record of a request, from the account's Workers logs (src/trace.ts).
 // Signed in only: the logs are of other people's requests. `GET /api/trace/<ray id>`, a
 // request's page, and the MCP tool.
-import { HTTPException } from "hono/http-exception";
+import { trace as definition } from "@cloudflare-ping/shared/commands";
 import { env } from "void/env";
 import { z } from "zod";
+import { fail } from "void-commands/server";
 import { traceOf } from "../trace";
+import { implement } from "./context";
 
-export const traceParams = z.object({ ray: z.string().regex(/^[0-9a-f]{16}(-[A-Z]{3})?$/) });
-// How far back to look, in minutes: up to a week.
-const minutes = z.number().int().min(1).max(10_080);
-// In a URL's query it arrives as text.
-export const traceQuery = z.object({ minutes: z.coerce.number().pipe(minutes).optional() });
-// As a tool's input, a number.
-export const traceInput = traceParams.extend({ minutes: minutes.optional() });
+export const traceAnswer = z.object({
+  ray: z.string(),
+  minutes: z.number(),
+  logs: z.array(
+    z.object({
+      // The request itself, or a line logged while it ran.
+      kind: z.enum(["request", "line"]),
+      at: z.string(),
+      service: z.string().nullable(),
+      message: z.string().nullable(),
+      colo: z.string().nullable(),
+      from: z.string().nullable(),
+      city: z.string().nullable(),
+      country: z.string().nullable(),
+      outcome: z.string().nullable(),
+      wallTimeMs: z.number().nullable(),
+      cpuTimeMs: z.number().nullable(),
+      traceId: z.string().nullable(),
+      spans: z.number(),
+    }),
+  ),
+});
 
-// 503 when the app has no token to read the logs with: the page says it's not set up.
-export function trace({ ray, minutes: since }: z.infer<typeof traceInput>) {
+// Not set up when the app has no token to read the logs with: the page says so.
+export const trace = implement(definition, traceAnswer, ({ ray, minutes }) => {
   const token = env.CLOUDFLARE_OBSERVABILITY_TOKEN;
   if (!token) {
-    throw new HTTPException(503, {
-      message: "Not set up: the app has no CLOUDFLARE_OBSERVABILITY_TOKEN (env.ts)",
-    });
+    fail("not_set_up", "Not set up: the app has no CLOUDFLARE_OBSERVABILITY_TOKEN (env.ts)");
   }
-  return traceOf(ray, since ?? 60, token);
-}
+  return traceOf(ray, minutes ?? 60, token);
+});

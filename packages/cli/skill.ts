@@ -3,7 +3,7 @@
 // reads. Its list of commands and tools is written from packages/shared/src/commands.ts, the list
 // `cloudflare-ping help`, the docs and the MCP tools come from, so the four can't differ.
 // write-skill.ts writes it (the package's build); skill.test.ts fails when it's out of date.
-import { COMMAND_LIST, COMMON_OPTIONS, SIGNING_IN } from "@cloudflare-ping/shared/commands";
+import { COMMAND_LIST, COMMON_OPTIONS, SIGNING_IN, usage } from "@cloudflare-ping/shared/commands";
 import { SITE } from "@cloudflare-ping/shared/site";
 
 export const SKILL_PATH = "skills/cloudflare-ping/SKILL.md";
@@ -15,7 +15,7 @@ export function skillText() {
       (mark) => mark !== "",
     );
     const marked = marks.length > 0 ? ` (${marks.join(", ")})` : "";
-    return `| \`cloudflare-ping ${each.use}\` | ${each.tool ? `\`${each.tool}\`` : "-"} | ${each.about}${marked} | \`${each.page}\` |`;
+    return `| \`cloudflare-ping ${usage(each)}\` | ${each.mcp ? `\`${each.name}\`` : "-"} | ${each.about}${marked} | \`${each.page}\` |`;
   });
   return `---
 name: cloudflare-ping
@@ -41,7 +41,11 @@ so starting a run or a test spends them; reading runs, limits and logs spends no
 - Check \`limits\` before starting runs or tests. Without the app's own token, the count
   is that of a Cloudflare address other customers share, and it can be 0 at any moment.
 - A run in the background (the default) answers once the probes reach the data centres; the
-  fetches come after. Read them a little later with \`show <run id>\`, or on the run's page.
+  fetches come after. Read them a little later with \`show <run id>\` (over MCP, the run's answer
+  links its resource, \`cloudflare-ping://runs/<id>\`), or on the run's page.
+- Over MCP, the tools that spend tests need the \`tests\` scope, granted when signing in, and ask
+  first when the agent can ask you. The same call twice within two minutes spends once.
+- Long lists (\`runs\`, \`places\`) come a lot at a time: pass the answer's \`next\` as \`cursor\`.
 - Only targets on the app's allowed list can be fetched; others are refused before any test is
   spent.
 - Pass a failure on in the app's own words: they say what went wrong (a test refused, a probe that didn't reach the Worker).

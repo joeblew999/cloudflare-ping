@@ -1,202 +1,405 @@
-// The commands, as `cloudflare-ping help` lists them and the docs' command reference shows them
-// (docs/cli.data.ts): one list, so the two never differ. What each one runs is in packages/cli/main.ts.
-export type CommandInfo = {
-  name: string;
-  use: string;
-  about: string;
-  // Where the web does the same.
-  page: string;
-  // The API route it calls.
-  api: string;
-  // The `vp run` task that runs it from source, in the repo, if it has one.
-  task: string | null;
-  // Its MCP tool (src/mcp.ts), if it has one: signing in and out is the MCP client's own.
-  tool: string | null;
-  // Whether it needs this machine signed in. The one place that decides: its API route and its
-  // page enforce what this says (src/commands/context.ts, `signedInFor`), and the docs
-  // and `cloudflare-ping help` show it from here.
-  signedIn: boolean;
-  // Whether it spends tests: only an explicit test, run or new map does, never coverage, places or
-  // a picker. Its MCP tool is marked by it (src/mcp.ts), the docs, `cloudflare-ping help` and the
-  // skill show it, and `vp run mcp:check` never calls it.
-  spends: boolean;
-  // Which of its options the CLI's bare argument fills (`places bang`: q), if it takes one. With
-  // it, one question becomes each surface's (`questionFor`).
-  argument: string | null;
-};
+// The app's commands, each written once (plan 2026-11-21-01): what it is, what it takes, where it
+// is on each surface. Everything is made from these: the API routes and pages run them with
+// `runCommand` (src/commands/context.ts), the MCP server lists them (src/mcp.ts), the CLI takes its
+// flags and help from them (packages/cli), the docs' command reference and the agent skill print
+// them, and `vp run mcp:check` asks them. The code that runs each one is beside it in the Worker
+// (src/commands/), as `implement(definition, output, run)`. Nothing here runs a command, so the
+// CLI and the docs can import it.
+import { z } from "zod";
+import {
+  defineCommand,
+  type CliShape,
+  type CommandDefinition,
+  type InputSchema,
+} from "void-commands";
+import { usageOf } from "void-commands/cli";
+import type { RoutePath } from "void/routes";
+import { PLACE_KINDS } from "@cloudflare-ping/shared/places";
+import { DEFAULT_TARGET } from "@cloudflare-ping/shared/targets";
 
-export const COMMAND_LIST: Array<CommandInfo> = [
-  {
-    name: "test",
-    use: "test [--from TH] [--path /where] [--probes 1] [--host <target>]",
-    about: "One test, to our probe or straight to a target",
-    page: "/",
-    api: "POST /api/probe",
-    task: "probe:test",
-    tool: "test",
-    signedIn: true,
-    spends: true,
+// A definition whose API path is one of the app's own routes: a typo doesn't compile.
+const command = <
+  const Name extends string,
+  Input extends InputSchema,
+  const Path extends RoutePath,
+  const Cli extends CliShape<Input> | null,
+>(
+  definition: CommandDefinition<Name, Input, Path, Cli>,
+) => defineCommand(definition);
+
+// Where to test from: Globalping's "magic" field.
+const from = z
+  .string()
+  .min(1)
+  .describe(
+    "Where the probes are: a country code (TH), a city, a region, or a network (AS13335), as places finds them",
+  );
+
+export const test = command({
+  name: "test",
+  about: "One test, to our probe or straight to a target",
+  input: z.object({
+    from,
+    // A pattern, not `startsWith`, whose JSON Schema form ("format": "starts_with") isn't standard.
+    path: z
+      .string()
+      .regex(/^\//, "A path starts with /")
+      .describe("The path the probes fetch: /where answers which data centre it ran in"),
+    probes: z.number().int().min(1).max(10).describe("How many probes: each is one test's worth"),
+    host: z
+      .string()
+      .optional()
+      .describe("A target on the allowed list to fetch directly; our own probe unless given"),
+  }),
+  api: { method: "POST", path: "/api/probe" },
+  page: "/",
+  task: "probe:test",
+  signedIn: true,
+  spends: true,
+  mcp: true,
+  cli: {
     argument: null,
+    flags: {
+      from: { type: "string", default: "TH", help: "Where the probes are", hint: "TH" },
+      path: { type: "string", default: "/where", help: "The path they fetch", hint: "/where" },
+      probes: { type: "string", default: "1", help: "How many probes", hint: "1" },
+      host: { type: "string", help: "A target on the allowed list, instead of our probe" },
+    },
   },
-  {
-    name: "run",
-    use: "run [--target <url>] [--from TH] [--probes 2] [--repeat 1] [--inline] [--everywhere [--at BKK,SIN]]",
-    about:
-      "Start a run and follow its fetches as they're recorded; --everywhere: from every data centre the map reached",
-    page: "/runs",
-    api: "POST /api/runs",
-    task: "ping:run",
-    tool: "run",
-    signedIn: true,
-    spends: true,
+});
+
+export const run = command({
+  name: "run",
+  about:
+    "Start a run and follow its fetches as they're recorded; everywhere: from every data centre the map reached",
+  input: z.object({
+    target: z
+      .url({ protocol: /^https$/ })
+      .describe("The address to fetch, from the allowed list (packages/shared/src/targets.ts)"),
+    from,
+    probes: z.number().int().min(1).max(10).describe("How many probes"),
+    repeat: z.number().int().min(1).max(5).describe("How many fetches each probe's request makes"),
+    background: z
+      .boolean()
+      .describe("Answer as soon as the probes reach us, and fetch afterwards (true), or wait"),
+    // From every data centre the map reached, one probe each (plan step 8), instead of `from` and
+    // `probes`; in the background. `at`: only these data centres, to try one first.
+    everywhere: z
+      .object({
+        map: z.string().min(8).max(64).optional().describe("Which map: the newest unless given"),
+        at: z
+          .array(
+            z.string().regex(/^[A-Za-z]{3}$/, "A data centre's three-letter code, such as BKK"),
+          )
+          .max(400)
+          .optional()
+          .describe("Only these data centres"),
+      })
+      .optional()
+      .describe("One probe in each data centre the map reached, instead of from and probes"),
+  }),
+  api: { method: "POST", path: "/api/runs" },
+  page: "/runs",
+  task: "ping:run",
+  signedIn: true,
+  spends: true,
+  mcp: true,
+  cli: {
     argument: null,
+    flags: {
+      target: {
+        type: "string",
+        default: DEFAULT_TARGET,
+        help: "The address to fetch",
+        hint: "<url>",
+      },
+      from: { type: "string", default: "TH", help: "Where the probes are", hint: "TH" },
+      probes: { type: "string", default: "2", help: "How many probes", hint: "2" },
+      repeat: { type: "string", default: "1", help: "Fetches per probe", hint: "1" },
+      inline: { type: "boolean", default: false, help: "Fetch before answering" },
+      everywhere: {
+        type: "boolean",
+        default: false,
+        help: "One probe in each data centre the map reached",
+      },
+      at: { type: "string", help: "With --everywhere: only these data centres", hint: "BKK,SIN" },
+    },
   },
-  {
-    name: "runs",
-    use: "runs",
-    about: "The newest runs",
-    page: "/runs",
-    api: "GET /api/runs",
-    task: "ping:runs",
-    tool: "runs",
-    signedIn: false,
-    spends: false,
+  follow: { command: "show", by: "id", uri: "cloudflare-ping://runs/{id}" },
+});
+
+export const runs = command({
+  name: "runs",
+  about: "The newest runs",
+  input: z.object({
+    cursor: z.string().max(200).optional().describe("Carry on from here: the last answer's next"),
+    limit: z.coerce.number().int().min(1).max(200).optional().describe("At most this many (50)"),
+  }),
+  api: { method: "GET", path: "/api/runs" },
+  page: "/runs",
+  task: "ping:runs",
+  signedIn: false,
+  spends: false,
+  mcp: true,
+  cli: {
     argument: null,
+    flags: {
+      cursor: { type: "string", help: "Carry on from the last answer's next" },
+      limit: { type: "string", help: "At most this many", hint: "50" },
+    },
   },
-  {
-    name: "show",
-    use: "show <run id>",
-    about: "One run and its fetches",
-    page: "/runs/<id>",
-    api: "GET /api/runs/<id>",
-    task: "ping:show",
-    tool: "show",
-    signedIn: false,
-    spends: false,
-    argument: "id",
-  },
-  {
-    name: "limits",
-    use: "limits",
-    about: "How many tests the app has left this hour",
-    page: "/runs",
-    api: "GET /api/limits",
-    task: "ping:limits",
-    tool: "limits",
-    signedIn: false,
-    spends: false,
-    argument: null,
-  },
-  {
-    name: "places",
-    use: "places [<what>] [--kind <kind>] [--limit <n>]",
-    about:
-      "Find a place to test from: continents, regions, countries, US states, cities and networks with probes, and Cloudflare's data centres",
-    page: "/",
-    api: "GET /api/places",
-    task: "ping:places",
-    tool: "places",
-    signedIn: false,
-    spends: false,
+});
+
+export const show = command({
+  name: "show",
+  about: "One run and its fetches",
+  input: z.object({
+    id: z.string().min(1).max(64).describe("The run's ID, as runs and run answer it"),
+  }),
+  api: { method: "GET", path: "/api/runs/[id]" },
+  page: "/runs/<id>",
+  task: "ping:show",
+  signedIn: false,
+  spends: false,
+  mcp: true,
+  cli: { argument: "id", flags: {} },
+  resource: { uri: "cloudflare-ping://runs/{id}", title: "A run and its fetches" },
+});
+
+export const limits = command({
+  name: "limits",
+  about: "How many tests the app has left this hour",
+  input: z.object({}),
+  api: { method: "GET", path: "/api/limits" },
+  page: "/runs",
+  task: "ping:limits",
+  signedIn: false,
+  spends: false,
+  mcp: true,
+  cli: { argument: null, flags: {} },
+});
+
+export const places = command({
+  name: "places",
+  about:
+    "Find a place to test from: continents, regions, countries, US states, cities and networks with probes, and Cloudflare's data centres",
+  input: z.object({
+    q: z
+      .string()
+      .max(100)
+      .optional()
+      .describe('What\'s typed: "bang", "TH", "AS13335", "virginia"'),
+    kind: z.enum(PLACE_KINDS).optional().describe("Only places of this kind"),
+    // Not given: with something typed, the best 50; with nothing, every place (the picker's).
+    limit: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(10_000)
+      .optional()
+      .describe("At most this many, best first: 50 with something typed, every place without"),
+    cursor: z.string().max(200).optional().describe("Carry on from here: the last answer's next"),
+  }),
+  api: { method: "GET", path: "/api/places" },
+  page: "/",
+  task: "ping:places",
+  signedIn: false,
+  spends: false,
+  mcp: true,
+  cli: {
     argument: "q",
+    flags: {
+      kind: { type: "string", help: `One of: ${PLACE_KINDS.join(", ")}` },
+      limit: { type: "string", help: "At most this many" },
+      cursor: { type: "string", help: "Carry on from the last answer's next" },
+    },
   },
-  {
-    name: "coverage",
-    use: "coverage [--place Europe|TH] [--no-cities]",
-    about: "All of Cloudflare's data centres and every probe, on a world map",
-    page: "/coverage",
-    api: "GET /api/coverage",
-    task: "ping:coverage",
-    tool: "coverage",
-    signedIn: false,
-    spends: false,
+});
+
+// The coverage command's options (plan 2026-11-20-04, "One filter, everywhere"): the page's
+// address, the API's query, the CLI's flags and the MCP tool's arguments, with one set of
+// defaults, applied in the command. void.config.ts reads its keys: the page cache keeps one page
+// per value.
+export const coverageOptions = z.object({
+  // One place, a continent or a country, never both. Anything, so that what a visitor types never
+  // ends on an error page.
+  place: z
+    .string()
+    .max(60)
+    .optional()
+    .describe(
+      'One continent or country: a country by its code ("TH"), a continent by its name ("Europe"); blank for everywhere',
+    ),
+  // True or false from an agent; "true" or "false" in an address.
+  cities: z
+    .union([z.boolean(), z.stringbool()])
+    .optional()
+    .describe("Every probe city too (true unless false); false for just the totals and the table"),
+});
+
+export const COVERAGE_OPTION_KEYS = Object.keys(coverageOptions.shape);
+
+export const coverage = command({
+  name: "coverage",
+  about: "All of Cloudflare's data centres and every probe, on a world map",
+  input: coverageOptions,
+  api: { method: "GET", path: "/api/coverage" },
+  page: "/coverage",
+  task: "ping:coverage",
+  signedIn: false,
+  spends: false,
+  mcp: true,
+  cli: {
     argument: null,
+    flags: {
+      place: { type: "string", help: "One continent or country", hint: "Europe|TH" },
+      cities: { type: "boolean", help: "Every probe city too; --no-cities for just the totals" },
+    },
   },
-  {
-    name: "map",
-    use: "map [--id <map id>]",
-    about: "Which Cloudflare data centres the probes reach, and what it cost to find out",
-    page: "/map",
-    api: "GET /api/map",
-    task: "ping:map",
-    tool: "map",
-    signedIn: false,
-    spends: false,
+});
+
+export const map = command({
+  name: "map",
+  about: "Which Cloudflare data centres the probes reach, and what it cost to find out",
+  input: z.object({
+    id: z.string().min(8).max(64).optional().describe("Which map: the newest unless given"),
+  }),
+  api: { method: "GET", path: "/api/map" },
+  page: "/map",
+  task: "ping:map",
+  signedIn: false,
+  spends: false,
+  mcp: true,
+  cli: {
     argument: null,
+    flags: { id: { type: "string", help: "Which map; the newest unless given" } },
   },
-  {
-    name: "remap",
-    use: "remap [--level country|city] [--countries TH,SG]",
-    about: "Start a new map: one test per place, worked through on a queue",
-    page: "/map",
-    api: "POST /api/map",
-    task: "ping:remap",
-    tool: "remap",
-    signedIn: true,
-    spends: true,
+  resource: { uri: "cloudflare-ping://maps/{id}", title: "A map" },
+});
+
+export const remap = command({
+  name: "remap",
+  about: "Start a new map: one test per place, worked through on a queue",
+  input: z.object({
+    level: z
+      .enum(["country", "city"])
+      .describe("One probe per country (about 120 tests for the world), or per city (about 1,100)"),
+    countries: z
+      .array(z.string().regex(/^[A-Za-z]{2}$/, "A country's two-letter code, such as TH"))
+      .max(50)
+      .optional()
+      .describe("Only these countries, by code (TH, SG): a small map, to try it"),
+  }),
+  api: { method: "POST", path: "/api/map" },
+  page: "/map",
+  task: "ping:remap",
+  signedIn: true,
+  spends: true,
+  mcp: true,
+  cli: {
     argument: null,
+    flags: {
+      level: { type: "string", default: "country", help: "country or city", hint: "country|city" },
+      countries: { type: "string", help: "Only these countries", hint: "TH,SG" },
+    },
   },
-  {
-    name: "trace",
-    use: "trace <ray id> [--minutes 60]",
-    about: "A request's Cloudflare log, by its cf-ray",
-    page: "/trace/<ray>",
-    api: "GET /api/trace/<ray>",
-    task: "probe:trace",
-    tool: "trace",
-    signedIn: true,
-    spends: false,
+  follow: { command: "map", by: "id", uri: "cloudflare-ping://maps/{id}" },
+});
+
+export const trace = command({
+  name: "trace",
+  about: "A request's Cloudflare log, by its cf-ray",
+  input: z.object({
+    ray: z
+      .string()
+      .regex(/^[0-9a-f]{16}(-[A-Z]{3})?$/)
+      .describe("The request's cf-ray, with or without its data centre (a5cf35412be9a955-BKK)"),
+    // In a URL's query it arrives as text.
+    minutes: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(10_080)
+      .optional()
+      .describe("How far back to look, in minutes, up to a week (60)"),
+  }),
+  api: { method: "GET", path: "/api/trace/[ray]" },
+  page: "/trace/<ray>",
+  task: "probe:trace",
+  signedIn: true,
+  spends: false,
+  mcp: true,
+  cli: {
     argument: "ray",
+    flags: { minutes: { type: "string", default: "60", help: "How far back to look", hint: "60" } },
   },
-  {
-    name: "init",
-    use: "init",
-    about: "Set this project's coding agents up to use the app: its skill, its MCP server",
-    page: "/docs/agents",
-    api: "none: files in this folder",
-    task: null,
-    tool: null,
+});
+
+// The commands that are only the CLI's: setting a project up, and signing this machine in and out.
+const ofTheCli = <const Name extends string>(
+  name: Name,
+  about: string,
+  page: string,
+  task: string | null,
+) =>
+  defineCommand({
+    name,
+    about,
+    input: z.object({}),
+    api: null,
+    page,
+    task,
     signedIn: false,
     spends: false,
-    argument: null,
-  },
-  {
-    name: "sign-in",
-    use: "sign-in",
-    about: "Sign this machine in",
-    page: "/login",
-    api: "Void's auth",
-    task: "ping:sign-in",
-    tool: null,
-    signedIn: false,
-    spends: false,
-    argument: null,
-  },
-  {
-    name: "sign-out",
-    use: "sign-out",
-    about: "Sign this machine out",
-    page: "Sign out",
-    api: "Void's auth",
-    task: "ping:sign-out",
-    tool: null,
-    signedIn: false,
-    spends: false,
-    argument: null,
-  },
-  {
-    name: "whoami",
-    use: "whoami",
-    about: "Who this machine is signed in as",
-    page: "the top bar",
-    api: "Void's auth",
-    task: "ping:whoami",
-    tool: null,
-    signedIn: false,
-    spends: false,
-    argument: null,
-  },
-];
+    mcp: false,
+    cli: { argument: null, flags: {} },
+  });
+
+export const init = ofTheCli(
+  "init",
+  "Set this project's coding agents up to use the app: its skill, its MCP server",
+  "/docs/agents",
+  null,
+);
+export const signIn = ofTheCli("sign-in", "Sign this machine in", "/login", "ping:sign-in");
+export const signOut = ofTheCli("sign-out", "Sign this machine out", "Sign out", "ping:sign-out");
+export const whoami = ofTheCli(
+  "whoami",
+  "Who this machine is signed in as",
+  "the top bar",
+  "ping:whoami",
+);
+
+// Every command, in the order the help and the docs list them.
+export const COMMAND_LIST = [
+  test,
+  run,
+  runs,
+  show,
+  limits,
+  places,
+  coverage,
+  map,
+  remap,
+  trace,
+  init,
+  signIn,
+  signOut,
+  whoami,
+] as const;
+
+export type AnyCommand = (typeof COMMAND_LIST)[number];
+
+// What the help, the docs and the skill print for a command.
+export const usage = (definition: AnyCommand) => usageOf(definition);
+
+// How the API route is written for people: `GET /api/runs/<id>`.
+export const apiOf = (definition: AnyCommand) =>
+  definition.api
+    ? `${definition.api.method} ${definition.api.path.replaceAll(/\[([^\]]+)\]/g, "<$1>")}`
+    : definition.name === "init"
+      ? "none: files in this folder"
+      : "Void's auth";
 
 // What every command takes: the help's and the docs' last words.
 export const COMMON_OPTIONS = [
@@ -209,26 +412,25 @@ export const SIGNED_IN_COMMANDS = COMMAND_LIST.filter((each) => each.signedIn).m
 );
 
 // One question to a command, as each surface takes it, written once as the command's options. The
-// MCP tool takes the options as they are. The API takes them in its route (`<id>` from id) and the
-// rest as its query. The CLI takes the bare argument (`argument`), then `--option value`, with
+// MCP tool takes the options as they are. The API takes them in its route (`[id]` from id) and the
+// rest as its query. The CLI takes the bare argument (`cli.argument`), then `--option value`, with
 // `--option` for true and `--no-option` for false. How `vp run mcp:check` asks the three the same.
 export function questionFor(
-  command: CommandInfo,
+  definition: AnyCommand,
   options: Record<string, string | number | boolean>,
 ) {
-  const [method = "GET", route = ""] = command.api.split(" ");
   const query = new URLSearchParams();
-  let path = route;
+  let path: string = definition.api?.path ?? "";
   const bare: Array<string> = [];
   const flags: Array<string> = [];
   for (const [key, value] of Object.entries(options)) {
     const text = String(value);
-    if (path.includes(`<${key}>`)) {
-      path = path.replace(`<${key}>`, encodeURIComponent(text));
+    if (path.includes(`[${key}]`)) {
+      path = path.replace(`[${key}]`, encodeURIComponent(text));
     } else {
       query.set(key, text);
     }
-    if (key === command.argument) {
+    if (key === definition.cli?.argument) {
       bare.push(text);
     } else if (typeof value === "boolean") {
       flags.push(value ? `--${key}` : `--no-${key}`);
@@ -238,9 +440,9 @@ export function questionFor(
   }
   const search = query.toString();
   return {
-    method,
+    method: definition.api?.method ?? "GET",
     path: search ? `${path}?${search}` : path,
-    cli: [command.name, ...bare, ...flags],
+    cli: [definition.name, ...bare, ...flags],
   };
 }
 

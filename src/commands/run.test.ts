@@ -1,10 +1,10 @@
 // Starting a run: a target not on the allowed list is refused before a Globalping test is spent,
 // and an allowed one is started with the app's token and held with `waitUntil` (src/commands/run.ts).
 // Void's env and the runs module are mocked (Void's guide/testing.md: tests run in Node).
-import { HTTPException } from "hono/http-exception";
+import { CommandFailure } from "void-commands/server";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { DEFAULT_TARGET } from "@cloudflare-ping/shared/targets";
-import { run } from "./run";
+import { run as command } from "./run";
 import { startRunEverywhere } from "../everywhere";
 import { startRun } from "../runs";
 
@@ -18,6 +18,7 @@ vi.mock("../everywhere", () => ({
 
 const body = { target: DEFAULT_TARGET, from: "TH", probes: 2, repeat: 1, background: true };
 const context = { waitUntil: vi.fn(), colo: "BKK" };
+const run = command.run;
 
 describe("run", () => {
   beforeEach(() => {
@@ -26,8 +27,10 @@ describe("run", () => {
     context.waitUntil.mockClear();
   });
 
-  it("refuses a target that isn't allowed, without starting anything", () => {
-    expect(() => run({ ...body, target: "https://example.com/" }, context)).toThrow(HTTPException);
+  it("refuses a target that isn't allowed, without starting anything", async () => {
+    await expect(run({ ...body, target: "https://example.com/" }, context)).rejects.toThrow(
+      CommandFailure,
+    );
     expect(startRun).not.toHaveBeenCalled();
   });
 

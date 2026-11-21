@@ -68,24 +68,38 @@ If one doesn't connect, tell us which agent and what it said.
 4. The agent gets a token for `/mcp` only, which it renews by itself. Allowing the same agent
    again isn't asked twice.
 
-The agent can't make an account, and can't use anything but the tools below. Starting a run or
-a test spends tests, as it does from the web and the CLI.
+The agent can't make an account, and can't use anything but the tools below. Starting a run, a
+test or a map spends tests, as it does from the web and the CLI, and over MCP needs one more thing:
+the `tests` scope ("Spend Globalping tests" on the allow page). An agent allowed without it can
+read, and is asked to sign in again for it the first time it tries to spend. When the agent can
+ask you, the tool asks first, with how many tests are left; the same call twice within two
+minutes spends once.
+
+An agent added before 2026-11-21 was registered without `tests` and can't ask for it: remove it
+and add it again once (`claude mcp remove cloudflare-ping`, then the `claude mcp add` above).
 
 ## The tools
 
 Each tool is a command (the same list, the same words, the same code as the page and the CLI):
 
 <ul>
-  <li v-for="command in data.commands.filter((each) => each.tool)" :key="command.name">
-    <code>{{ command.tool }}</code>: {{ command.about }}. The same as
+  <li v-for="command in data.commands.filter((each) => each.mcp)" :key="command.name">
+    <code>{{ command.name }}</code>: {{ command.about }}. The same as
     <code>cloudflare-ping {{ command.name }}</code>.
   </li>
 </ul>
 
+Each tool says what it answers (its output schema), and fails in the app's own words. A run and a
+map are also resources to read: `cloudflare-ping://runs/<id>` and `cloudflare-ping://maps/<id>`;
+`run` and `remap` answer as soon as the work starts, with a link to the one that shows it coming
+in. `runs` and `places` come a lot at a time: pass the answer's `next` as `cursor`.
+
 ## How it's built
 
 `/mcp` is a Void route (`routes/mcp.ts`) serving the official MCP SDK
-(`@modelcontextprotocol/server`), a fresh server per request. Signing in is Void's own auth with
+(`@modelcontextprotocol/server`), a fresh server per request, made from the commands list by the
+repo's own package, `void-commands` (`packages/void-commands`). Its Server Card is at
+`/.well-known/mcp/server-card.json`, and the API's OpenAPI document at `/api/openapi.json`. Signing in is Void's own auth with
 Better Auth's MCP plugin (`auth.ts`): it is the OAuth server, binds each token to
 `/mcp`, and lets an agent register itself, by its metadata document's URL or by Dynamic Client
 Registration. The discovery documents are at

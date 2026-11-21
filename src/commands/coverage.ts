@@ -6,8 +6,9 @@
 //
 // Narrowed to one place (plan 2026-11-20-04, "One filter, everywhere"): a continent or a country,
 // never both, so nothing combines or conflicts. Nothing given: everything.
-import { z } from "zod";
+import { coverage as definition } from "@cloudflare-ping/shared/commands";
 import { searchPlaces } from "@cloudflare-ping/shared/places";
+import { z } from "zod";
 import {
   allPlaces,
   continents,
@@ -16,15 +17,70 @@ import {
   probes,
 } from "../sources/lists";
 import { continentRule } from "../sources/places";
-import { coverageOptions } from "./coverage-options";
-
-export { coverageOptions };
+import { datacentre, probeCity } from "../sources/reduce";
+import { implement } from "./context";
 
 // The place it's narrowed to, and how it's written to ask for it again (`value`: a country by its
 // code, a continent by its name), for an address, a command or a box.
-type Narrowed = { kind: "continent" | "country"; code: string; name: string; value: string };
+const narrowed = z.object({
+  kind: z.enum(["continent", "country"]),
+  code: z.string(),
+  name: z.string(),
+  value: z.string(),
+});
+type Narrowed = z.infer<typeof narrowed>;
 
-export async function coverage(options: z.infer<typeof coverageOptions> = {}) {
+// A country in the table: its data centres and probes side by side.
+const country = z.object({
+  code: z.string(),
+  name: z.string(),
+  continent: z.string(),
+  datacentres: z.number(),
+  probes: z.number(),
+  cities: z.number(),
+});
+
+export const coverageAnswer = z.object({
+  // The place it's narrowed to, a continent or a country, named from the same lists the places
+  // are: null for everything.
+  place: narrowed.nullable(),
+  // What was asked for when no place matched it: everything is shown instead.
+  unmatched: z.string().nullable(),
+  totals: z.object({
+    datacentres: z.number(),
+    // Data centres the airport data couldn't place (a new code): not on the map yet.
+    unplaced: z.array(z.string()),
+    probes: z.number(),
+    cities: z.number(),
+    countries: z.number(),
+    // How the two line up, country by country.
+    bothCountries: z.number(),
+    noProbeCountries: z.number(),
+    noDatacentreCountries: z.number(),
+  }),
+  // Every country, its data centres and probes, grouped by continent; both A to Z.
+  continents: z.array(
+    z.object({
+      code: z.string(),
+      name: z.string(),
+      datacentres: z.number(),
+      probes: z.number(),
+      countries: z.array(country),
+    }),
+  ),
+  // Cloudflare's data centres, each placed by its airport code.
+  datacentres: z.array(
+    datacentre.extend({
+      country: z.string().nullable(),
+      lat: z.number().nullable(),
+      lon: z.number().nullable(),
+    }),
+  ),
+  // The probe cities, the most probes first; left out only when asked (`cities: false`).
+  cities: z.array(probeCity),
+});
+
+export const coverage = implement(definition, coverageAnswer, async (options) => {
   const [
     {
       data: { cities: everyCity },
@@ -131,4 +187,4 @@ export async function coverage(options: z.infer<typeof coverageOptions> = {}) {
     // The probe cities, the most probes first; left out only when asked (`cities: false`).
     cities: options.cities === false ? [] : [...cities].sort((a, b) => b.probes - a.probes),
   };
-}
+});

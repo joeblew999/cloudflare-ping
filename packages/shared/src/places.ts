@@ -1,8 +1,9 @@
 // Places (plan 2026-11-20-04): what a test can run from, and what a list can be narrowed to. One
 // search, run by the Worker for `GET /api/places` (and so the CLI and MCP) and by the picker in
 // the browser, over the same places from that API: the same matching everywhere. Pure: no
-// Worker, no browser, no packages. The places themselves, and every name, come from the lists
-// the app reads (src/sources): nothing about them is written here.
+// Worker, no browser, no packages (a place's schema is in place-schema.ts, so the picker doesn't
+// load zod). The places themselves, and every name, come from the lists the app reads
+// (src/sources): nothing about them is written here.
 
 export const PLACE_KINDS = [
   "continent",
@@ -31,23 +32,8 @@ export const KIND_LABELS: Record<PlaceKind, string> = {
   datacentre: "Cloudflare data centres",
 };
 
-export type Place = {
-  kind: PlaceKind;
-  // What people read: "Bangkok", "Thailand", "Amazon.com", "BKK".
-  name: string;
-  // Where it is, or what it is, after the name: "Thailand (TH)", "Virginia (US-VA)",
-  // "AS14618, AS16509", "Bangkok, Thailand".
-  within: string | null;
-  // What it's found by exactly: "TH", "US-VA", "AS13335", "BKK".
-  codes: Array<string>;
-  // What's sent to Globalping as the place to test from (its location "magic"): "TH",
-  // "Bangkok+TH", "Ashburn+US-VA", "Amazon.com". A data centre's is its code.
-  magic: string;
-  // Globalping's probes there (none for a data centre: they're Cloudflare's).
-  probes: number;
-  // Its country (ISO code), where it has one: for narrowing lists.
-  country: string | null;
-};
+export type { Place } from "./place-schema";
+import type { Place } from "./place-schema";
 
 // Lower case, no accents: "Chișinău" is found by "chisinau".
 export function fold(text: string): string {

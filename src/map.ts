@@ -4,7 +4,7 @@
 // `/where` from one probe in each of its places, and keeps each answer as a sighting
 // (db/schema.ts). Cloudflare's own list of data centres is kept beside it as reference.
 import { datacentres as datacentresTable, maps, sightings } from "@schema";
-import { HTTPException } from "hono/http-exception";
+import { fail } from "void-commands/server";
 import { and, count, db, desc, eq, isNotNull, isNull, sql } from "void/db";
 import { env } from "void/env";
 import { logger } from "void/log";
@@ -71,9 +71,7 @@ export async function refreshDatacentres() {
 export async function startMap(level: Level, only?: Array<string>) {
   const groups = await placesFor(level, only);
   if (groups.length === 0) {
-    throw new HTTPException(400, {
-      message: `No probes in ${only?.join(", ") ?? "any country"}`,
-    });
+    fail("not_found", `No probes in ${only?.join(", ") ?? "any country"}`);
   }
   const id = crypto.randomUUID();
   const places = groups.reduce((total, each) => total + each.places.length, 0);

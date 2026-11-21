@@ -6,7 +6,7 @@ import { getUser } from "void/auth";
 import { signedInFor } from "../src/commands/context";
 import { routeUrl } from "void/routes";
 import { z } from "zod";
-import { input, measurementId, result, start } from "../src/commands/test";
+import { measurementId, result, start, test } from "../src/commands/test";
 
 export type Props = InferProps<typeof loader>;
 
@@ -38,8 +38,11 @@ export const loader = defineHandler.withValidator({
   };
 });
 
-export const action = defineHandler.withValidator({ body: input })(async (c, { body }) => {
-  signedInFor("test", c);
+export const action = defineHandler.withValidator({ body: test.definition.input })(async (
+  c,
+  { body },
+) => {
+  signedInFor(test.definition, c);
   const measurement = await start(body);
   return c.redirect(routeUrl("/", { query: { measurement }, hash: "probe" }));
 });

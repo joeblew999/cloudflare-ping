@@ -36,6 +36,7 @@
     "typescript": "catalog:",
     "vite-plus": "catalog:",
     "void": "catalog:",
+    "void-commands": "workspace:*",
     "zod": "catalog:"
   },
   "engines": {

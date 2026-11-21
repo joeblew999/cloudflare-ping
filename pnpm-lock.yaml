@@ -95,6 +95,9 @@ importers:
       react-dom:
         specifier: ^19.2.4
         version: 19.3.1(react@19.3.1)
+      void-commands:
+        specifier: workspace:*
+        version: link:packages/void-commands
       zod:
         specifier: 'catalog:'
         version: 4.6.7
@@ -150,6 +153,9 @@ importers:
       void:
         specifier: 'catalog:'
         version: 1.11.0(@types/node@26.6.6)(@voidzero-dev/vite-plus-core@8.3.8000(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1))(arktype@2.2.10)(kysely@0.29.9)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(valibot@1.5.0(typescript@7.0.2))(vitest@5.1.0)(vue@3.5.45(typescript@7.0.2))(workerd@1.20261116.1)(zod@4.6.7)
+      void-commands:
+        specifier: workspace:*
+        version: link:../packages/void-commands
       vue:
         specifier: 'catalog:'
         version: 3.5.45(typescript@7.0.2)
@@ -171,6 +177,9 @@ importers:
       void:
         specifier: 'catalog:'
         version: 1.11.0(@types/node@26.6.6)(@voidzero-dev/vite-plus-core@8.3.8000(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1))(arktype@2.2.10)(kysely@0.29.9)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(valibot@1.5.0(typescript@7.0.2))(vitest@5.1.0)(vue@3.5.45(typescript@7.0.2))(workerd@1.20261116.1)(zod@4.6.7)
+      void-commands:
+        specifier: workspace:*
+        version: link:../void-commands
       zod:
         specifier: 'catalog:'
         version: 4.6.7
@@ -180,6 +189,12 @@ importers:
       void:
         specifier: 'catalog:'
         version: 1.11.0(@types/node@26.6.6)(@voidzero-dev/vite-plus-core@8.3.8000(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1))(arktype@2.2.10)(kysely@0.29.9)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(valibot@1.5.0(typescript@7.0.2))(vitest@5.1.0)(vue@3.5.45(typescript@7.0.2))(workerd@1.20261116.1)(zod@4.6.7)
+      void-commands:
+        specifier: workspace:*
+        version: link:../void-commands
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
     devDependencies:
       typescript:
         specifier: 'catalog:'
@@ -190,6 +205,33 @@ importers:
       vitepress:
         specifier: 'catalog:'
         version: 2.0.0-alpha.21(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(postcss@8.5.33)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1)
+
+  packages/void-commands:
+    devDependencies:
+      '@cfworker/json-schema':
+        specifier: 'catalog:'
+        version: 4.1.6
+      '@modelcontextprotocol/client':
+        specifier: 'catalog:'
+        version: 2.4.0
+      '@modelcontextprotocol/server':
+        specifier: 'catalog:'
+        version: 2.4.0
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.6
+      hono:
+        specifier: ^4.11.9
+        version: 4.13.19
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      vite-plus:
+        specifier: 'catalog:'
+        version: 1.7.0(@types/node@26.6.6)(@vitest/ui@5.1.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1)
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
 
 packages:
 

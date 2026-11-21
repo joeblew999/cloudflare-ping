@@ -22,7 +22,11 @@ so starting a run or a test spends them; reading runs, limits and logs spends no
 - Check `limits` before starting runs or tests. Without the app's own token, the count
   is that of a Cloudflare address other customers share, and it can be 0 at any moment.
 - A run in the background (the default) answers once the probes reach the data centres; the
-  fetches come after. Read them a little later with `show <run id>`, or on the run's page.
+  fetches come after. Read them a little later with `show <run id>` (over MCP, the run's answer
+  links its resource, `cloudflare-ping://runs/<id>`), or on the run's page.
+- Over MCP, the tools that spend tests need the `tests` scope, granted when signing in, and ask
+  first when the agent can ask you. The same call twice within two minutes spends once.
+- Long lists (`runs`, `places`) come a lot at a time: pass the answer's `next` as `cursor`.
 - Only targets on the app's allowed list can be fetched; others are refused before any test is
   spent.
 - Pass a failure on in the app's own words: they say what went wrong (a test refused, a probe that didn't reach the Worker).
@@ -33,16 +37,16 @@ so starting a run or a test spends them; reading runs, limits and logs spends no
 
 | Command | MCP tool | What it does | On the web |
 | --- | --- | --- | --- |
-| `cloudflare-ping test [--from TH] [--path /where] [--probes 1] [--host <target>]` | `test` | One test, to our probe or straight to a target (spends tests, needs sign-in) | `/` |
-| `cloudflare-ping run [--target <url>] [--from TH] [--probes 2] [--repeat 1] [--inline] [--everywhere [--at BKK,SIN]]` | `run` | Start a run and follow its fetches as they're recorded; --everywhere: from every data centre the map reached (spends tests, needs sign-in) | `/runs` |
-| `cloudflare-ping runs` | `runs` | The newest runs | `/runs` |
-| `cloudflare-ping show <run id>` | `show` | One run and its fetches | `/runs/<id>` |
+| `cloudflare-ping test [--from TH] [--path /where] [--probes 1] [--host <host>]` | `test` | One test, to our probe or straight to a target (spends tests, needs sign-in) | `/` |
+| `cloudflare-ping run [--target <url>] [--from TH] [--probes 2] [--repeat 1] [--inline] [--everywhere] [--at BKK,SIN]` | `run` | Start a run and follow its fetches as they're recorded; everywhere: from every data centre the map reached (spends tests, needs sign-in) | `/runs` |
+| `cloudflare-ping runs [--cursor <cursor>] [--limit 50]` | `runs` | The newest runs | `/runs` |
+| `cloudflare-ping show <id>` | `show` | One run and its fetches | `/runs/<id>` |
 | `cloudflare-ping limits` | `limits` | How many tests the app has left this hour | `/runs` |
-| `cloudflare-ping places [<what>] [--kind <kind>] [--limit <n>]` | `places` | Find a place to test from: continents, regions, countries, US states, cities and networks with probes, and Cloudflare's data centres | `/` |
-| `cloudflare-ping coverage [--place Europe|TH] [--no-cities]` | `coverage` | All of Cloudflare's data centres and every probe, on a world map | `/coverage` |
-| `cloudflare-ping map [--id <map id>]` | `map` | Which Cloudflare data centres the probes reach, and what it cost to find out | `/map` |
+| `cloudflare-ping places [<q>] [--kind <kind>] [--limit <limit>] [--cursor <cursor>]` | `places` | Find a place to test from: continents, regions, countries, US states, cities and networks with probes, and Cloudflare's data centres | `/` |
+| `cloudflare-ping coverage [--place Europe|TH] [--cities]` | `coverage` | All of Cloudflare's data centres and every probe, on a world map | `/coverage` |
+| `cloudflare-ping map [--id <id>]` | `map` | Which Cloudflare data centres the probes reach, and what it cost to find out | `/map` |
 | `cloudflare-ping remap [--level country|city] [--countries TH,SG]` | `remap` | Start a new map: one test per place, worked through on a queue (spends tests, needs sign-in) | `/map` |
-| `cloudflare-ping trace <ray id> [--minutes 60]` | `trace` | A request's Cloudflare log, by its cf-ray (needs sign-in) | `/trace/<ray>` |
+| `cloudflare-ping trace <ray> [--minutes 60]` | `trace` | A request's Cloudflare log, by its cf-ray (needs sign-in) | `/trace/<ray>` |
 | `cloudflare-ping init` | - | Set this project's coding agents up to use the app: its skill, its MCP server | `/docs/agents` |
 | `cloudflare-ping sign-in` | - | Sign this machine in | `/login` |
 | `cloudflare-ping sign-out` | - | Sign this machine out | `Sign out` |

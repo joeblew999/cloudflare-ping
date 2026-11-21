@@ -1,7 +1,7 @@
 {
   "name": "@cloudflare-ping/shared",
   "private": true,
-  "description": "What the app, the CLI and the docs share: where the app is, what /run may fetch, the API version, the commands, the coding agents `init` sets up, Globalping's limit in words, places and how they're searched, and the words for a failed call.",
+  "description": "What the app, the CLI and the docs share: where the app is, what /run may fetch, the API version, the commands (each written once), the coding agents `init` sets up, Globalping's limit in words, places and how they're searched, and the words for a failed call.",
   "type": "module",
   "exports": {
     "./agents": "./src/agents.ts",
@@ -9,13 +9,16 @@
     "./coverage": "./src/coverage.ts",
     "./failure": "./src/failure.ts",
     "./limits": "./src/limits.ts",
+    "./place-schema": "./src/place-schema.ts",
     "./places": "./src/places.ts",
     "./site": "./src/site.ts",
     "./targets": "./src/targets.ts",
     "./version": "./src/version.ts"
   },
   "dependencies": {
-    "void": "catalog:"
+    "void": "catalog:",
+    "void-commands": "workspace:*",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:"

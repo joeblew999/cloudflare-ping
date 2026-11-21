@@ -9,7 +9,9 @@
 //   `/mcp` only, signed by `jwt()`. A client registers itself by its metadata URL (`cimd()`,
 //   which MCP 2026-07-28 asks for) or by Dynamic Client Registration (most clients today). Anyone
 //   can register a client, but only an allowed account can sign one in. Signing in is /login, then
-//   /consent.
+//   /consent. The scope `tests` (plan 2026-11-21-01, step 6) is what lets a client call the tools
+//   that spend Globalping tests (src/mcp-scope.ts): one granted only the standard scopes can
+//   read, not spend.
 import { cimd } from "@better-auth/cimd";
 import { mcp } from "@better-auth/mcp";
 import { APIError } from "better-auth/api";
@@ -18,6 +20,7 @@ import { deviceAuthorization } from "better-auth/plugins/device-authorization";
 import { jwt } from "better-auth/plugins/jwt";
 import { defineAuth } from "void/auth";
 import { CLI_CLIENT_ID, SITE } from "@cloudflare-ping/shared/site";
+import { SPEND_SCOPE } from "./src/mcp-scope";
 
 // CIMD fetches a client's metadata document from the URL it names. Its own transport is for Node
 // (`node:net`, to refuse private addresses). On a Worker, `fetch` already only reaches public
@@ -57,6 +60,8 @@ export default defineAuth(({ defaults, env }) => {
         // Native clients (Claude Code, Cursor) call back to http://127.0.0.1 and may not say
         // they're native.
         clientRegistrationDefaultApplicationType: "infer",
+        // Better Auth's standard scopes, and the one to spend tests.
+        scopes: ["openid", "profile", "email", "offline_access", SPEND_SCOPE],
       }),
       cimd({ fetchClientMetadataResource, metadataProfile: "mcp-2026-07-28" }),
     ],

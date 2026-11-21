@@ -12,6 +12,7 @@
     "@cloudflare-ping/theme": "workspace:*",
     "vitepress": "catalog:",
     "void": "catalog:",
+    "void-commands": "workspace:*",
     "vue": "catalog:"
   }
 }

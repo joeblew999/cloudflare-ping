@@ -2,7 +2,7 @@
 // (`If-None-Match`, with the version tag it last sent: plan 2026-11-20-03). A 304 keeps what's
 // kept; a 200 replaces it. What's read back is checked against its schema, so a value of another
 // shape (an older version's) is fetched again; the key carries a version too.
-import { HTTPException } from "hono/http-exception";
+import { fail } from "void-commands/server";
 import { kv } from "void/kv";
 import { logger } from "void/log";
 import { z } from "zod";
@@ -51,9 +51,7 @@ export async function cachedSource<T>(
       logger.warn(`${source.url} didn't answer; using what's kept`, { status: response?.status });
       return { data: entry.data, changed: false };
     }
-    throw new HTTPException(502, {
-      message: `${source.url} couldn't be read (HTTP ${response?.status ?? "no answer"})`,
-    });
+    fail("refused", `${source.url} couldn't be read (HTTP ${response?.status ?? "no answer"})`);
   }
   const data = await source.reduce(response);
   await kv.put(source.key, { etag: response.headers.get("etag"), checkedAt: now, data });

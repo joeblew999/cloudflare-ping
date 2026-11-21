@@ -5,7 +5,7 @@
 // (queues/runs.ts), 50 places to a Globalping test, waiting out Globalping's hourly limit when
 // they must.
 import { maps, runPlaces, runs, sightings } from "@schema";
-import { HTTPException } from "hono/http-exception";
+import { fail } from "void-commands/server";
 import { and, db, desc, eq, inArray, isNotNull } from "void/db";
 import { env } from "void/env";
 import { logger } from "void/log";
@@ -35,9 +35,7 @@ async function placesFrom(everywhere: Everywhere) {
     ? await db.select().from(maps).where(eq(maps.id, everywhere.map)).limit(1)
     : await db.select().from(maps).orderBy(desc(maps.createdAt)).limit(1);
   if (!map) {
-    throw new HTTPException(400, {
-      message: "No map yet to run everywhere from: start one (cloudflare-ping remap)",
-    });
+    fail("not_found", "No map yet to run everywhere from: start one (cloudflare-ping remap)");
   }
   const seen = await db
     .select({
@@ -75,11 +73,12 @@ async function placesFrom(everywhere: Everywhere) {
   }
   const places = [...byColo.values()].sort((a, b) => a.colo.localeCompare(b.colo));
   if (places.length === 0) {
-    throw new HTTPException(400, {
-      message: everywhere.at?.length
+    fail(
+      "not_found",
+      everywhere.at?.length
         ? `The map (${map.id}) didn't reach ${everywhere.at.join(", ")}`
         : `The map (${map.id}) hasn't reached any data centre yet`,
-    });
+    );
   }
   return { map, places };
 }

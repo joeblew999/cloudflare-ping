@@ -4,18 +4,13 @@
 // back. The home page's "Run a probe".
 import { parseArgs } from "node:util";
 import { fetch } from "void/client";
+import { test as definition } from "@cloudflare-ping/shared/commands";
 import { commonOptions, headers, printedJson, signedIn, siteOf } from "../api";
 
 export async function test(args: Array<string>) {
   const { values } = parseArgs({
     args,
-    options: {
-      from: { type: "string", default: "TH" },
-      path: { type: "string", default: "/where" },
-      probes: { type: "string", default: "1" },
-      host: { type: "string" },
-      ...commonOptions,
-    },
+    options: { ...definition.cli.flags, ...commonOptions },
   });
   const site = siteOf(values.site);
 

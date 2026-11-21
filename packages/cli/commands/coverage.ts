@@ -6,6 +6,7 @@
 // (packages/shared/src/coverage.ts). The Coverage page (`/coverage?place=Europe`).
 import { parseArgs } from "node:util";
 import { fetch } from "void/client";
+import { coverage as definition } from "@cloudflare-ping/shared/commands";
 import {
   count,
   coverageGaps,
@@ -18,7 +19,7 @@ export async function coverage(args: Array<string>) {
   const { values } = parseArgs({
     args,
     allowNegative: true,
-    options: { place: { type: "string" }, cities: { type: "boolean" }, ...commonOptions },
+    options: { ...definition.cli.flags, ...commonOptions },
   });
   const site = siteOf(values.site);
   const found = await asked(() =>

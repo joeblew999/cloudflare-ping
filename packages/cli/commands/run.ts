@@ -6,22 +6,13 @@
 // sent on the app's queue; `show <run id>` later says which it reached.
 import { parseArgs } from "node:util";
 import { fetch } from "void/client";
-import { DEFAULT_TARGET } from "@cloudflare-ping/shared/targets";
+import { run as definition } from "@cloudflare-ping/shared/commands";
 import { asked, commonOptions, headers, printedJson, printRow, signedIn, siteOf } from "../api";
 
 export async function run(args: Array<string>) {
   const { values } = parseArgs({
     args,
-    options: {
-      target: { type: "string", default: DEFAULT_TARGET },
-      from: { type: "string", default: "TH" },
-      probes: { type: "string", default: "2" },
-      repeat: { type: "string", default: "1" },
-      inline: { type: "boolean", default: false },
-      everywhere: { type: "boolean", default: false },
-      at: { type: "string" },
-      ...commonOptions,
-    },
+    options: { ...definition.cli.flags, ...commonOptions },
   });
   const site = siteOf(values.site);
 

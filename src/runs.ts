@@ -1,7 +1,7 @@
 // Runs (plan steps 5 and 8): start one, list them, read one with its fetches. Used by the
 // commands (src/commands), which the API, the pages and the MCP tools all run.
 import { fetches, runPlaces, runs } from "@schema";
-import { count, db, desc, eq } from "void/db";
+import { and, count, db, desc, eq, lt, or } from "void/db";
 import { logger } from "void/log";
 import { probeFrom } from "./globalping";
 
@@ -73,9 +73,11 @@ export async function startRun(options: StartRun) {
   return { id, expected: reached * options.repeat, test };
 }
 
-// The newest runs, each with how many fetches it has recorded.
-export async function listRuns(limit = 50) {
-  return db
+// The newest runs, each with how many fetches it has recorded: `limit` of them, after `after` (the
+// last one of the previous lot, by time then ID, so new runs don't shift a page), and whether
+// there are more.
+export async function listRuns(limit = 50, after?: { createdAt: string; id: string }) {
+  const rows = await db
     .select({
       id: runs.id,
       target: runs.target,
@@ -90,9 +92,18 @@ export async function listRuns(limit = 50) {
     })
     .from(runs)
     .leftJoin(fetches, eq(fetches.runId, runs.id))
+    .where(
+      after
+        ? or(
+            lt(runs.createdAt, after.createdAt),
+            and(eq(runs.createdAt, after.createdAt), lt(runs.id, after.id)),
+          )
+        : undefined,
+    )
     .groupBy(runs.id)
-    .orderBy(desc(runs.createdAt))
-    .limit(limit);
+    .orderBy(desc(runs.createdAt), desc(runs.id))
+    .limit(limit + 1);
+  return { rows: rows.slice(0, limit), more: rows.length > limit };
 }
 
 // One run and its fetches, in the order they were made, and, for a run everywhere, the data

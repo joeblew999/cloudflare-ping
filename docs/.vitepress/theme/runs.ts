@@ -3,8 +3,8 @@
 import { fetch } from "void/client";
 
 export async function latestRuns(count: number) {
-  const { runs } = await fetch("/api/runs");
-  return runs.slice(0, count);
+  const { runs } = await fetch("/api/runs", { query: { limit: count } });
+  return runs;
 }
 
 export type RunSummary = Awaited<ReturnType<typeof latestRuns>>[number];

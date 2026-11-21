@@ -28,7 +28,7 @@ import {
   type StoredOAuthTokens,
 } from "@modelcontextprotocol/client";
 import { z } from "zod";
-import { COMMAND_LIST, questionFor, type CommandInfo } from "@cloudflare-ping/shared/commands";
+import { COMMAND_LIST, questionFor, type AnyCommand } from "@cloudflare-ping/shared/commands";
 import { SITE } from "@cloudflare-ping/shared/site";
 
 const { values } = parseArgs({
@@ -45,7 +45,7 @@ const check = (ok: boolean, what: string) => {
 
 const commandNamed = (name: string) => {
   const found = COMMAND_LIST.find((each) => each.name === name);
-  if (!found?.tool) {
+  if (!found?.mcp) {
     throw new Error(`No command ${name} with an MCP tool (packages/shared/src/commands.ts)`);
   }
   return found;
@@ -253,16 +253,18 @@ async function cli(args: Array<string>): Promise<unknown> {
       typeof caught === "object" && caught !== null && "stderr" in caught
         ? String(caught.stderr).trim()
         : String(caught);
-    return { error: words };
+    // The CLI's words without its "Failed (503): ", so a failure on purpose (trace not set up)
+    // compares with MCP's, which are the words alone.
+    return { error: words.replace(/^Failed \(\d+\): /, "") };
   }
 }
 
 // The tool's answer: its data, or its error in the words the page and the CLI show.
-async function tool(client: Client, command: CommandInfo, options: Options) {
-  if (command.spends || !command.tool) {
+async function tool(client: Client, command: AnyCommand, options: Options) {
+  if (command.spends || !command.mcp) {
     throw new Error(`${command.name} spends tests: the check never calls it`);
   }
-  const result = await client.callTool({ name: command.tool, arguments: options });
+  const result = await client.callTool({ name: command.name, arguments: options });
   if (result.isError) {
     const first = Array.isArray(result.content) ? result.content[0] : undefined;
     const text =
@@ -398,19 +400,21 @@ check(true, `signed in to ${mcpUrl.href} as an MCP client`);
 // The tools: one per command that has one, in the command's own words, and the ones that spend
 // tests marked as not read-only.
 const { tools } = await client.listTools();
-const commands = COMMAND_LIST.filter((each) => each.tool !== null);
+const commands = COMMAND_LIST.filter((each) => each.mcp);
 const names = tools.map((each) => each.name).sort();
-const expected = commands.flatMap((each) => (each.tool ? [each.tool] : [])).sort();
+const expected = commands.map((each) => each.name).sort();
 check(
   JSON.stringify(names) === JSON.stringify(expected),
   `the tools are the commands' own: ${names.join(", ")}`,
 );
 for (const command of commands) {
-  const found = tools.find((each) => each.name === command.tool);
+  const found = tools.find((each) => each.name === command.name);
   const readOnly = found?.annotations?.readOnlyHint === true;
   check(
-    (found?.description ?? "").startsWith(`${command.about}.`) && readOnly === !command.spends,
-    `${command.tool}: described as \`cloudflare-ping help\` describes it, ${readOnly ? "read-only" : "spends tests"}`,
+    (found?.description ?? "").startsWith(`${command.about}.`) &&
+      readOnly === !command.spends &&
+      found?.outputSchema?.type === "object",
+    `${command.name}: described as \`cloudflare-ping help\` describes it, ${readOnly ? "read-only" : "spends tests"}, with what it answers`,
   );
 }
 
@@ -430,15 +434,37 @@ for (const [name, options] of questions) {
   await ask(client, name, options);
 }
 
-// The newest run, then one of its fetches' Cloudflare log: their IDs come from the answers.
+// The newest run with fetches, then one of its fetches' Cloudflare log: their IDs come from the
+// answers.
 const newest = z
-  .object({ runs: z.array(z.object({ id: z.string() })) })
+  .object({ runs: z.array(z.object({ id: z.string(), fetches: z.number() })) })
   .safeParse(await ask(client, "runs", {}));
-const id = newest.success ? newest.data.runs[0]?.id : undefined;
+// The newest run that recorded fetches, so its log can be asked for too.
+const id = newest.success
+  ? (newest.data.runs.find((each) => each.fetches > 0) ?? newest.data.runs[0])?.id
+  : undefined;
+
+// The next lot of runs, from a page's `next`: the same on every surface.
+const page = z
+  .object({ next: z.string().nullable() })
+  .safeParse(await ask(client, "runs", { limit: 2 }));
+if (page.success && page.data.next) {
+  await ask(client, "runs", { limit: 2, cursor: page.data.next });
+}
 if (id) {
+  const answer = await ask(client, "show", { id });
+  // The same run as a resource (show's): the same answer.
+  const read = await client.readResource({ uri: `cloudflare-ping://runs/${id}` });
+  const [content] = read.contents;
+  check(
+    content !== undefined &&
+      "text" in content &&
+      comparable(JSON.parse(content.text)) === comparable(answer),
+    `cloudflare-ping://runs/${id}: the resource is show's answer`,
+  );
   const shown = z
     .object({ fetches: z.array(z.object({ ray: z.string().nullable(), createdAt: z.string() })) })
-    .safeParse(await ask(client, "show", { id }));
+    .safeParse(answer);
   const fetched = shown.success ? shown.data.fetches.find((each) => each.ray) : undefined;
   if (fetched?.ray) {
     // Back as far as that fetch, so its log is in the answer: trace looks back up to a week.

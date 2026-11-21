@@ -4,6 +4,7 @@
 // typed fetch (`void/client`), the same calls the pages make, and say the API version they were
 // built for (packages/shared/src/version.ts). A failure prints the same words a page shows.
 import { FetchError } from "void/client";
+import { exitCodeOf } from "void-commands/cli";
 import { SITE } from "@cloudflare-ping/shared/site";
 import { failure } from "@cloudflare-ping/shared/failure";
 import { API_VERSION, API_VERSION_HEADER } from "@cloudflare-ping/shared/version";
@@ -34,10 +35,12 @@ export const headers = (authorization?: string): Record<string, string> => ({
   ...(authorization ? { authorization } : {}),
 });
 
-// When a call fails: the same words a page shows (packages/shared/src/failure.ts), and a failed exit.
+// When a call fails: the same words a page shows (packages/shared/src/failure.ts), and the exit code
+// for the kind of failure (void-commands' FAILURES: 3 signed out, 5 not found, 6 a limit reached…),
+// so a script can tell them apart.
 export function stop(error: unknown): never {
   console.error(failure(error));
-  process.exit(1);
+  process.exit(exitCodeOf(error instanceof FetchError ? (error.status ?? null) : null));
 }
 
 // An API call anyone may make (reading runs).

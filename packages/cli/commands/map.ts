@@ -4,15 +4,13 @@
 // /api/map`, signed in: it spends one Globalping test per place). The Map page's "Start a map".
 import { parseArgs } from "node:util";
 import { fetch } from "void/client";
+import { map as mapDefinition, remap as remapDefinition } from "@cloudflare-ping/shared/commands";
 import { asked, commonOptions, headers, printedJson, signedIn, siteOf, stop } from "../api";
 
 export async function map(args: Array<string>) {
   const { values } = parseArgs({
     args,
-    options: {
-      id: { type: "string" },
-      ...commonOptions,
-    },
+    options: { ...mapDefinition.cli.flags, ...commonOptions },
   });
   const site = siteOf(values.site);
   const found = await asked(() =>
@@ -46,11 +44,7 @@ export async function map(args: Array<string>) {
 export async function remap(args: Array<string>) {
   const { values } = parseArgs({
     args,
-    options: {
-      level: { type: "string", default: "country" },
-      countries: { type: "string" },
-      ...commonOptions,
-    },
+    options: { ...remapDefinition.cli.flags, ...commonOptions },
   });
   const site = siteOf(values.site);
   const level = values.level;
