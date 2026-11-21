@@ -1,6 +1,7 @@
 // Places (plan 2026-11-20-04): what a test can run from, and what a list can be narrowed to. One
 // search, run by the Worker for `GET /api/places` (and so the CLI and MCP) and by the picker in
-// the browser, over the same places from that API: the same matching everywhere. Pure: no
+// the browser, over the same places (a page's loader gives the picker them): the same matching
+// everywhere. Pure: no
 // Worker, no browser, no packages (a place's schema is in place-schema.ts, so the picker doesn't
 // load zod). The places themselves, and every name, come from the lists the app reads
 // (src/sources): nothing about them is written here.
@@ -20,6 +21,19 @@ export type PlaceKind = (typeof PLACE_KINDS)[number];
 export const FROM_KINDS: ReadonlyArray<PlaceKind> = PLACE_KINDS.filter(
   (kind) => kind !== "datacentre",
 );
+
+// The places each of the website's location fields takes, written once (plan 2026-11-21-04): the
+// place picker (src/PlacePicker.tsx) offers these, and each page's loader gives it these
+// (src/commands/places.ts). A test's and a run's From; the coverage place; a map's countries; a
+// run everywhere's data centres. One place, or several.
+export type PlaceField = { kinds: ReadonlyArray<PlaceKind>; several: boolean };
+
+export const PLACE_FIELDS = {
+  from: { kinds: FROM_KINDS, several: false },
+  coverage: { kinds: ["continent", "country"], several: false },
+  countries: { kinds: ["country"], several: true },
+  datacentres: { kinds: ["datacentre"], several: true },
+} as const satisfies Record<string, PlaceField>;
 
 // Each kind's heading, where places are shown in groups.
 export const KIND_LABELS: Record<PlaceKind, string> = {
@@ -67,11 +81,13 @@ function typosApart(a: string, b: string, limit: number): boolean {
 }
 
 // How well a place matches what's typed (already folded): lower is better, null when it doesn't.
-// An exact code or name; the name's start; a word in the name; what it's within (so "bang"
-// finds Dhaka, in Bangladesh); anywhere in the name; last, the name or a word in it a typo or
-// two away ("thialand", "bankok").
+// An exact code or name; the name's start, or the start of the place as it's shown ("Bangkok,
+// Thailand (TH)", what the picker's box says after a pick); a word in the name; what it's within
+// (so "bang" finds Dhaka, in Bangladesh); anywhere in the name; last, the name or a word in it a
+// typo or two away ("thialand", "bankok").
 export function scoreOf(place: Place, typed: string): number | null {
   const name = fold(place.name);
+  const within = place.within ? fold(place.within) : "";
   const codes = place.codes.map(fold);
   if (
     name === typed ||
@@ -80,13 +96,12 @@ export function scoreOf(place: Place, typed: string): number | null {
   ) {
     return 0;
   }
-  if (name.startsWith(typed)) {
+  if (name.startsWith(typed) || (within !== "" && `${name}, ${within}`.startsWith(typed))) {
     return 1;
   }
   if (wordsOf(name).some((word) => word.startsWith(typed))) {
     return 2;
   }
-  const within = place.within ? fold(place.within) : "";
   if (
     within.startsWith(typed) ||
     wordsOf(within).some((word) => word.startsWith(typed)) ||

@@ -4,14 +4,14 @@
 // the same drawing: src/WorldMap.tsx). The CLI's `coverage`; `GET /api/coverage`. Narrowed to one
 // place, a continent or a country, with the place picker (`?place=Europe`, `?place=TH`), as the
 // API, CLI and MCP tool are.
-import { Link, useRouter } from "@void/react";
+import { Link } from "@void/react";
 import {
   coverageGaps,
   coverageHeadline,
   coverageUnmatched,
   count,
 } from "@cloudflare-ping/shared/coverage";
-import { asArgument } from "@cloudflare-ping/shared/places";
+import { PLACE_FIELDS, asArgument } from "@cloudflare-ping/shared/places";
 import { useState } from "react";
 import { routeUrl } from "void/routes";
 import { PlacePicker } from "../src/PlacePicker";
@@ -25,8 +25,8 @@ export default function CoveragePage({
   continents,
   datacentres,
   cities,
+  places,
 }: Props) {
-  const router = useRouter();
   // A country gets its own view; a continent, the every-country table of just its countries.
   const country = place?.kind === "country" ? place : null;
   const [wanted, setWanted] = useState(place?.value ?? "");
@@ -53,19 +53,15 @@ export default function CoveragePage({
       {unmatched ? <p className="different">{coverageUnmatched(unmatched)}</p> : null}
 
       <form method="get" action="/coverage" className="form coverage-filter">
-        <label>
-          A continent or a country
-          <PlacePicker
-            name="place"
-            value={wanted}
-            onChange={setWanted}
-            kinds={["continent", "country"]}
-            unknown="Not a continent or a country with probes"
-            onPick={(picked) => {
-              void router.visit(routeUrl("/coverage", { query: { place: picked.magic } }));
-            }}
-          />
-        </label>
+        <PlacePicker
+          label="A continent or a country"
+          field={PLACE_FIELDS.coverage}
+          places={places}
+          name="place"
+          value={wanted ? [wanted] : []}
+          onChange={([next = ""]) => setWanted(next)}
+          placeholder="Everywhere, unless you pick one"
+        />
         <button type="submit" className="button alt">
           Show
         </button>

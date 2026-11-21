@@ -190,7 +190,8 @@ export const places = command({
       .optional()
       .describe('What\'s typed: "bang", "TH", "AS13335", "virginia"'),
     kind: z.enum(PLACE_KINDS).optional().describe("Only places of this kind"),
-    // Not given: with something typed, the best 50; with nothing, every place (the picker's).
+    // Not given: with something typed, the best 50; with nothing, every place (the CLI counts
+    // them by kind).
     limit: z.coerce
       .number()
       .int()

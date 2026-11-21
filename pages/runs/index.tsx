@@ -6,8 +6,8 @@ import { Suspense, use, useState } from "react";
 import { routeUrl } from "void/routes";
 import { limitsLine } from "@cloudflare-ping/shared/limits";
 import { ALLOWED_HOSTS, DEFAULT_TARGET } from "@cloudflare-ping/shared/targets";
-import { asArgument } from "@cloudflare-ping/shared/places";
-import { PlaceChips, PlacePicker } from "../../src/PlacePicker";
+import { PLACE_FIELDS, asArgument } from "@cloudflare-ping/shared/places";
+import { PlacePicker } from "../../src/PlacePicker";
 import type { Props } from "./index.server";
 
 const HOSTS = [...ALLOWED_HOSTS];
@@ -19,7 +19,7 @@ function Quota({ limits }: Pick<Props, "limits">) {
   return <>{found.ok ? limitsLine(found.found) : found.error}</>;
 }
 
-export default function RunsPage({ email, runs, limits }: Props) {
+export default function RunsPage({ email, runs, places, limits }: Props) {
   const [host, setHost] = useState(DEFAULT.hostname);
   const [path, setPath] = useState(DEFAULT.pathname);
   // From every data centre the map reached (plan step 8), or only some of them.
@@ -102,16 +102,16 @@ export default function RunsPage({ email, runs, limits }: Props) {
             </label>
           </div>
           <div className="form-row">
-            <label>
-              From
-              <PlacePicker
-                name="from"
-                value={form.data.from}
-                onChange={(value) => form.setData("from", value)}
-                required
-              />
-              {form.errors.from ? <span className="different">{form.errors.from}</span> : null}
-            </label>
+            <PlacePicker
+              label="From"
+              field={PLACE_FIELDS.from}
+              places={places}
+              value={form.data.from ? [form.data.from] : []}
+              onChange={([from = ""]) => form.setData("from", from)}
+              placeholder="A country, a city, a network…"
+              required
+              error={form.errors.from}
+            />
             <label>
               Probes
               <input
@@ -156,16 +156,14 @@ export default function RunsPage({ email, runs, limits }: Props) {
             and Probes)
           </label>
           {everywhere ? (
-            <div className="field">
-              <span>Only these data centres (optional)</span>
-              <PlaceChips
-                label="Only these data centres"
-                value={at}
-                kinds={["datacentre"]}
-                placeholder="Type a data centre: BKK, Singapore…"
-                onChange={(only) => pickEverywhere(true, only)}
-              />
-            </div>
+            <PlacePicker
+              label="Only these data centres (optional)"
+              field={PLACE_FIELDS.datacentres}
+              places={places}
+              value={at}
+              onChange={(only) => pickEverywhere(true, only)}
+              placeholder="Every one, unless you pick some"
+            />
           ) : null}
           <div className="form-actions">
             <button type="submit" className="button brand" disabled={form.pending || !email}>

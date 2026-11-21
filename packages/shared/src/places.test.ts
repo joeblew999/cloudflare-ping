@@ -52,6 +52,11 @@ describe("searchPlaces", () => {
     ]);
   });
 
+  it("the place as it's shown, as the picker's box says it after a pick", () => {
+    expect(names(searchPlaces(places, { q: "Bangkok, Thailand (TH" }))).toEqual(["Bangkok"]);
+    expect(names(searchPlaces(places, { q: "Thailand, Asia" }))).toEqual(["Thailand"]);
+  });
+
   it("a word inside a name, and the places inside a state", () => {
     expect(names(searchPlaces(places, { q: "virg" }))).toEqual([
       "Virginia",

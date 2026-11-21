@@ -1,9 +1,12 @@
 // The home page: where it was served from, and one Globalping test (src/commands/test.ts). The
 // action makes the test and redirects to `/?measurement=<id>`; the loader then waits for its
-// answer as a deferred prop, so the page shows at once, and the answer has its own link.
+// answer as a deferred prop, so the page shows at once, and the answer has its own link. The From
+// box's places come deferred too (src/commands/places.ts).
 import { defineHandler, defineHead, defer, type InferProps } from "void";
 import { getUser } from "void/auth";
+import { PLACE_FIELDS } from "@cloudflare-ping/shared/places";
 import { signedInFor } from "../src/commands/context";
+import { placesFor } from "../src/commands/places";
 import { routeUrl } from "void/routes";
 import { z } from "zod";
 import { measurementId, result, start, test } from "../src/commands/test";
@@ -22,6 +25,7 @@ export const loader = defineHandler.withValidator({
     email: getUser()?.email ?? null,
     here: { colo: text(cf?.colo), city: text(cf?.city), country: text(cf?.country) },
     measurement,
+    places: defer(() => placesFor(PLACE_FIELDS.from)),
     // Globalping's words when it can't be read (gone, or refused), shown in place of the answer.
     answer: measurement
       ? defer(async () => {

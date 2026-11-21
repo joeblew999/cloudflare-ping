@@ -6,7 +6,7 @@
 import { Form, Link, useForm } from "@void/react";
 import { Suspense, use } from "react";
 import { routeUrl } from "void/routes";
-import { asArgument } from "@cloudflare-ping/shared/places";
+import { PLACE_FIELDS, asArgument } from "@cloudflare-ping/shared/places";
 import { SITE } from "@cloudflare-ping/shared/site";
 import { ALLOWED_HOSTS } from "@cloudflare-ping/shared/targets";
 import { PlacePicker } from "../src/PlacePicker";
@@ -93,7 +93,7 @@ function Answer({ answer }: { answer: NonNullable<Props["answer"]> }) {
   );
 }
 
-export default function HomePage({ email, here, measurement, answer }: Props) {
+export default function HomePage({ email, here, measurement, places, answer }: Props) {
   const form = useForm(
     "/",
     { from: "TH", path: "/where", probes: 2, host: "" },
@@ -189,16 +189,16 @@ export default function HomePage({ email, here, measurement, answer }: Props) {
               </select>
             </label>
             <div className="form-row">
-              <label>
-                From
-                <PlacePicker
-                  name="from"
-                  value={form.data.from}
-                  onChange={(value) => form.setData("from", value)}
-                  required
-                />
-                {form.errors.from ? <span className="different">{form.errors.from}</span> : null}
-              </label>
+              <PlacePicker
+                label="From"
+                field={PLACE_FIELDS.from}
+                places={places}
+                value={form.data.from ? [form.data.from] : []}
+                onChange={([from = ""]) => form.setData("from", from)}
+                placeholder="A country, a city, a network…"
+                required
+                error={form.errors.from}
+              />
               <label>
                 Path
                 <input

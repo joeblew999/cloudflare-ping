@@ -3,7 +3,8 @@
 // src/commands/map.ts as `POST /api/map` does; the CLI's `remap`). A map fills in as its queue
 // works through the countries, waiting out Globalping's hourly limit when it must.
 import { Form, Link, useForm } from "@void/react";
-import { PlaceChips } from "../src/PlacePicker";
+import { PLACE_FIELDS } from "@cloudflare-ping/shared/places";
+import { PlacePicker } from "../src/PlacePicker";
 import type { Props } from "./map.server";
 
 // Every country, unless some are given.
@@ -17,6 +18,7 @@ export default function MapPage({
   countriesDone,
   reached,
   datacentres,
+  places,
 }: Props) {
   const form = useForm("/map", { level: "country", countries: ALL }, { throwOnError: false });
 
@@ -109,19 +111,15 @@ export default function MapPage({
               <option value="city">city</option>
             </select>
           </label>
-          <div className="field">
-            <span>Only these countries (optional)</span>
-            <PlaceChips
-              label="Only these countries"
-              value={form.data.countries ?? ALL}
-              kinds={["country"]}
-              placeholder="Type a country: Thailand, SG…"
-              onChange={(countries) => form.setData("countries", countries)}
-            />
-            {form.errors.countries ? (
-              <span className="different">{form.errors.countries}</span>
-            ) : null}
-          </div>
+          <PlacePicker
+            label="Only these countries (optional)"
+            field={PLACE_FIELDS.countries}
+            places={places}
+            value={form.data.countries ?? ALL}
+            onChange={(countries) => form.setData("countries", countries)}
+            placeholder="Every country, unless you pick some"
+            error={form.errors.countries}
+          />
         </div>
         <div className="form-actions">
           <button type="submit" className="button brand" disabled={form.pending || !email}>

@@ -1,280 +1,263 @@
-// The place picker (plan 2026-11-20-04): a text box that suggests places as you type, as
-// globalping.io's Location box does. Every place comes from `GET /api/places` (the same places the
-// CLI and MCP get), loaded once when a box is first used; every keypress then runs the same
-// `searchPlaces` the API runs, in the browser, and shows the places in the same groups the CLI
-// does. Nothing here knows a place: kinds, names and what's sent to Globalping all come with the
-// places. `PlacePicker` holds one place (a test's From); `PlaceChips` several (the map's
-// countries, a run everywhere's data centres).
+// The place picker (plan 2026-11-21-04): the one box for every location field on the website, a
+// test's and a run's From, the coverage place, a map's countries and a run everywhere's data
+// centres. Which places a field takes is written once, in PLACE_FIELDS
+// (packages/shared/src/places.ts). The page's loader hands them over deferred (placesFor,
+// src/commands/places.ts), so the box is ready when the page is. Every keypress runs the same
+// search `GET /api/places` runs, and the list shows the places in the CLI's groups. Downshift's
+// combobox (useCombobox, with useMultipleSelection for several, as chips) does the keys, the
+// list and what screen readers are told. It looks like every other field: the site's form styles
+// (pages/style.css).
+//
+// What the field holds is what's sent: each picked place's `magic` ("TH", "Bangkok+TH", "BKK").
+// The box shows the place's name. Typing after a pick unpicks it. Typed text that isn't picked
+// keeps the form from being sent ("Pick one from the list"), so a form never goes with less than
+// it shows. A place is picked by a click or Enter, never by leaving the box, and Enter never sends
+// the form: the test, run and map forms spend tests.
 import {
-  FROM_KINDS,
   KIND_LABELS,
   groupByKind,
   searchPlaces,
   type Place,
-  type PlaceKind,
+  type PlaceField,
 } from "@cloudflare-ping/shared/places";
-import { useEffect, useId, useState, type KeyboardEvent } from "react";
-import { fetch } from "void/client";
+import type { Deferred } from "@void/react";
+import { useCombobox, useMultipleSelection, type UseComboboxReturnValue } from "downshift";
+import {
+  Suspense,
+  use,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from "react";
+import type { PickerPlaces } from "./commands/places";
 
-// Every place, fetched once for every box on the page.
-let loading: Promise<Array<Place>> | null = null;
-function loadPlaces(): Promise<Array<Place>> {
-  loading ??= fetch("/api/places", { query: {} }).then(
-    (found) => found.places,
-    (error: unknown) => {
-      loading = null;
-      throw error;
-    },
-  );
-  return loading;
-}
-
-function usePlaces() {
-  const [places, setPlaces] = useState<Array<Place> | null>(null);
-  const [failed, setFailed] = useState(false);
-  const load = () => {
-    if (!places) {
-      loadPlaces().then(setPlaces, () => setFailed(true));
-    }
-  };
-  return { places, failed, load };
-}
-
-// How a place is read out: "Bangkok, Thailand (TH)".
-const said = (place: Place) => `${place.name}${place.within ? `, ${place.within}` : ""}`;
-
-// The place a value names, if it's one of them: what's sent to Globalping, or one of its codes.
-function placeOf(places: Array<Place> | null, value: string) {
-  const wanted = value.trim().toLowerCase();
-  return wanted === ""
-    ? undefined
-    : places?.find(
-        (each) =>
-          each.magic.toLowerCase() === wanted ||
-          each.codes.some((code) => code.toLowerCase() === wanted),
-      );
-}
-
-// The suggestions under a box, and the keys that move through them.
-function useSuggestions(options: {
-  places: Array<Place> | null;
-  query: string;
-  kinds: ReadonlyArray<PlaceKind>;
-  exclude?: ReadonlyArray<string>;
-  onPick: (place: Place) => void;
-}) {
-  const listId = useId();
-  const [open, setOpen] = useState(false);
-  const [active, setActive] = useState(0);
-  const found =
-    options.places && options.query.trim() !== ""
-      ? searchPlaces(options.places, { q: options.query, kinds: options.kinds, perKind: 8 }).filter(
-          (each) => !options.exclude?.includes(each.magic),
-        )
-      : [];
-  const groups = groupByKind(found);
-  const flat = groups.flatMap((group) => group.places);
-  const shown = open && flat.length > 0;
-  const optionId = (at: number) => `${listId}-${at}`;
-
-  useEffect(() => {
-    if (shown) {
-      document.getElementById(optionId(active))?.scrollIntoView({ block: "nearest" });
-    }
-  });
-
-  const pick = (place: Place) => {
-    options.onPick(place);
-    setOpen(false);
-  };
-
-  function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      setOpen(true);
-      setActive((at) => (shown ? Math.min(at + 1, flat.length - 1) : 0));
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      setActive((at) => Math.max(at - 1, 0));
-    } else if (event.key === "Enter") {
-      // Enter in a place box picks; it never submits the form, which on the test, run and map
-      // forms would spend Globalping tests (a map with no countries picked is every country).
-      event.preventDefault();
-      if (shown && flat[active]) {
-        pick(flat[active]);
-      }
-    } else if (event.key === "Escape" && shown) {
-      event.preventDefault();
-      setOpen(false);
-    } else if (event.key === "Tab") {
-      setOpen(false);
-    }
-  }
-
-  const typed = () => {
-    setOpen(true);
-    setActive(0);
-  };
-
-  const input = {
-    role: "combobox",
-    "aria-expanded": shown,
-    "aria-controls": listId,
-    "aria-autocomplete": "list",
-    "aria-activedescendant": shown ? optionId(active) : undefined,
-    autoComplete: "off",
-    spellCheck: false,
-    onKeyDown,
-    onBlur: () => setOpen(false),
-  } as const;
-
-  let at = -1;
-  const list = shown ? (
-    <ul role="listbox" id={listId} className="place-list">
-      {groups.map((group) => (
-        <li key={group.kind} role="presentation">
-          <span className="place-group">{KIND_LABELS[group.kind]}</span>
-          <ul role="presentation">
-            {group.places.map((place) => {
-              at += 1;
-              const here = at;
-              return (
-                <li
-                  key={`${place.kind}|${place.magic}`}
-                  id={optionId(here)}
-                  role="option"
-                  aria-selected={here === active}
-                  className={here === active ? "place active" : "place"}
-                  onMouseDown={(event) => {
-                    event.preventDefault();
-                    pick(place);
-                  }}
-                  onMouseEnter={() => setActive(here)}
-                >
-                  <span>
-                    <strong>{place.name}</strong>
-                    {place.within ? `, ${place.within}` : ""}
-                  </span>
-                  {place.kind === "datacentre" ? null : (
-                    <span className="place-probes">{place.probes.toLocaleString("en-US")}</span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </li>
-      ))}
-    </ul>
-  ) : null;
-
-  return { input, list, typed, shown };
-}
-
-// One place: what's in the box is what's sent to Globalping, picked or typed.
-export function PlacePicker({
-  name,
-  value,
-  onChange,
-  kinds = FROM_KINDS,
-  required,
-  onPick,
-  unknown = "Sent as typed",
-}: {
-  name: string;
-  value: string;
-  onChange: (value: string) => void;
-  kinds?: ReadonlyArray<PlaceKind>;
-  required?: boolean;
-  // When a suggestion is picked (not typed): a page that acts on the pick at once.
-  onPick?: (place: Place) => void;
-  // What to say when what's typed is none of the places.
-  unknown?: string;
-}) {
-  const { places, failed, load } = usePlaces();
-  const { input, list, typed, shown } = useSuggestions({
-    places,
-    query: value,
-    kinds,
-    onPick: (place) => {
-      onChange(place.magic);
-      onPick?.(place);
-    },
-  });
-  const named = placeOf(places, value);
-  return (
-    <span className="place-picker">
-      <span className="place-box">
-        <input
-          {...input}
-          name={name}
-          value={value}
-          required={required}
-          onFocus={load}
-          onChange={(event) => {
-            load();
-            onChange(event.target.value);
-            typed();
-          }}
-        />
-        {list}
-      </span>
-      <span className="place-said">
-        {failed
-          ? "Places couldn't be loaded"
-          : named
-            ? `${said(named)} · ${named.kind === "datacentre" ? "Cloudflare data centre" : `${named.probes.toLocaleString("en-US")} probes`}`
-            : shown
-              ? "Pick one, or keep what you typed"
-              : value.trim() === ""
-                ? "Type to search"
-                : places
-                  ? unknown
-                  : ""}
-      </span>
-    </span>
-  );
-}
-
-// Several places, each a chip; what's sent is each one's own (a country's code, a data centre's).
-export function PlaceChips({
-  label,
-  value,
-  onChange,
-  kinds,
-  placeholder,
-}: {
-  // What the box is for, read out by screen readers (chips sit in a group, not a label).
+type Props = {
   label: string;
-  value: Array<string>;
+  field: PlaceField;
+  // From the page's loader: placesFor(...the page's fields).
+  places: Deferred<PickerPlaces>;
+  // The picked places' `magic`: one at most, unless the field takes several.
+  value: ReadonlyArray<string>;
   onChange: (value: Array<string>) => void;
-  kinds: ReadonlyArray<PlaceKind>;
-  placeholder: string;
-}) {
-  const { places, failed, load } = usePlaces();
-  const [query, setQuery] = useState("");
-  const { input, list, typed } = useSuggestions({
-    places,
-    query,
-    kinds,
-    exclude: value,
-    onPick: (place) => {
-      onChange([...value, place.magic]);
-      setQuery("");
+  // For a plain form (the coverage page's): each picked place is sent under this name.
+  name?: string;
+  placeholder?: string;
+  // One place must be picked.
+  required?: boolean;
+  // The server's words about the field.
+  error?: string;
+};
+
+const PICK = "Pick one from the list";
+const NOTHING = "Nothing matches that";
+
+export function PlacePicker(props: Props) {
+  return (
+    <Suspense fallback={<Unready label={props.label} words="Loading places…" />}>
+      <Ready {...props} />
+    </Suspense>
+  );
+}
+
+function Ready(props: Props) {
+  const found = use(props.places);
+  const places = useMemo(
+    () => (found.ok ? found.places.filter((each) => props.field.kinds.includes(each.kind)) : []),
+    [found, props.field],
+  );
+  if (!found.ok) {
+    return <Unready label={props.label} words={`Places couldn't be loaded: ${found.error}`} />;
+  }
+  return props.field.several ? (
+    <Several {...props} places={places} />
+  ) : (
+    <One {...props} places={places} />
+  );
+}
+
+// The box while there are no places to pick from.
+function Unready({ label, words }: { label: string; words: string }) {
+  const id = useId();
+  return (
+    <div className="field place-picker">
+      <label htmlFor={id}>{label}</label>
+      <input id={id} disabled placeholder={words} />
+    </div>
+  );
+}
+
+type Loaded = Omit<Props, "places"> & { places: Array<Place> };
+
+// How a place is shown, in the list and in the box: "Bangkok, Thailand (TH)".
+const said = (place: Place | null) =>
+  place ? `${place.name}${place.within ? `, ${place.within}` : ""}` : "";
+
+const keyOf = (place: Place | null) => (place ? `${place.kind}|${place.magic}` : null);
+
+// The place a value is: its magic, or one of its codes ("EU" is Europe).
+function placeOf(places: ReadonlyArray<Place>, value: string) {
+  const wanted = value.toLowerCase();
+  return (
+    places.find((each) => each.magic.toLowerCase() === wanted) ??
+    places.find((each) => each.codes.some((code) => code.toLowerCase() === wanted))
+  );
+}
+
+// What's offered for what's typed: the best 8 of each kind, in the CLI's groups, in the order the
+// list shows them (Downshift counts the items in that order).
+function offered(places: ReadonlyArray<Place>, typed: string, picked: ReadonlyArray<string>) {
+  const found = searchPlaces(places, { q: typed, perKind: 8 }).filter(
+    (each) => !picked.includes(each.magic),
+  );
+  return groupByKind(found).flatMap((group) => group.places);
+}
+
+// Enter picks (Downshift, when the list is open); it never sends the form.
+const enterNeverSends = (event: KeyboardEvent<HTMLInputElement>) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+  }
+};
+
+// Typed text that isn't picked keeps the form from being sent, with the browser's own message.
+function useUnpicked(unpicked: boolean) {
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    input.current?.setCustomValidity(unpicked ? PICK : "");
+  }, [unpicked]);
+  return input;
+}
+
+// Downshift tells of a pick after the render that follows it, so the text in the box is kept as
+// it's typed, from the box's own onChange: kept a render later, fast typing would lose keys.
+const { InputKeyDownEnter, ItemClick } = useCombobox.stateChangeTypes;
+
+// One place.
+function One({ label, places, value, onChange, name, placeholder, required, error }: Loaded) {
+  const picked = (value[0] && placeOf(places, value[0])) || null;
+  const [text, setText] = useState(() => (picked ? said(picked) : (value[0] ?? "")));
+  // The value the text was last set for: another value from the page (a link to another place)
+  // puts its place in the box (React's "adjusting state when a prop changes").
+  const key = value.join("\n");
+  const [textFor, setTextFor] = useState(key);
+  if (key !== textFor) {
+    setTextFor(key);
+    setText(picked ? said(picked) : (value[0] ?? ""));
+  }
+  // The picked place's name in the box: the list offers every place, as for an empty box.
+  const typed = picked && text === said(picked) ? "" : text;
+  const items = useMemo(() => offered(places, typed, []), [places, typed]);
+  const unpicked = text.trim() !== "" && !picked;
+  const input = useUnpicked(unpicked);
+  const combobox = useCombobox<Place>({
+    items,
+    itemToString: said,
+    itemToKey: keyOf,
+    selectedItem: picked,
+    inputValue: text,
+    defaultHighlightedIndex: 0,
+    onStateChange: (changes) => {
+      if (
+        (changes.type === InputKeyDownEnter || changes.type === ItemClick) &&
+        changes.selectedItem
+      ) {
+        setText(said(changes.selectedItem));
+        setTextFor(changes.selectedItem.magic);
+        onChange([changes.selectedItem.magic]);
+      }
     },
   });
+  // Typing after a pick unpicks it.
+  const type = (next: string) => {
+    setText(next);
+    if (picked) {
+      setTextFor("");
+      onChange([]);
+    }
+  };
+  const hint = hintOf(error, unpicked, items);
+  const hintId = useId();
   return (
-    <span className="place-picker">
-      <span className="place-box">
-        <span className="place-chips">
-          {value.map((each) => {
-            const named = placeOf(places, each);
+    <div className="field place-picker">
+      <label {...combobox.getLabelProps()}>{label}</label>
+      <div className="place-box">
+        <input
+          {...combobox.getInputProps({
+            ref: input,
+            onChange: (event: ChangeEvent<HTMLInputElement>) => type(event.target.value),
+            onKeyDown: enterNeverSends,
+            placeholder,
+            required,
+            autoComplete: "off",
+            spellCheck: false,
+            "aria-describedby": hint ? hintId : undefined,
+            "aria-invalid": error ? true : undefined,
+          })}
+        />
+        <List combobox={combobox} items={items} />
+      </div>
+      <Hint id={hintId} error={error} words={hint} />
+      {name && picked ? <input type="hidden" name={name} value={picked.magic} /> : null}
+    </div>
+  );
+}
+
+// Several places, each a chip: a click or Enter adds one, its × (or Backspace) takes it off.
+function Several({ label, places, value, onChange, name, placeholder, error }: Loaded) {
+  const [text, setText] = useState("");
+  const items = useMemo(() => offered(places, text, value), [places, text, value]);
+  const unpicked = text.trim() !== "";
+  const input = useUnpicked(unpicked);
+  // The chips are the values themselves, each shown by its place's name.
+  const selection = useMultipleSelection<string>({
+    selectedItems: [...value],
+    onSelectedItemsChange: ({ selectedItems }) => onChange(selectedItems),
+  });
+  const combobox = useCombobox<Place>({
+    items,
+    itemToString: said,
+    itemToKey: keyOf,
+    selectedItem: null,
+    inputValue: text,
+    defaultHighlightedIndex: 0,
+    onStateChange: (changes) => {
+      if (
+        (changes.type === InputKeyDownEnter || changes.type === ItemClick) &&
+        changes.selectedItem
+      ) {
+        setText("");
+        onChange([...value, changes.selectedItem.magic]);
+      }
+    },
+  });
+  const hint = hintOf(error, unpicked, items);
+  const hintId = useId();
+  return (
+    <div className="field place-picker">
+      <label {...combobox.getLabelProps()}>{label}</label>
+      <div className="place-box">
+        <div className="place-chips">
+          {value.map((each, index) => {
+            const place = placeOf(places, each);
             return (
-              <span key={each} className="chip" title={named ? said(named) : each}>
-                {named ? `${named.name}${named.kind === "datacentre" ? "" : ` (${each})`}` : each}
+              <span
+                key={each}
+                className="chip"
+                title={place ? said(place) : each}
+                {...selection.getSelectedItemProps({ selectedItem: each, index })}
+              >
+                {place?.name ?? each}
                 <button
                   type="button"
-                  aria-label={`Remove ${named?.name ?? each}`}
-                  onClick={() => onChange(value.filter((other) => other !== each))}
+                  aria-label={`Take off ${place?.name ?? each}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    selection.removeSelectedItem(each);
+                  }}
                 >
                   ×
                 </button>
@@ -282,28 +265,92 @@ export function PlaceChips({
             );
           })}
           <input
-            {...input}
-            aria-label={label}
-            value={query}
-            placeholder={value.length === 0 ? placeholder : ""}
-            onFocus={load}
-            onChange={(event) => {
-              load();
-              setQuery(event.target.value);
-              typed();
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Backspace" && query === "" && value.length > 0) {
-                onChange(value.slice(0, -1));
-              } else {
-                input.onKeyDown(event);
-              }
-            }}
+            {...combobox.getInputProps(
+              selection.getDropdownProps({
+                ref: input,
+                preventKeyAction: combobox.isOpen,
+                onChange: (event: ChangeEvent<HTMLInputElement>) => setText(event.target.value),
+                onKeyDown: enterNeverSends,
+                placeholder: value.length === 0 ? placeholder : "",
+                autoComplete: "off",
+                spellCheck: false,
+                "aria-describedby": hint ? hintId : undefined,
+                "aria-invalid": error ? true : undefined,
+              }),
+            )}
           />
-        </span>
-        {list}
-      </span>
-      {failed ? <span className="place-said">Places couldn&apos;t be loaded.</span> : null}
+        </div>
+        <List combobox={combobox} items={items} />
+      </div>
+      <Hint id={hintId} error={error} words={hint} />
+      {name
+        ? value.map((each) => <input key={each} type="hidden" name={name} value={each} />)
+        : null}
+    </div>
+  );
+}
+
+// What's said under the box: the server's words, or why the form won't be sent yet.
+function hintOf(error: string | undefined, unpicked: boolean, items: ReadonlyArray<Place>) {
+  return error ?? (unpicked ? (items.length === 0 ? NOTHING : PICK) : null);
+}
+
+function Hint({ id, error, words }: { id: string; error?: string; words: string | null }) {
+  return words ? (
+    <span id={id} className={error ? "place-said different" : "place-said"}>
+      {words}
     </span>
+  ) : null;
+}
+
+// The list under the box, in groups by kind. Out of the Tab order: the browser would otherwise
+// stop on it (it scrolls), and Tab would land on a list that closes as the box is left.
+function List({
+  combobox,
+  items,
+}: {
+  combobox: UseComboboxReturnValue<Place>;
+  items: ReadonlyArray<Place>;
+}) {
+  const menu = combobox.getMenuProps();
+  const shown = combobox.isOpen && items.length > 0;
+  let index = -1;
+  return (
+    <ul {...menu} className="place-list" hidden={!shown} tabIndex={-1}>
+      {shown
+        ? groupByKind(items).map((group) => {
+            const heading = `${menu.id}-${group.kind}`;
+            return (
+              <li key={group.kind} role="presentation">
+                <span id={heading} className="place-group">
+                  {KIND_LABELS[group.kind]}
+                </span>
+                <ul role="group" aria-labelledby={heading}>
+                  {group.places.map((place) => {
+                    index += 1;
+                    return (
+                      <li
+                        key={keyOf(place)}
+                        className={index === combobox.highlightedIndex ? "place active" : "place"}
+                        {...combobox.getItemProps({ item: place, index })}
+                      >
+                        <span>
+                          <strong>{place.name}</strong>
+                          {place.within ? `, ${place.within}` : ""}
+                        </span>
+                        {place.kind === "datacentre" ? null : (
+                          <span className="place-probes">
+                            {place.probes.toLocaleString("en-US")}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </li>
+            );
+          })
+        : null}
+    </ul>
   );
 }

@@ -32,6 +32,9 @@ catalog:
   "@better-auth/oauth-provider": 1.7.26
   "@void/react": 1.11.0
   better-auth: 1.7.26
+  # The place picker's keyboard and screen-reader parts (src/PlacePicker.tsx, plan 2026-11-21-04):
+  # 9.4.0, 30 June; 9.5.0 was under two weeks old.
+  downshift: 9.4.0
   typescript: ^7.0.2
   # The pair Void 1.11.0 writes for a new project (it's built with them): Vite+ 1.7.0 and its core,
   # 8.3.8000. Held at 1.6.0 with Void 1.10.0, which wrote no pair (reported to Void 2026-11-18).

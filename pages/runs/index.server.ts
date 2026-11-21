@@ -1,11 +1,14 @@
 // Runs: the newest (src/commands/runs.ts, as `GET /api/runs`), Globalping's limit as a deferred
 // prop (src/commands/limits.ts, as `GET /api/limits`), and the action that starts one
-// (src/commands/run.ts, as `POST /api/runs`), then opens its page.
+// (src/commands/run.ts, as `POST /api/runs`), then opens its page. The places for its From and data
+// centres boxes come deferred too (src/commands/places.ts).
 import { defineHandler, defineHead, defer, type InferProps } from "void";
 import { getUser } from "void/auth";
 import { routeUrl } from "void/routes";
+import { PLACE_FIELDS } from "@cloudflare-ping/shared/places";
 import { runCommand } from "../../src/commands/context";
 import { limits } from "../../src/commands/limits";
+import { placesFor } from "../../src/commands/places";
 import { run } from "../../src/commands/run";
 import { runs } from "../../src/commands/runs";
 
@@ -16,6 +19,7 @@ export const loader = defineHandler(async (c) => {
   return {
     email: getUser()?.email ?? null,
     runs: newest.runs,
+    places: defer(() => placesFor(PLACE_FIELDS.from, PLACE_FIELDS.datacentres)),
     // Globalping's words when it can't be asked, shown in place of the limit.
     limits: defer(async () => {
       try {
