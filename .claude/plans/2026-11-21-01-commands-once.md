@@ -223,8 +223,8 @@ Workers Logs shows who used them.
   (OpenAPI 3.1, the eight routes), the server card, failures in the app's words (404 for a run
   that isn't there, 400 naming the field), the CLI's help, paging and exit code 5. Signed out,
   the three spending routes refuse an empty body with 400 (Void's validator runs first, as before
-  the rewrite) and a valid one with 401 (`call` asks `requireAuth` before running), so no test
-  can be spent signed out; not sent with a valid body, so nothing was spent.
+  the rewrite). A valid one would get 401: `call` asks `requireAuth` before running the command,
+  and all three are `signedIn` (read in the code, not sent, so nothing was spent).
 - **Agents added before this change** were registered without the `tests` scope and can't step
   up: remove and add them again once (docs/agents.md says so).
 - **MCP Apps** (the map or coverage page shown in the AI's chat): its own plan.
